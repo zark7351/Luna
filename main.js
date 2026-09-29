@@ -4,7 +4,8 @@ const path = require('node:path');
 const reportFatal = error => { fs.writeFileSync(path.join(app.getPath('temp'),'lunapet-startup-error.log'),String(error.stack || error)); app.exit(1); };
 process.on('uncaughtException', reportFatal);
 process.on('unhandledRejection', reportFatal);
-const {defaults,validate,offline,askAI} = require('./core');
+const {defaults,validate,offline} = require('./core');
+const {askWithSystemNetwork} = require('./network');
 const smoke = process.argv.includes('--smoke-test');
 if (smoke) app.setPath('userData', path.join(app.getPath('temp'), 'lunapet-smoke-' + process.pid));
 let win, tray, state, stateFile, busy=false, drag=null;
@@ -63,7 +64,7 @@ app.whenReady().then(async()=>{
     try{
       let key='';if(state.settings.online && state.key){try{key=safeStorage.decryptString(Buffer.from(state.key,'base64'));}catch{throw Error('密钥无法解密，请在设置中重新填写。');}}
       let answer;
-      try{answer=state.settings.online?await askAI(state.settings,key,state.history,text):offline(text,state.settings);}catch(e){if(e.name==='TimeoutError'||e.name==='AbortError')throw Error('连接超时，请稍后重试。');if(e instanceof TypeError)throw Error('连接失败，请检查网络和服务地址。');throw e;}
+      try{answer=state.settings.online?await askWithSystemNetwork(state.settings,key,state.history,text):offline(text,state.settings);}catch(e){if(e.name==='TimeoutError'||e.name==='AbortError')throw Error('连接超时，请稍后重试。');if(e instanceof TypeError)throw Error('响应读取失败，请检查网络后重试。');throw e;}
       const online=state.settings.online;
       state.history.push({role:'user',content:text,online},{role:'assistant',content:answer,online});state.history=state.history.slice(-100);persist();return {answer,online};
     }finally{busy=false;}

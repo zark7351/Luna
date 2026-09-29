@@ -1,6 +1,6 @@
 # 开发交接
 
-最后整理：2026-09-29。当前版本：0.1.0。
+最后整理：2026-09-29。当前版本：0.1.1。
 
 ## 用户确认的方向
 
@@ -17,6 +17,10 @@
 - build-portable.ps1 生成仓库同级 LunaPet-Windows/LunaPet.exe。
 
 ## 已修复的问题
+
+0.1.1：用户配置 OpenAI 后出现“连接失败”。无密钥探测同一个 https://api.openai.com/v1/models，Node fetch 直连得到 UND_ERR_CONNECT_TIMEOUT，Electron net.fetch 使用系统代理返回预期 HTTP 401。主进程改用 network.js 中的 askWithSystemNetwork，跟随操作系统代理/PAC；不硬编码任何代理地址。保留拒绝重定向，禁用附带会话 Cookie。新增安全的超时、代理、DNS 与证书错误提示，不输出密钥或底层原始请求错误。
+
+新增传输集成检查 tests/network-smoke.cjs，以假密钥向本地模拟服务器发送请求，验证实际 Electron POST、回复读取和拒绝重定向。4 个 Node 测试与该网络检查通过，0.1.1 打包后的窗口集成检查也通过。外部探测只验证可达性，不代表用户密钥、额度或模型已通过验证。AI 修复仍需用户重新发送一条消息验收。
 
 初次集成测试退出时出现 TypeError: Object has been destroyed，源于窗口销毁后到达的鼠标穿透 IPC。已加入 liveWindow 检查，并添加在销毁窗口后触发 passthrough/drag 的集成回归检查。
 

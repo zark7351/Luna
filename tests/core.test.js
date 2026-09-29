@@ -20,3 +20,14 @@ test('report auth and malformed responses without exposing server text',async()=
  await assert.rejects(askAI({...defaults,baseUrl:'https://example.com'},'',[],'hello',async()=>({ok:true,json:async()=>({})})),/没有返回/);
  assert.match(offline('你是谁',defaults),/离线互动/);
 });
+test('network failures produce actionable messages without leaking request details',async()=>{
+ for (const [error,expected] of [
+  [new TypeError('fetch failed sk-secret-test'),/Windows 系统代理/],
+  [new Error('net::ERR_PROXY_CONNECTION_FAILED'),/系统代理连接失败/],
+  [new Error('net::ERR_CERT_AUTHORITY_INVALID'),/安全连接验证失败/],
+  [Object.assign(new Error('timeout'),{name:'TimeoutError'}),/连接超时/],
+  [new Error('net::ERR_NAME_NOT_RESOLVED'),/无法解析/]
+ ]) {
+  await assert.rejects(askAI({...defaults,baseUrl:'https://example.com'},'',[],'hello',async()=>{throw error;}),e=>{assert.match(e.message,expected);assert.doesNotMatch(e.message,/sk-secret/);return true;});
+ }
+});

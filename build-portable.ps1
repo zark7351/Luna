@@ -9,7 +9,7 @@ New-Item -ItemType Directory -Path $outputRoot -Force | Out-Null
 Copy-Item -Path (Join-Path $runtimeRoot '*') -Destination $outputRoot -Recurse -Force
 $appRoot = Join-Path $outputRoot 'resources/app'
 New-Item -ItemType Directory -Path $appRoot -Force | Out-Null
-foreach ($file in @('package.json','main.js','preload.js','core.js','renderer.js','style.css','index.html','README.md','ASSET-PROMPT.txt')) {
+foreach ($file in @('package.json','main.js','preload.js','core.js','network.js','renderer.js','style.css','index.html','README.md','ASSET-PROMPT.txt')) {
     Copy-Item -LiteralPath (Join-Path $sourceRoot $file) -Destination $appRoot -Force
 }
 Copy-Item -LiteralPath (Join-Path $sourceRoot 'assets') -Destination $appRoot -Recurse -Force
