@@ -1,27 +1,33 @@
 <!doctype html>
-<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'"><title>露娜 · 桌面伙伴</title><link rel="stylesheet" href="style.css"></head>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'">
+  <title>露娜 · 桌面宠物</title>
+  <link rel="stylesheet" href="style.css">
+</head>
 <body>
-<section id="panel" class="interactive">
-  <header><div class="avatar">✦</div><div class="identity"><h1 id="title">露娜</h1><span id="mode">本地互动 · 预设台词</span></div><button id="settings-button" title="设置" aria-label="设置">⚙</button><button id="collapse" title="收起聊天" aria-label="收起聊天">−</button></header>
-  <div class="intro"><span>YOUR LITTLE COMPANION</span><p>给忙碌的日常，留一点温柔。</p></div>
-  <div id="messages" role="log" aria-live="polite"><div class="message assistant welcome">你好呀，我是露娜。<br>点点我，或者和我说声你好吧。</div></div>
-  <div class="suggestions"><button data-say="你好">打个招呼</button><button data-say="今天有点累">歇一会儿</button><button id="clear">清空聊天</button></div>
-  <form id="chat-form"><textarea id="message" maxlength="3000" rows="2" placeholder="想和我说些什么？" aria-label="聊天内容"></textarea><button id="send" type="submit" aria-label="发送消息">↑</button></form>
-  <div id="status" role="status">Enter 发送 · Shift + Enter 换行</div>
-</section>
-<div id="companion">
-  <div id="bubble" class="interactive">很高兴遇见你。</div>
-  <button id="pet" class="interactive" aria-label="点击互动，按住拖动宠物" title="点击互动 · 按住拖动"></button>
-  <div class="petbar interactive"><button id="chat-toggle">✦ 聊天</button><button id="sleep">☾ 休息</button><button id="hide" title="隐藏到托盘">⌄</button></div>
-  <div class="caption">按住角色拖动 · 点击互动</div>
-</div>
-<section id="settings" class="interactive" hidden>
- <header><div class="identity"><h1>相处的方式</h1><span>本地宠物设置</span></div><button id="settings-close" aria-label="关闭设置">×</button></header>
- <form id="settings-form">
-  <div class="twocol"><label>她的名字<input id="name" maxlength="24"></label><label>她怎么称呼你<input id="nickname" maxlength="40" placeholder="你的昵称"></label></div>
-  <label class="check"><input type="checkbox" id="top">宠物始终置顶</label>
-  <p class="help">露娜目前在本机运行，聊天只会触发预设回应。以后会逐步加入养成、解锁和换装玩法。</p>
-  <div id="settings-status" role="status"></div><button class="primary" type="submit">保存设置</button>
- </form>
-</section>
-<script src="renderer.js"></script></body></html>
+  <div id="companion">
+    <div id="bubble" class="interactive" role="status">很高兴遇见你。</div>
+    <button id="pet" class="interactive" aria-label="点击互动，按住拖动宠物" title="点击互动 · 按住拖动"></button>
+    <div class="petbar interactive">
+      <button id="settings-button" title="设置" aria-label="设置">⚙ 设置</button>
+      <button id="sleep">☾ 休息</button>
+      <button id="hide" title="隐藏到托盘" aria-label="隐藏到托盘">⌄</button>
+    </div>
+    <div class="caption">按住角色拖动 · 点击互动</div>
+  </div>
+  <section id="settings" class="interactive" hidden>
+    <header><h1>露娜设置</h1><button id="settings-close" aria-label="关闭设置">×</button></header>
+    <form id="settings-form">
+      <label>她的名字<input id="name" maxlength="24"></label>
+      <label>她怎么称呼你<input id="nickname" maxlength="40" placeholder="你的昵称"></label>
+      <label class="check"><input type="checkbox" id="top">宠物始终置顶</label>
+      <div id="settings-status" role="status"></div>
+      <button class="primary" type="submit">保存设置</button>
+    </form>
+  </section>
+  <script src="renderer.js"></script>
+</body>
+</html>

@@ -1,16 +1,18 @@
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
-const {defaults,validate,offline}=require('../core');
+const {defaults,validate,migrateState,WINDOW_WIDTH,WINDOW_HEIGHT}=require('../core');
 
-test('legacy AI settings are discarded while local preferences remain',()=>{
-  const settings=validate({name:'星露娜',nickname:'小星',top:false,online:true,baseUrl:'https://example.com/v1',model:'old-model',memory:'旧偏好'});
-  assert.deepEqual(settings,{name:'星露娜',nickname:'小星',top:false});
-  assert.deepEqual(validate({}),defaults);
+test('old chat and AI data are discarded while local settings remain',()=>{
+  const state=migrateState({settings:{name:'星露娜',nickname:'小星',top:false,online:true,baseUrl:'https://example.com/v1'},key:'old-key',history:[{role:'user',content:'old chat'}],position:[100,200]});
+  assert.deepEqual(state,{settings:{name:'星露娜',nickname:'小星',top:false},layoutVersion:2,position:[447,200]});
+  assert.equal(Object.hasOwn(state,'history'),false);
+  assert.equal(Object.hasOwn(state,'key'),false);
 });
 
-test('local responses are clearly preset and reflect saved names',()=>{
-  const settings=validate({name:'露娜',nickname:'小星'});
-  assert.match(offline('你好',settings),/小星，.*露娜/);
-  assert.match(offline('你是谁',settings),/预设台词/);
-  assert.match(offline('随便聊聊',settings),/固定台词/);
+test('new position and settings stay stable on later launches',()=>{
+  const state=migrateState({settings:defaults,layoutVersion:2,position:[447,200]});
+  assert.deepEqual(state.position,[447,200]);
+  assert.deepEqual(validate({}),defaults);
+  assert.equal(WINDOW_WIDTH,280);
+  assert.equal(WINDOW_HEIGHT,550);
 });

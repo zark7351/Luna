@@ -1,4 +1,8 @@
 const defaults = { name: '露娜', nickname: '', top: true };
+const WINDOW_WIDTH = 280;
+const WINDOW_HEIGHT = 550;
+const OLD_PET_OFFSET = 387;
+const PET_OFFSET = 40;
 
 function validate(input = {}) {
   const s = { ...defaults };
@@ -10,13 +14,13 @@ function validate(input = {}) {
   return s;
 }
 
-function offline(text, s) {
-  const who = s.nickname ? `${s.nickname}，` : '';
-  if (/晚安|睡觉|困了/.test(text)) return `${who}晚安呀。把今天先放下，好好休息。`;
-  if (/你好|早上|早安|嗨/.test(text)) return `${who}你好，我是${s.name}。今天也在这里陪你。`;
-  if (/累|烦|难过/.test(text)) return `${who}先歇一小会儿吧，喝口水、伸个懒腰。`;
-  if (/名字|你是谁/.test(text)) return `我是${s.name}，你的桌面伙伴。现在只会回复一些预设台词。`;
-  return `${who}我收到啦。现在还只会说些固定台词，你也可以点点我，看看我的反应。`;
+function migrateState(saved = {}) {
+  if (!saved || typeof saved !== 'object') saved = {};
+  const state = { settings: validate(saved.settings || {}), layoutVersion: 2 };
+  if (Array.isArray(saved.position) && saved.position.length === 2 && saved.position.every(Number.isFinite)) {
+    state.position = [saved.position[0] + (saved.layoutVersion === 2 ? 0 : OLD_PET_OFFSET - PET_OFFSET), saved.position[1]];
+  }
+  return state;
 }
 
-module.exports = { defaults, validate, offline };
+module.exports = { defaults, validate, migrateState, WINDOW_WIDTH, WINDOW_HEIGHT };
