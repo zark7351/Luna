@@ -20,6 +20,14 @@ test('report auth and malformed responses without exposing server text',async()=
  await assert.rejects(askAI({...defaults,baseUrl:'https://example.com'},'',[],'hello',async()=>({ok:true,json:async()=>({})})),/没有返回/);
  assert.match(offline('你是谁',defaults),/离线互动/);
 });
+test('differentiate quota and temporary 429 responses',async()=>{
+ const s={...defaults,baseUrl:'https://example.com'};
+ const failed=code=>({ok:false,status:429,text:async()=>JSON.stringify({error:{code,message:'secret-server-details'}})});
+ await assert.rejects(askAI(s,'',[],'hello',async()=>failed('credit_balance_exhausted')),e=>{assert.match(e.message,/预付余额不足/);assert.doesNotMatch(e.message,/secret-server-details/);return true;});
+ await assert.rejects(askAI(s,'',[],'hello',async()=>failed('project_spend_limit_exceeded')),/项目的 API 消费上限/);
+ await assert.rejects(askAI(s,'',[],'hello',async()=>failed('slow_down')),/请求过于频繁/);
+ await assert.rejects(askAI(s,'',[],'hello',async()=>({ok:false,status:429,text:async()=>'<html>proxy</html>'})),/可能是限流或额度问题/);
+});
 test('network failures produce actionable messages without leaking request details',async()=>{
  for (const [error,expected] of [
   [new TypeError('fetch failed sk-secret-test'),/Windows 系统代理/],

@@ -33,7 +33,27 @@ async function askAI(s, key, history, text, fetcher = fetch) {
   } catch (error) {
     throw Error(connectionError(error));
   }
-  if (!res.ok) throw Error(res.status === 401 ? '认证失败，请检查 API Key。' : res.status === 429 ? '服务限流或额度不足，请稍后重试。' : `模型服务返回 HTTP ${res.status}，请检查地址与模型。`);
+  if (!res.ok) {
+    if (res.status === 401) throw Error('认证失败，请检查 API Key。');
+    if (res.status === 429) {
+      let code = '';
+      try {
+        const body = await res.text();
+        if (body.length <= 4096) code = JSON.parse(body)?.error?.code || '';
+      } catch {}
+      const billing = {
+        credit_balance_exhausted:'API 预付余额不足，请到 OpenAI API 平台查看余额。',
+        organization_spend_limit_exceeded:'组织的 API 消费上限已达到，请检查平台的消费限额。',
+        project_spend_limit_exceeded:'项目的 API 消费上限已达到，请检查项目限额。',
+        organization_usage_limit_exceeded:'组织的 API 用量上限已达到，请检查平台用量限制。',
+        insufficient_quota:'API 额度不足，请检查平台余额和消费限额。'
+      };
+      throw Error(billing[code] || (code === 'slow_down' || code === 'rate_limit_exceeded'
+        ? '请求过于频繁，请稍后再试。'
+        : 'API 返回 HTTP 429；可能是限流或额度问题，请检查 OpenAI API 平台。'));
+    }
+    throw Error(`模型服务返回 HTTP ${res.status}，请检查地址与模型。`);
+  }
   const data = await res.json();
   const answer = data?.choices?.[0]?.message?.content;
   if (typeof answer !== 'string' || !answer.trim()) throw Error('服务没有返回可显示的文本，请确认支持 Chat Completions。');
