@@ -1,0 +1,28 @@
+# Dependencies and packaged binaries (rebuild on each computer)
+node_modules/
+dist/
+release/
+LunaPet-Windows/
+*.exe
+*.zip
+
+# Credentials and personal runtime data
+.env
+.env.*
+!.env.example
+state.json
+state.json.tmp
+*.pem
+*.key
+
+# Generated verification output
+preview.png
+smoke-result.json
+*.log
+coverage/
+
+# Local editor and OS files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
