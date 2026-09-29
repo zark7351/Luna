@@ -20,7 +20,7 @@
 - 改动接口、存储、窗口生命周期时，执行 npm test；影响桌面行为时执行 Electron --smoke-test 集成检查。
 - --smoke-test 使用独立临时用户目录。不要拿用户真实聊天或密钥做测试。
 - 所有异步窗口回调与 IPC 都应检查窗口生命周期，避免 Object has been destroyed 回归。
-- 打包用 build-portable.ps1，输出到仓库同级 LunaPet-Windows。打包前关闭正在运行的该便携版，避免 Windows 文件锁。不要关闭不属于本项目的进程。
+- 打包用 node build-portable.cjs，输出到仓库同级 LunaPet-Windows；该入口无需改变 PowerShell 执行策略。旧 ps1 仅作兼容包装。打包前关闭正在运行的该便携版，避免 Windows 文件锁。不要关闭不属于本项目的进程。
 - 报告哪些检查实际通过，哪些未验证。模拟接口测试不能代表真实供应商连接成功。
 
 ## 数据与版本管理

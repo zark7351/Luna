@@ -32,6 +32,8 @@ API Key 使用 Electron safeStorage / Windows 系统能力加密后保存在本�
 
 ## 源码开发
 
+构建便携版：在仓库目录执行 `node build-portable.cjs`，输出在同级 `LunaPet-Windows`。如果 PowerShell 禁止执行 `.ps1`，直接使用这个 Node.js 入口即可，不需要修改系统执行策略。`npm.cmd run build` 也可使用。
+
 需要 Node.js 22.12+ 和 npm。执行 `npm install`，然后 `node node_modules/electron/install.js` 下载运行时，再执行 `npm start`。运行单元测试：`npm test`。应用集成检查：`node_modules/electron/dist/electron.exe . --smoke-test`。该检查使用临时用户数据目录，不会读写个人聊天。
 
 主要文件：main.js（窗口、托盘、加密与保存），core.js（接口与校验），preload.js（隔离桥接），renderer.js / style.css / index.html（交互与显示）。

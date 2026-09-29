@@ -47,10 +47,12 @@ git push
 关闭本项目正在运行的便携程序，然后在 PowerShell 执行：
 
 ```powershell
-./build-portable.ps1
+node build-portable.cjs
 ```
 
 输出位于仓库同级的 LunaPet-Windows。开发者通过 Git 传源码，运行时和便携 exe 重新生成。角色素材与 package-lock.json 已纳入源码。
+
+该 Node.js 入口不受 PowerShell 的 `.ps1` 执行策略影响，无需管理员权限或调整策略。如果 npm.ps1 也被拦截，可使用 `npm.cmd ci`、`npm.cmd test` 和 `npm.cmd start`。
 
 ## 哪些不随 Git 同步
 

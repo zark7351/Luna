@@ -14,9 +14,13 @@
 - 中文聊天与设置界面，离线预设台词，Chat Completions 兼容接口。
 - 可配置名字、用户称呼、偏好、服务地址、模型、API Key；本地保存最多 100 条聊天。在线请求使用最近 20 条在线聊天。
 - 主进程加密密钥；更换服务地址清除旧密钥；远端仅允许 HTTPS，本机允许 HTTP。
-- build-portable.ps1 生成仓库同级 LunaPet-Windows/LunaPet.exe。
+- node build-portable.cjs 生成仓库同级 LunaPet-Windows/LunaPet.exe；旧 ps1 为兼容包装。
 
 ## 已修复的问题
+
+用户在 Windows PowerShell 中运行 build-portable.ps1 时被执行策略拦截。新增无额外依赖的 build-portable.cjs 与 npm build 命令，旧 ps1 调用同一实现，文档统一使用 node build-portable.cjs。不修改系统执行策略；运行文件和文档一起打包。
+
+已在 D 盘成功生成便携程序；4 项单元测试和生成程序的 --smoke-test 均通过。此构建修复保存在本地，尚未推送 GitHub。
 
 0.1.1：用户配置 OpenAI 后出现“连接失败”。无密钥探测同一个 https://api.openai.com/v1/models，Node fetch 直连得到 UND_ERR_CONNECT_TIMEOUT，Electron net.fetch 使用系统代理返回预期 HTTP 401。主进程改用 network.js 中的 askWithSystemNetwork，跟随操作系统代理/PAC；不硬编码任何代理地址。保留拒绝重定向，禁用附带会话 Cookie。新增安全的超时、代理、DNS 与证书错误提示，不输出密钥或底层原始请求错误。
 
