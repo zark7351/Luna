@@ -56,4 +56,4 @@ node build-portable.cjs
 
 ## 哪些不随 Git 同步
 
-API Key、宠物个人聊天与偏好、node_modules、便携 exe、Codex 本地聊天记录和电脑级工具配置。API Key 在每台电脑的宠物设置中重新填写，不上传到仓库。项目交接只保存开发背景和测试结论。
+宠物个人聊天与设置、node_modules、便携 exe、Codex 本地聊天记录和电脑级工具配置。项目交接只保存开发背景和测试结论。当前版本纯本地运行，不需要 API Key。

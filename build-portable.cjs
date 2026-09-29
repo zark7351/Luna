@@ -6,7 +6,7 @@ try {
   const runtime = path.join(source, 'node_modules', 'electron', 'dist');
   const output = path.resolve(source, '..', 'LunaPet-Windows');
   const appDir = path.join(output, 'resources', 'app');
-  const files = ['package.json','main.js','preload.js','core.js','network.js','renderer.js','style.css','index.html','README.md','ASSET-PROMPT.txt','CROSS-COMPUTER.md','HANDOFF.md','ROADMAP.md','AGENTS.md'];
+  const files = ['package.json','main.js','preload.js','core.js','renderer.js','style.css','index.html','README.md','ASSET-PROMPT.txt','CROSS-COMPUTER.md','HANDOFF.md','ROADMAP.md','AGENTS.md'];
   if (!fs.existsSync(path.join(runtime, 'electron.exe'))) throw Error('Missing Electron runtime. Run npm ci, then node node_modules/electron/install.js.');
   for (const name of [...files, 'assets']) {
     if (!fs.existsSync(path.join(source, name))) throw Error(`Missing source: ${name}`);
@@ -17,6 +17,8 @@ try {
     fs.cpSync(path.join(runtime, entry), path.join(output, targetName), {recursive:true,force:true});
   }
   fs.mkdirSync(appDir, {recursive:true});
+  // Remove the obsolete online transport from an existing portable output.
+  fs.rmSync(path.join(appDir, 'network.js'), {force:true});
   for (const name of files) fs.copyFileSync(path.join(source,name), path.join(appDir,name));
   fs.cpSync(path.join(source,'assets'), path.join(appDir,'assets'), {recursive:true,force:true});
   fs.copyFileSync(path.join(source,'README.md'), path.join(output,'使用说明.md'));

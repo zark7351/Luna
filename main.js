@@ -1,11 +1,10 @@
-const { app, BrowserWindow, ipcMain, screen, Tray, Menu, nativeImage, safeStorage } = require('electron');
+const { app, BrowserWindow, ipcMain, screen, Tray, Menu, nativeImage } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
 const reportFatal = error => { fs.writeFileSync(path.join(app.getPath('temp'),'lunapet-startup-error.log'),String(error.stack || error)); app.exit(1); };
 process.on('uncaughtException', reportFatal);
 process.on('unhandledRejection', reportFatal);
 const {defaults,validate,offline} = require('./core');
-const {askWithSystemNetwork} = require('./network');
 const smoke = process.argv.includes('--smoke-test');
 if (smoke) app.setPath('userData', path.join(app.getPath('temp'), 'lunapet-smoke-' + process.pid));
 let win, tray, state, stateFile, busy=false, drag=null;
@@ -15,7 +14,7 @@ function persist() {
   fs.writeFileSync(stateFile+'.tmp',JSON.stringify(state,null,2),'utf8');
   fs.renameSync(stateFile+'.tmp',stateFile);
 }
-function publicState() { return { settings:state.settings, history:state.history, hasKey:!!state.key }; }
+function publicState() { return { settings:state.settings, history:state.history }; }
 function safePosition(x,y) {
   const a=screen.getDisplayNearestPoint({x:Math.round(x+310),y:Math.round(y+275)}).workArea;
   return [Math.round(clamp(x,a.x,a.x+Math.max(0,a.width-620))),Math.round(clamp(y,a.y,a.y+Math.max(0,a.height-550)))];
@@ -27,8 +26,9 @@ else {
 app.on('second-instance',()=>{if(win)restore();});
 app.whenReady().then(async()=>{
   stateFile=path.join(app.getPath('userData'),'state.json');
-  state={settings:{...defaults},history:[],key:''};
-  try { const saved=JSON.parse(fs.readFileSync(stateFile,'utf8'));state.settings=validate(saved.settings||{});state.key=typeof saved.key==='string'?saved.key:'';state.history=Array.isArray(saved.history)?saved.history.filter(x=>['user','assistant'].includes(x.role)&&typeof x.content==='string').slice(-100):[];state.position=saved.position;}catch{}
+  if(smoke){fs.mkdirSync(path.dirname(stateFile),{recursive:true});fs.writeFileSync(stateFile,JSON.stringify({settings:{name:'露娜',nickname:'',top:true,online:true,baseUrl:'https://example.test/v1',model:'old-model',memory:'old preference'},key:'fake-encrypted-key',history:[{role:'assistant',content:'旧版测试回复',online:true}]}),'utf8');}
+  state={settings:{...defaults},history:[]};
+  try { const saved=JSON.parse(fs.readFileSync(stateFile,'utf8'));state.settings=validate(saved.settings||{});state.history=Array.isArray(saved.history)?saved.history.filter(x=>['user','assistant'].includes(x.role)&&typeof x.content==='string').slice(-100):[];state.position=saved.position;if(Object.hasOwn(saved,'key') || ['online','baseUrl','model','memory'].some(k=>Object.hasOwn(saved.settings||{},k)))persist();}catch{}
   const area=screen.getPrimaryDisplay().workArea;
   const p=state.position || [area.x+area.width-650,area.y+area.height-570];
   const [x,y]=safePosition(Number(p[0])||0,Number(p[1])||0);
@@ -47,14 +47,8 @@ app.whenReady().then(async()=>{
   handle('state',()=>publicState());
   handle('settings',input=>{
     if(busy)throw Error('请等待本次回复完成再保存。');
-    const next=validate(input); let key=state.key;
-    if(input.clearKey || next.baseUrl!==state.settings.baseUrl)key='';
-    if(typeof input.apiKey==='string' && input.apiKey.trim()){
-      if(input.apiKey.length>4096)throw Error('密钥长度异常。');
-      if(!safeStorage.isEncryptionAvailable())throw Error('系统加密暂不可用，未保存密钥。');
-      key=safeStorage.encryptString(input.apiKey.trim()).toString('base64');
-    }
-    const previous=state;state={...state,settings:next,key};try{persist();}catch(e){state=previous;throw e;}
+    const next=validate(input);
+    const previous=state;state={...state,settings:next};try{persist();}catch(e){state=previous;throw e;}
     win.setAlwaysOnTop(next.top);return publicState();
   });
   handle('chat',async raw=>{
@@ -62,11 +56,8 @@ app.whenReady().then(async()=>{
     const text=String(raw||'').trim();if(!text || text.length>3000)throw Error('请输入 1–3000 字。');
     busy=true;
     try{
-      let key='';if(state.settings.online && state.key){try{key=safeStorage.decryptString(Buffer.from(state.key,'base64'));}catch{throw Error('密钥无法解密，请在设置中重新填写。');}}
-      let answer;
-      try{answer=state.settings.online?await askWithSystemNetwork(state.settings,key,state.history,text):offline(text,state.settings);}catch(e){if(e.name==='TimeoutError'||e.name==='AbortError')throw Error('连接超时，请稍后重试。');if(e instanceof TypeError)throw Error('响应读取失败，请检查网络后重试。');throw e;}
-      const online=state.settings.online;
-      state.history.push({role:'user',content:text,online},{role:'assistant',content:answer,online});state.history=state.history.slice(-100);persist();return {answer,online};
+      const answer=offline(text,state.settings);
+      state.history.push({role:'user',content:text,online:false},{role:'assistant',content:answer,online:false});state.history=state.history.slice(-100);persist();return {answer,online:false};
     }finally{busy=false;}
   });
   handle('clear',()=>{if(busy)throw Error('请等待回复完成。');state.history=[];persist();return true;});
@@ -83,7 +74,10 @@ app.whenReady().then(async()=>{
   if(smoke){
     try{
       await new Promise(r=>setTimeout(r,1200));
-      const result=await win.webContents.executeJavaScript(`(async()=>{const s=await window.pet.call('state');if(!s.ok)throw Error('state');document.querySelector('#message').value='你好';document.querySelector('#chat-form').requestSubmit();await new Promise(r=>setTimeout(r,600));if(!document.querySelector('#messages').textContent.includes('你好，我是'))throw Error('chat');document.querySelector('#settings-button').click();await new Promise(r=>setTimeout(r,200));if(document.querySelector('#settings').hidden)throw Error('settings');document.querySelector('#settings-close').click();document.querySelector('#pet').click();if(!document.querySelector('#pet').classList.contains('happy'))throw Error('expression');return {chat:true,settings:true,expression:true,bridge:true};})()`);
+      const result=await win.webContents.executeJavaScript(`(async()=>{const s=await window.pet.call('state');if(!s.ok||'online' in s.value.settings||'hasKey' in s.value)throw Error('local state');if(!document.querySelector('#messages').textContent.includes('旧版 AI 回复'))throw Error('legacy history');document.querySelector('#message').value='你好';document.querySelector('#chat-form').requestSubmit();await new Promise(r=>setTimeout(r,600));if(!document.querySelector('#messages').textContent.includes('你好，我是'))throw Error('chat');document.querySelector('#settings-button').click();await new Promise(r=>setTimeout(r,200));if(document.querySelector('#settings').hidden||document.querySelector('#online'))throw Error('local settings');document.querySelector('#settings-close').click();document.querySelector('#pet').click();if(!document.querySelector('#pet').classList.contains('happy'))throw Error('expression');return {chat:true,settings:true,expression:true,bridge:true,localOnly:true,legacyHistory:true};})()`);
+      const migrated=JSON.parse(fs.readFileSync(stateFile,'utf8'));
+      if(Object.hasOwn(migrated,'key') || Object.hasOwn(migrated.settings,'online') || !migrated.history.some(m=>m.content==='旧版测试回复'))throw Error('legacy storage migration');
+      result.legacyStorage=true;
       await new Promise(r=>setTimeout(r,250));
       const shot=await win.webContents.capturePage();fs.writeFileSync(path.join(__dirname,'preview.png'),shot.toPNG());
       const oldSender=win.webContents;

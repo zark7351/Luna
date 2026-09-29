@@ -2,7 +2,7 @@
 <html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'"><title>露娜 · 桌面伙伴</title><link rel="stylesheet" href="style.css"></head>
 <body>
 <section id="panel" class="interactive">
-  <header><div class="avatar">✦</div><div class="identity"><h1 id="title">露娜</h1><span id="mode">离线互动 · 预设台词</span></div><button id="settings-button" title="设置" aria-label="设置">⚙</button><button id="collapse" title="收起聊天" aria-label="收起聊天">−</button></header>
+  <header><div class="avatar">✦</div><div class="identity"><h1 id="title">露娜</h1><span id="mode">本地互动 · 预设台词</span></div><button id="settings-button" title="设置" aria-label="设置">⚙</button><button id="collapse" title="收起聊天" aria-label="收起聊天">−</button></header>
   <div class="intro"><span>YOUR LITTLE COMPANION</span><p>给忙碌的日常，留一点温柔。</p></div>
   <div id="messages" role="log" aria-live="polite"><div class="message assistant welcome">你好呀，我是露娜。<br>点点我，或者和我说声你好吧。</div></div>
   <div class="suggestions"><button data-say="你好">打个招呼</button><button data-say="今天有点累">歇一会儿</button><button id="clear">清空聊天</button></div>
@@ -16,19 +16,11 @@
   <div class="caption">按住角色拖动 · 点击互动</div>
 </div>
 <section id="settings" class="interactive" hidden>
- <header><div class="identity"><h1>相处的方式</h1><span>角色与 AI 设置</span></div><button id="settings-close" aria-label="关闭设置">×</button></header>
+ <header><div class="identity"><h1>相处的方式</h1><span>本地宠物设置</span></div><button id="settings-close" aria-label="关闭设置">×</button></header>
  <form id="settings-form">
   <div class="twocol"><label>她的名字<input id="name" maxlength="24"></label><label>她怎么称呼你<input id="nickname" maxlength="40" placeholder="你的昵称"></label></div>
-  <label>希望她记住的事<textarea id="memory" maxlength="1500" rows="2" placeholder="例如：喜欢猫，正在学习日语"></textarea></label>
   <label class="check"><input type="checkbox" id="top">宠物始终置顶</label>
-  <div class="divider"></div>
-  <label class="check"><input type="checkbox" id="online">启用 AI 对话</label>
-  <p class="help">支持 Chat Completions 兼容服务。启用后，你发送的消息、最近的 AI 对话和上方偏好会发送到所填服务。</p>
-  <label>服务地址（通常以 /v1 结尾）<input id="baseUrl" placeholder="https://你的服务地址/v1" type="url"></label>
-  <label>模型名称<input id="model" placeholder="填写服务商提供的模型 ID" maxlength="100"></label>
-  <label>API Key<input id="apiKey" type="password" autocomplete="off" placeholder="仅在本机加密保存，留空保留"></label>
-  <label class="check"><input type="checkbox" id="clearKey">删除已保存的密钥</label>
-  <p class="help">更换服务地址会清除旧密钥；如有需要请重新填写。本机模型服务可不填密钥。</p>
+  <p class="help">露娜目前在本机运行，聊天只会触发预设回应。以后会逐步加入养成、解锁和换装玩法。</p>
   <div id="settings-status" role="status"></div><button class="primary" type="submit">保存设置</button>
  </form>
 </section>
