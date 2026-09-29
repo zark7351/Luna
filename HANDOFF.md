@@ -43,10 +43,11 @@
 
 ## 本次接力准备
 
-新增 .gitignore、.gitattributes、AGENTS.md、HANDOFF.md、ROADMAP.md 和跨电脑指南。当前源码目录已初始化为 Git 根目录，使用 main 分支，origin 配置为 https://github.com/zark7351/Luna.git。首次推送结果以 git status 和远端分支为准；不要凭本段假定已经上传。
+新增 .gitignore、.gitattributes、AGENTS.md、HANDOFF.md、ROADMAP.md 和跨电脑指南。当前源码目录已初始化为 Git 根目录，使用 main 分支，origin 配置为 https://github.com/zark7351/Luna.git。首次提交 442ba9f 已推送，使用 ls-remote 核实远端 main 与本机提交一致，main 已跟踪 origin/main。
+
+原电脑 Git 直连 GitHub 超时，本次使用系统现有代理的一次性 Git 参数完成同步，没有修改全局 Git 配置。其他电脑按自身网络配置连接，不复制原电脑的代理端口。
 
 ## 下一步
 
-1. 完成首次推送并核实 origin/main 与本机提交一致；若尚未登录，在本机完成 GitHub 登录，不要索取聊天中的密码或令牌。
-2. 在另一台 Windows 电脑克隆，安装依赖并运行测试和程序。
-3. 用户接下来若选择模型服务，帮助配置并验证真实 AI 聊天；不要先行扩展未确认的路线图功能。
+1. 在另一台 Windows 电脑克隆，安装依赖并运行测试和程序。新电脑 GitHub 登录在本机完成，不要索取聊天中的密码或令牌。
+2. 用户接下来若选择模型服务，帮助配置并验证真实 AI 聊天；不要先行扩展未确认的路线图功能。
