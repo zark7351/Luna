@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'">
+  <title>露娜收藏夹</title>
+  <link rel="stylesheet" href="library.css">
+</head>
+<body>
+  <header>
+    <div><h1>露娜收藏夹</h1><p>拖给露娜的内容，都收在这里。</p></div>
+    <button id="refresh" title="刷新收藏">刷新</button>
+  </header>
+  <div class="toolbar">
+    <input id="search" type="search" placeholder="搜索收藏" aria-label="搜索收藏">
+    <button id="add-file" title="从电脑选择文件收藏">添加文件</button>
+    <button id="paste" title="收藏剪贴板中的文字或链接">收藏剪贴板</button>
+  </div>
+  <div id="status" role="status"></div>
+  <main id="items" aria-live="polite"></main>
+  <script src="library.js"></script>
+</body>
+</html>

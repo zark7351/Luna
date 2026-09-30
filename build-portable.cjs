@@ -6,7 +6,7 @@ try {
   const runtime = path.join(source, 'node_modules', 'electron', 'dist');
   const output = path.resolve(source, '..', 'LunaPet-Windows');
   const appDir = path.join(output, 'resources', 'app');
-  const files = ['package.json','main.js','preload.js','core.js','renderer.js','style.css','index.html','README.md','ASSET-PROMPT.txt','CROSS-COMPUTER.md','HANDOFF.md','ROADMAP.md','AGENTS.md'];
+  const files = ['package.json','main.js','preload.js','core.js','collection.js','renderer.js','style.css','index.html','library.js','library.css','library.html','README.md','ASSET-PROMPT.txt','CROSS-COMPUTER.md','HANDOFF.md','ROADMAP.md','AGENTS.md'];
   if (!fs.existsSync(path.join(runtime, 'electron.exe'))) throw Error('Missing Electron runtime. Run npm ci, then node node_modules/electron/install.js.');
   for (const name of [...files, 'assets']) {
     if (!fs.existsSync(path.join(source, name))) throw Error(`Missing source: ${name}`);

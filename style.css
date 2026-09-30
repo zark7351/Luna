@@ -14,7 +14,9 @@ button:focus-visible,input:focus-visible{outline:2px solid #9b7ad1;outline-offse
 .petbar{position:absolute;bottom:16px;display:flex;justify-content:center;gap:4px;width:100%;pointer-events:auto}
 .petbar button{background:#fffbfff0;border:1px solid #e7ddf0;border-radius:16px;padding:7px 11px;font-size:11px;color:#8b6da1}
 .petbar button:hover{background:#eadff5}
+.petbar button{padding:7px 8px}
 .caption{position:absolute;bottom:-4px;text-align:center;width:100%;font-size:9px;color:#988aa4;text-shadow:0 1px 3px white}
+#companion.drop-ready #bubble{background:#efe5fb;border:1px solid #a784c7;color:#694d84}
 #settings{position:absolute;left:12px;right:12px;top:18px;border:1px solid white;border-radius:24px;background:#fcf9ff;box-shadow:0 8px 25px #38245a20;overflow:hidden}
 #settings header{height:58px;display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #eae4f0}
 #settings h1{font-size:16px;margin:0;font-weight:600}
