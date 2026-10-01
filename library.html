@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: luna-media:; media-src luna-media:; connect-src 'none'">
   <title>露娜收藏夹</title>
   <link rel="stylesheet" href="library.css">
 </head>
@@ -17,8 +17,14 @@
     <button id="add-file" title="从电脑选择文件收藏">添加文件</button>
     <button id="paste" title="收藏剪贴板中的文字或链接">收藏剪贴板</button>
   </div>
+  <nav id="tabs" role="tablist" aria-label="收藏分类">
+    <button id="tab-media" role="tab" data-tab="media" aria-selected="true" aria-controls="items">图片与视频 <span></span></button>
+    <button id="tab-files" role="tab" data-tab="files" aria-selected="false" aria-controls="items" tabindex="-1">文件 <span></span></button>
+    <button id="tab-text" role="tab" data-tab="text" aria-selected="false" aria-controls="items" tabindex="-1">文字 <span></span></button>
+    <button id="tab-links" role="tab" data-tab="links" aria-selected="false" aria-controls="items" tabindex="-1">链接 <span></span></button>
+  </nav>
   <div id="status" role="status"></div>
-  <main id="items" aria-live="polite"></main>
+  <main id="items" role="tabpanel" aria-labelledby="tab-media" aria-live="polite"></main>
   <script src="library.js"></script>
 </body>
 </html>

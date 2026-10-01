@@ -34,7 +34,8 @@ document.addEventListener('drop',async e=>{
   if(sleeping)$('sleep').click();
   $('bubble').textContent='正在收藏…';
   try{
-    const files=e.dataTransfer.files;
+    // FileList itself cannot be passed through Electron's context bridge.
+    const files=Array.from(e.dataTransfer.files);
     if(files.length){
       const result=await window.pet.saveDroppedFiles(files);
       if(!result.ok)throw Error(result.error);
