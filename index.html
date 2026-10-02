@@ -9,26 +9,75 @@
 </head>
 <body>
   <div id="companion">
+    <section id="today-panel" class="interactive" aria-label="时间和天气">
+      <div class="clock-block">
+        <svg id="day-cycle" viewBox="0 0 32 32" role="img" aria-label="当前时段">
+          <defs><clipPath id="time-above-horizon"><rect width="32" height="23"/></clipPath></defs>
+          <g class="time-sun"><g class="sun-disc" transform="translate(16 16)"><circle r="9" fill="currentColor" opacity=".12"/><circle r="5.5" fill="currentColor"/><g stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M0-11v2M0 9v2M-11 0h2M9 0h2M-8-8l1.5 1.5M6.5 6.5 8 8M-8 8l1.5-1.5M6.5-6.5 8-8"/></g></g></g>
+          <path class="time-moon" d="M19 6a10 10 0 1 0 7 17A10 10 0 0 1 19 6Z" fill="#a995cd"/>
+          <path class="time-horizon" d="M3 23h26m-20 4h14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <div class="calendar"><span id="calendar-weekday"></span></div>
+      </div>
+      <button id="weather-button" title="设置天气城市" aria-label="设置天气城市">
+        <svg id="weather-icon" viewBox="0 0 64 56" aria-hidden="true" data-kind="unset">
+          <g class="sun"><g class="sun-rays" fill="none" stroke="#e6b464" stroke-width="2.5" stroke-linecap="round"><path d="M30 4v4m0 32v4M10 24h4m32 0h4M16 10l3 3m22 22 3 3M16 38l3-3m22-22 3-3"/></g><circle cx="30" cy="24" r="10" fill="#f5d58e"/></g>
+          <path class="moon" d="M39 8a17 17 0 1 0 11 29A17 17 0 0 1 39 8Z" fill="#bbb2e9"/>
+          <g class="cloud"><path d="M16 39a9 9 0 0 1 0-18 12 12 0 0 1 23-3 10 10 0 1 1 9 21Z" fill="#fff" stroke="#c8b9df" stroke-width="1.7"/></g>
+          <g class="rain" stroke="#a3badd" stroke-width="2.5" stroke-linecap="round"><path d="m21 44-2 5"/><path d="m32 44-2 5"/><path d="m43 44-2 5"/></g>
+          <g class="snow" fill="#aab7d9"><circle cx="20" cy="47" r="2"/><circle cx="32" cy="45" r="2"/><circle cx="44" cy="48" r="2"/></g>
+          <path class="lightning" d="m34 36-9 12h7l-3 8 13-13h-8l4-7Z" fill="#edbf73"/>
+          <g class="fog" stroke="#b8accc" stroke-width="2" stroke-linecap="round"><path d="M13 43h34M19 48h32"/></g>
+          <g class="stars" fill="#b9a3d1"><path d="m19 14 1.5 4L25 19l-4.5 1.5L19 25l-1.5-4.5L13 19l4.5-1Z"/><circle cx="43" cy="12" r="2"/></g>
+        </svg>
+        <div class="weather-copy"><span id="weather-temperature">天气</span><span id="weather-description">选择城市</span></div>
+      </button>
+      <div class="weather-footer"><span id="weather-city">今日陪伴</span><span id="weather-status">✦</span></div>
+    </section>
     <div id="bubble" class="interactive" role="status">很高兴遇见你。</div>
     <button id="pet" class="interactive" aria-label="点击互动，按住拖动宠物" title="点击互动 · 按住拖动"></button>
-    <div class="petbar interactive">
-      <button id="library-button" title="打开收藏夹">✦ 收藏</button>
-      <button id="settings-button" title="设置" aria-label="设置">⚙ 设置</button>
-      <button id="sleep">☾ 休息</button>
-      <button id="hide" title="隐藏到托盘" aria-label="隐藏到托盘">⌄</button>
+    <div class="petbar interactive" role="group" aria-label="露娜操作">
+      <button id="library-button" title="收藏夹" aria-label="收藏夹"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/><path d="m12 10 1.3 2.6 2.9.4-2.1 2 .5 2.9-2.6-1.4-2.6 1.4.5-2.9-2.1-2 2.9-.4Z"/></svg></button>
+      <button id="screenshot-button" title="截图收藏 · Ctrl+Alt+A" aria-label="截图收藏"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m8 0h5v-5M8 8h8v8H8Z"/></svg></button>
+      <button id="reminder-button" title="提醒" aria-label="提醒"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 17h14l-2-3V9a5 5 0 0 0-10 0v5ZM10 21h4M12 2v2"/></svg></button>
+      <button id="hide" title="隐藏到托盘" aria-label="隐藏到托盘"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 8 6 6 6-6M5 19h14"/></svg></button>
     </div>
-    <div class="caption">拖来文件、文字或链接，我帮你收藏</div>
   </div>
+  <dialog id="help" class="interactive" aria-labelledby="help-title">
+    <header><h1 id="help-title">和露娜一起</h1><button id="help-close" title="关闭说明" aria-label="关闭说明"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header>
+    <div class="help-content">
+      <p class="help-intro">桌面上的小伙伴，帮你收好临时内容。</p>
+      <dl>
+        <dt>互动与移动</dt><dd>点击露娜触发表情和气泡，按住角色可拖动位置。电脑连续 5 分钟没有键鼠操作，她会自动休息；恢复操作后自动唤醒。</dd>
+        <dt>拖来就能收藏</dt><dd>将文件、文字或网页链接拖到露娜身上。收藏夹按类型显示，图片和视频可以预览。</dd>
+        <dt>截图收藏</dt><dd>点击框选图标或按 Ctrl + Alt + A，拖动框选后松开鼠标，截图自动收藏到图片与视频。Esc 或右键取消；每次在一块屏幕内框选。设置里可关闭快捷键。</dd>
+        <dt>复制与定位</dt><dd>收藏卡片的复制图标可复制内容，文件夹图标可定位文件。本地文件只保存路径，移动或删除原文件会使收藏失效。</dd>
+        <dt>提醒</dt><dd>铃铛里填写内容，选择定时或时长倒计时，到点弹窗并播放提示音，可完成或延后 5 分钟；设置中的声音开关控制所有声音。关闭露娜时不会提醒，重启或休眠恢复后会补提示。</dd>
+        <dt>时段与天气</dt><dd>太阳、月亮和地平线表示大致时段，Mon 等表示星期。右键托盘图标进入设置选择天气城市，支持自动定位与手动搜索。</dd>
+        <dt>设置与隐藏</dt><dd>右键托盘图标进入设置，可修改名字、称呼和置顶。向下箭头隐藏露娜，双击系统托盘图标可再次显示。</dd>
+      </dl>
+      <details class="weather-sources"><summary>天气来源</summary><p><button type="button" data-provider="weather">Open-Meteo</button> · <button type="button" data-provider="cities">GeoNames</button> · <button type="button" data-provider="location">ipwho.is</button></p><p>自动定位通过公网 IP 估算城市，代理可能影响结果。</p></details>
+    </div>
+  </dialog>
   <section id="settings" class="interactive" hidden>
-    <header><h1>露娜设置</h1><button id="settings-close" aria-label="关闭设置">×</button></header>
+    <header><h1>设置</h1><button id="settings-close" title="关闭设置" aria-label="关闭设置"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header>
     <form id="settings-form">
-      <label>她的名字<input id="name" maxlength="24"></label>
-      <label>她怎么称呼你<input id="nickname" maxlength="40" placeholder="你的昵称"></label>
-      <label class="check"><input type="checkbox" id="top">宠物始终置顶</label>
+      <div class="identity-settings"><label>名字<input id="name" maxlength="24"></label><label>称呼<input id="nickname" maxlength="40" placeholder="你的昵称"></label></div>
+      <div class="weather-settings">
+        <div class="weather-heading">天气<button id="weather-locate" type="button" title="自动定位城市（IP 定位，代理可能影响结果）" aria-label="自动定位城市"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg></button></div>
+        <div class="city-search"><input id="weather-query" maxlength="80" placeholder="城市名" aria-label="搜索天气城市"><button id="weather-search" type="button" title="搜索城市" aria-label="搜索城市"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></button></div>
+        <select id="weather-results" aria-label="选择城市" hidden></select>
+        <div class="city-selection"><span id="weather-selected">未设置城市</span><button id="weather-clear" type="button" title="清除城市，保存后关闭天气" aria-label="清除天气城市"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17"/></svg></button></div>
+        <div id="weather-setting-status" role="status"></div>
+      </div>
+      <label class="check"><span>置顶</span><input type="checkbox" id="top" role="switch"></label>
+      <label class="check" title="Ctrl + Alt + A"><span>快捷键截图</span><input type="checkbox" id="screenshot-shortcut" role="switch" aria-label="快捷键截图 Ctrl+Alt+A"></label>
+      <label class="check"><span>声音</span><input type="checkbox" id="sound-enabled" role="switch" aria-label="声音"></label>
       <div id="settings-status" role="status"></div>
-      <button class="primary" type="submit">保存设置</button>
+      <div class="settings-actions"><button id="settings-help" type="button" title="使用说明" aria-label="使用说明"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.2 8.5a3 3 0 0 1 5.8 1c0 2-3 2.2-3 4M12 17h.01"/></svg></button><button class="primary" type="submit" title="保存设置" aria-label="保存设置"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg></button></div>
     </form>
   </section>
+  <script src="weather-ui.js"></script>
   <script src="renderer.js"></script>
 </body>
 </html>

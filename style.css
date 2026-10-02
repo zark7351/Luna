@@ -1,34 +1,112 @@
 :root{color-scheme:light;font-family:'Microsoft YaHei UI','Segoe UI',sans-serif;color:#393248;font-size:13px}
 *{box-sizing:border-box}
-body{margin:0;width:280px;height:550px;overflow:hidden;background:transparent;user-select:none}
-button,input{font:inherit}
+body{margin:0;width:280px;height:640px;overflow:hidden;background:transparent;user-select:none}
+button,input,select{font:inherit}
 button{cursor:pointer;border:0;color:inherit;background:none}
-button:focus-visible,input:focus-visible{outline:2px solid #9b7ad1;outline-offset:2px}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #9b7ad1;outline-offset:2px}
 [hidden]{display:none!important}
-#companion{position:absolute;left:20px;bottom:17px;width:240px;height:490px;pointer-events:none}
-#bubble{position:absolute;top:0;left:7px;right:7px;border-radius:17px 17px 4px 17px;background:#fffafcf5;box-shadow:0 4px 14px #43315312;color:#8a719d;text-align:center;padding:12px 14px;line-height:1.6;font-size:12px;max-height:80px;overflow:hidden;pointer-events:auto}
+#companion{position:absolute;left:20px;bottom:17px;width:240px;height:548px;pointer-events:none}
+#bubble{position:absolute;top:58px;left:7px;right:7px;border-radius:14px 14px 4px 14px;background:#fffafcf5;box-shadow:0 3px 12px #43315312;color:#8a719d;text-align:center;padding:8px 12px;line-height:1.5;font-size:12px;max-height:70px;overflow:hidden;pointer-events:auto}
 #pet{position:absolute;bottom:43px;left:20px;width:200px;height:400px;padding:0;background-image:url('assets/character.png');background-size:300% 100%;background-position:0% 0;background-repeat:no-repeat;pointer-events:auto;transform-origin:50% 100%;animation:breathe 4s ease-in-out infinite;touch-action:none}
 #pet.blink,#pet.sleeping{background-position:50% 0}
 #pet.happy{background-position:100% 0;animation:happy .55s ease-in-out 2}
 #pet.sleeping{animation:breathe 6s ease-in-out infinite;filter:saturate(.8)}
-.petbar{position:absolute;bottom:16px;display:flex;justify-content:center;gap:4px;width:100%;pointer-events:auto}
-.petbar button{background:#fffbfff0;border:1px solid #e7ddf0;border-radius:16px;padding:7px 11px;font-size:11px;color:#8b6da1}
-.petbar button:hover{background:#eadff5}
-.petbar button{padding:7px 8px}
-.caption{position:absolute;bottom:-4px;text-align:center;width:100%;font-size:9px;color:#988aa4;text-shadow:0 1px 3px white}
+.petbar{position:absolute;bottom:6px;display:flex;justify-content:center;gap:8px;width:100%;pointer-events:auto}
+.petbar button{display:grid;place-items:center;width:32px;height:32px;padding:7px;background:#fffbfff0;border:1px solid #e7ddf0;border-radius:11px;color:#8b6da1;box-shadow:0 2px 7px #4331530c;transition:background .15s,transform .15s}
+.petbar button:hover{background:#eadff5;transform:translateY(-1px)}
+.petbar svg,#help-close svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+#help{width:256px;max-height:calc(100% - 36px);padding:0;border:1px solid white;border-radius:21px;background:#fcf9ff;color:#655271;box-shadow:0 8px 25px #38245a20;overflow:auto}
+#help::backdrop{background:transparent}
+#help header{display:flex;align-items:center;justify-content:space-between;padding:15px 17px;border-bottom:1px solid #eae4f0}
+#help h1{font-size:15px;font-weight:600;margin:0}
+#help-close{display:grid;place-items:center;width:28px;height:28px;border-radius:8px;color:#9986ad}
+#help-close:hover{background:#e9e1f2}
+.help-content{padding:12px 17px 17px;font-size:11px;line-height:1.7}
+.help-intro{margin:0 0 13px;color:#a191b0;font-size:10px}
+.help-content dl{margin:0}
+.help-content dt{font-weight:600;color:#87679f;margin-top:12px}
+.help-content dd{margin:3px 0 0;color:#94829f}
 #companion.drop-ready #bubble{background:#efe5fb;border:1px solid #a784c7;color:#694d84}
-#settings{position:absolute;left:12px;right:12px;top:18px;border:1px solid white;border-radius:24px;background:#fcf9ff;box-shadow:0 8px 25px #38245a20;overflow:hidden}
-#settings header{height:58px;display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #eae4f0}
-#settings h1{font-size:16px;margin:0;font-weight:600}
-#settings header button{width:28px;height:28px;font-size:21px;color:#80748e;border-radius:8px}
+#settings{position:absolute;left:12px;right:12px;top:46px;border:1px solid white;border-radius:22px;background:linear-gradient(145deg,#fffafe,#f3ecf9);box-shadow:0 7px 22px #38245a18;max-height:calc(100% - 64px);overflow:auto}
+#settings header{height:54px;display:flex;align-items:center;justify-content:space-between;padding:12px 17px}
+#settings h1{font-size:15px;margin:0;font-weight:600;color:#7e6096;letter-spacing:1px}
+#settings header button{display:grid;place-items:center;width:28px;height:28px;padding:0;color:#a18aaf;border-radius:9px}
 #settings header button:hover{background:#e9e1f2}
-#settings-form{padding:15px 18px}
-label{display:block;font-size:11px;color:#8c799c;margin-bottom:11px}
-label input:not([type=checkbox]){display:block;width:100%;margin-top:5px;font-size:12px;border:1px solid #e3d9eb;background:#ffffffcc;color:#44364f;border-radius:12px;padding:10px;user-select:text}
-.check{display:flex;align-items:center;gap:7px;color:#655271}
-.check input{accent-color:#9870c3}
-.primary{background:#9471bc;color:white;border-radius:12px;padding:11px;width:100%}
+#settings svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+#settings-form{padding:0 14px 14px}
+.identity-settings,.weather-settings{border:1px solid #e9e0f0;border-radius:15px;background:#ffffffb0;padding:12px;margin-bottom:10px}
+label{display:block;font-size:10px;color:#a18aaf;margin-bottom:10px}
+.identity-settings label:last-child{margin-bottom:0}
+label input:not([type=checkbox]){display:block;width:100%;margin-top:5px;font-size:12px;border:1px solid #ede4f3;background:#f9f5fc;color:#655271;border-radius:9px;padding:8px 10px;user-select:text}
+input::placeholder{color:#bba8c7}
+.check{display:flex;align-items:center;justify-content:space-between;color:#8c719f;padding:9px 12px;border:1px solid #e9e0f0;border-radius:12px;background:#ffffffb0;font-size:11px}
+.check input{appearance:none;position:relative;width:32px;height:19px;border-radius:12px;background:#dcd2e5;margin:0;cursor:pointer}
+.check input::before{content:'';display:block;width:13px;height:13px;position:absolute;top:3px;left:3px;border-radius:50%;background:#fff;box-shadow:0 1px 3px #43315318}
+.check input:checked{background:#a58ac0}
+.check input:checked::before{left:16px}
+.settings-actions{display:flex;gap:8px}
+.settings-actions button{display:grid;place-items:center;height:36px;border-radius:11px}
+#settings-help{width:36px;border:1px solid #e2d5ec;background:#fff9ff;color:#a18aaf;flex-shrink:0}
+.primary{background:linear-gradient(110deg,#a58ac1,#9271b0);color:white;padding:0;width:100%;box-shadow:0 3px 8px #9271b025}
+.primary:hover{background:#9271b0}
 #settings-status{font-size:11px;color:#a05478;line-height:1.5;padding-bottom:8px}
+#today-panel{position:absolute;top:0;left:7px;right:7px;height:48px;border:1px solid #fffdfd;border-radius:14px;background:linear-gradient(120deg,#fffafdF5,#eee7f8F5);box-shadow:0 3px 12px #72559115;pointer-events:auto;display:grid;align-items:center;grid-template-columns:58px 1fr 52px;gap:4px;padding:0 9px;color:#79618e}
+.clock-block{display:flex;align-items:center;gap:3px}
+#day-cycle{display:block;width:26px;height:26px;flex-shrink:0;color:#dbb165}
+.time-moon,.time-horizon{display:none}
+#day-cycle[data-period=night] .time-sun{display:none}
+#day-cycle[data-period=night] .time-moon{display:block}
+#day-cycle[data-period=sunrise] .time-horizon,#day-cycle[data-period=sunset] .time-horizon{display:block}
+#day-cycle[data-period=sunrise] .time-sun,#day-cycle[data-period=sunset] .time-sun{clip-path:url(#time-above-horizon)}
+#day-cycle[data-period=sunrise] .sun-disc,#day-cycle[data-period=sunset] .sun-disc{transform:translate(16px,22px)}
+#day-cycle[data-period=sunset]{color:#da9b85}
+.calendar{font-size:10px;color:#9b87ae}
+#calendar-weekday{color:#86689d;letter-spacing:.2px;font-family:'Segoe UI',sans-serif}
+#weather-button{display:flex;align-items:center;gap:1px;padding:0;border-radius:9px;min-width:0;height:38px}
+#weather-button:hover{background:#ffffff70}
+#weather-icon{width:30px;height:30px;flex-shrink:0;overflow:visible}
+#weather-icon>g,#weather-icon>path{display:none}
+#weather-icon[data-kind=clear] .sun,#weather-icon[data-kind=partly] .sun,#weather-icon[data-kind=partly] .cloud,#weather-icon[data-kind=cloud] .cloud,#weather-icon[data-kind=rain] .cloud,#weather-icon[data-kind=snow] .cloud,#weather-icon[data-kind=storm] .cloud,#weather-icon[data-kind=fog] .cloud{display:block}
+#weather-icon.night[data-kind=clear] .sun,#weather-icon.night[data-kind=partly] .sun{display:none}
+#weather-icon.night[data-kind=clear] .moon,#weather-icon.night[data-kind=partly] .moon{display:block}
+#weather-icon[data-kind=rain] .rain,#weather-icon[data-kind=snow] .snow,#weather-icon[data-kind=storm] .lightning,#weather-icon[data-kind=fog] .fog,#weather-icon[data-kind=unset] .stars{display:block}
+#weather-icon[data-kind=partly] .cloud{transform:translate(7px,7px) scale(.82);transform-origin:center}
+.sun-rays{transform-origin:30px 24px;animation:sun-turn 35s linear infinite}
+.cloud{animation:cloud-drift 5s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+.rain,.snow{animation:weather-fall 1.8s ease-in-out infinite}
+.moon,.stars{animation:clock-pulse 4s ease-in-out infinite}
+.lightning{animation:clock-pulse 2.7s ease-in-out infinite}
+.weather-copy{display:flex;flex-direction:column;align-items:center;min-width:0;flex:1}
+#weather-temperature{font-family:'Segoe UI','Microsoft YaHei UI',sans-serif;font-size:17px;line-height:20px;font-weight:500;color:#795f94;white-space:nowrap}
+#weather-description{font-size:9px;white-space:nowrap;color:#9a86ad}
+.weather-footer{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;font-size:9px;color:#a18cb2;gap:2px;min-width:0}
+#weather-city{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+#weather-status{flex-shrink:0;font-size:8px}
+#today-panel[data-weather-status=ready] #weather-status,#today-panel[data-weather-status=unset] #weather-status{display:none}
+#today-panel[data-weather-status=stale] #weather-status{color:#ad895f}
+#weather-button.loading{opacity:.55}
+.weather-heading{display:flex;align-items:center;justify-content:space-between;font-size:10px;color:#a18aaf;margin-bottom:7px}
+.weather-heading button,.city-search button{display:grid;place-items:center;background:#efe7f7;color:#9275a8;border-radius:9px;padding:0;width:29px;height:29px;flex-shrink:0}
+.weather-heading button:hover,.city-search button:hover{background:#e3d5ef}
+.weather-sources{margin-top:14px;border-top:1px solid #ece4f2;padding-top:9px;color:#ad9bb9;font-size:9px}
+.weather-sources summary{cursor:pointer}
+.weather-sources p{margin:6px 0 0}
+.weather-sources button{padding:0;font-size:inherit;text-decoration:underline;text-underline-offset:2px;color:inherit}
+.city-search{display:flex;gap:6px}
+.city-search input{width:0;flex:1;min-width:0;border:1px solid #ede4f3;border-radius:9px;padding:8px;background:#f9f5fc;font-size:11px;color:#655271;user-select:text}
+#weather-results{width:100%;margin-top:7px;border:1px solid #e3d9eb;border-radius:7px;padding:6px;background:#fff;color:#655271;font-size:10px}
+.city-selection{display:flex;align-items:center;justify-content:space-between;gap:4px;margin-top:7px;font-size:10px;color:#8a719d}
+#weather-selected{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#weather-clear{display:grid;place-items:center;width:22px;height:22px;padding:0;border-radius:6px;color:#ad99ba;flex-shrink:0}
+#weather-clear:hover{background:#efe7f7}
+#weather-setting-status{font-size:10px;color:#997494;line-height:1.5;margin-top:4px}
+button:disabled{cursor:wait;opacity:.5}
+@keyframes clock-pulse{0%,100%{opacity:1}50%{opacity:.45}}
+@keyframes sun-turn{to{transform:rotate(360deg)}}
+@keyframes cloud-drift{0%,100%{translate:-1px 0}50%{translate:2px 0}}
+@keyframes weather-fall{0%,100%{translate:0 -1px;opacity:.55}50%{translate:-1px 3px;opacity:1}}
 @keyframes breathe{0%,100%{transform:scaleY(1) rotate(-.3deg)}50%{transform:scaleY(1.012) rotate(.3deg)}}
 @keyframes happy{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-7px) rotate(1deg)}}
-@media(prefers-reduced-motion:reduce){#pet{animation:none!important}}
+@media(prefers-reduced-motion:reduce){#pet,#today-panel *{animation:none!important}}
+
+#reminder-button{position:relative}#reminder-button.has-reminders::after{content:"";position:absolute;right:4px;top:4px;width:5px;height:5px;border-radius:50%;background:#d9a576;box-shadow:0 0 0 2px #f9f5fc}

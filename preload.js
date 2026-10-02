@@ -1,5 +1,5 @@
 const {contextBridge,ipcRenderer,webUtils}=require('electron');
-const allowed=new Set(['state','settings','hide','quit','library-show','collection-list','collection-add-text','collection-add-clipboard','library-add-files','collection-open','collection-delete','collection-copy','collection-reveal','collection-file-icon','collection-link-preview']);
+const allowed=new Set(['reminder-show','reminder-list','screenshot-start','screenshot-shortcut','state','settings','weather-current','weather-search','weather-locate','weather-provider','hide','quit','library-show','collection-list','collection-add-text','collection-add-clipboard','library-add-files','collection-open','collection-delete','collection-copy','collection-reveal','collection-file-icon','collection-link-preview']);
 contextBridge.exposeInMainWorld('pet',{
   call:(channel,payload)=>{if(!allowed.has(channel))throw Error('Unknown operation');return ipcRenderer.invoke(channel,payload);},
   saveDroppedFiles:async files=>{
@@ -16,6 +16,13 @@ contextBridge.exposeInMainWorld('pet',{
     return ipcRenderer.invoke('collection-add-drop',entries);
   },
   onCollectionUpdated:callback=>ipcRenderer.on('collection-updated',()=>callback()),
+  onScreenshotShortcutChanged:callback=>ipcRenderer.on('screenshot-shortcut-changed',(_event,value)=>callback(value)),
+  onScreenshotMessage:callback=>ipcRenderer.on('screenshot-message',(_event,value)=>callback(value)),
+  onPanel:callback=>ipcRenderer.on('panel-open',(_event,name)=>callback(name)),
+  onSound:callback=>ipcRenderer.on('sound-play',(_event,name)=>callback(name)),
+  onReminderCount:callback=>ipcRenderer.on('reminder-count',(_event,value)=>callback(value)),
+  onReminderDue:callback=>ipcRenderer.on('reminder-due',(_event,value)=>callback(value)),
+  onIdleChanged:callback=>ipcRenderer.on('idle-changed',(_event,value)=>callback(value===true)),
   passthrough:value=>ipcRenderer.send('passthrough',!!value),
   drag:value=>ipcRenderer.send('drag',!!value)
 });
