@@ -1,0 +1,1 @@
+html,body{margin:0;width:100%;height:100%;background:transparent;overflow:hidden}#outline{position:absolute;inset:0;box-sizing:border-box;border:var(--line,1px) solid #bd799d;pointer-events:none}

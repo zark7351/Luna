@@ -24,3 +24,13 @@ test('越界截图裁到屏幕边界，非法或过小区域不保存',()=>{
   assert.deepEqual(cropBounds({x:-10,y:90,width:40,height:30},{width:100,height:100},{width:200,height:200}),{x:0,y:180,width:60,height:20});
   for(const rect of [null,{x:NaN,y:0,width:10,height:10},{x:0,y:0,width:1,height:20},{x:200,y:0,width:20,height:20}])assert.throws(()=>cropBounds(rect,{width:100,height:100},{width:100,height:100}));
 });
+test('工作区变化不打断框选，录屏选择只交付区域和屏幕源，真正分辨率变化会取消',async()=>{
+  const {EventEmitter}=require('node:events'),{createScreenshot}=require('../screenshot');const handlers=new Map(),windows=[];
+  class Window extends EventEmitter{constructor(){super();this.dead=false;this.webContents=new EventEmitter();this.webContents.setWindowOpenHandler=()=>{};windows.push(this);}isDestroyed(){return this.dead;}destroy(){this.dead=true;this.emit('closed');}setAlwaysOnTop(){}async loadFile(){}showInactive(){}focus(){}}
+  const screen=new EventEmitter(),display={id:1,size:{width:100,height:100},bounds:{x:-100,y:0,width:100,height:100},scaleFactor:1};screen.getAllDisplays=()=>[display];screen.getCursorScreenPoint=()=>({x:-50,y:50});screen.getDisplayNearestPoint=()=>display;
+  const thumbnail={isEmpty:()=>false,getSize:()=>({width:200,height:200}),toDataURL:()=>''};let selected,cancelled=0;
+  const controller=createScreenshot({BrowserWindow:Window,ipcMain:{handle:(name,fn)=>handlers.set(name,fn),removeHandler:name=>handlers.delete(name)},screen,getSources:async()=>[{id:'screen:1',display_id:'1',thumbnail}],getWindows:()=>[],save:()=>assert.fail('recording selection must not save PNG'),onMessage:()=>{}});
+  await controller.start({onSelect:value=>selected=value,onCancel:()=>cancelled++});screen.emit('display-metrics-changed',{},display,['workArea']);assert.equal(controller.isActive(),true);
+  assert.equal((await handlers.get('screenshot-select')({sender:windows[0].webContents},{x:10,y:20,width:30,height:40})).ok,true);assert.equal(selected.sourceId,'screen:1');assert.equal(selected.bounds.x,-100);assert.equal(cancelled,0);assert.equal(controller.isActive(),false);
+  await controller.start({onSelect:()=>{},onCancel:()=>cancelled++});screen.emit('display-metrics-changed',{},display,['scaleFactor']);assert.equal(controller.isActive(),false);assert.equal(cancelled,1);controller.stop();
+});

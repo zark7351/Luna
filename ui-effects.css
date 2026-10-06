@@ -1,0 +1,4 @@
+button{transition:background-color .16s,border-color .16s,box-shadow .16s}
+#bubble.reminder-alert{animation:reminder-glow 3.5s ease-in-out infinite}
+@keyframes reminder-glow{50%{box-shadow:0 3px 16px #c99ab82a}}
+@media(prefers-reduced-motion:reduce){#bubble.reminder-alert{animation:none}.bottom-sheet{animation:none}button{transition:none}}

@@ -26,8 +26,9 @@ async function createReminders(directory,{now=Date.now,onDue=()=>{},onChange=()=
     const item={id:previous?.id||randomUUID(),title:input.title.trim(),dueAt,mode,...mode==='countdown'?{durationSeconds:input.durationSeconds}:{},status:'pending',createdAt:previous?.createdAt||now()};
     await persist(previous?items.map(entry=>entry.id===item.id?item:entry):[...items,item]);return item;
   });}
-  async function action({id,action}={}){return serial(async()=>{
+  async function action({id,action}={},onlyFired=false){return serial(async()=>{
     const item=items.find(item=>item.id===id);if(!item)throw Error('提醒已不存在。');
+    if(onlyFired&&item.status!=='fired')throw Error('这条提醒已处理或尚未到时间。');
     if(!['complete','snooze','delete'].includes(action))throw Error('未知提醒操作。');
     if(action==='snooze'&&item.status!=='fired')throw Error('只有已到点的提醒可延后。');
     await persist(action==='delete'?items.filter(entry=>entry.id!==id):items.map(entry=>entry.id!==id?entry:action==='complete'?{...entry,status:'done'}:{...entry,status:'pending',dueAt:now()+5*60000}));return true;

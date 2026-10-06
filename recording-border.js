@@ -1,0 +1,1 @@
+const line=Number(new URLSearchParams(location.search).get('line'));if(line>0&&line<=2)document.documentElement.style.setProperty('--line',line+'px');

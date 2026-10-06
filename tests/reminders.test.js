@@ -2,6 +2,16 @@ const test=require('node:test'),assert=require('node:assert/strict');
 const fs=require('node:fs/promises'),path=require('node:path'),os=require('node:os');
 const {createReminders}=require('../reminders');
 async function fixture(t){const directory=await fs.mkdtemp(path.join(os.tmpdir(),'luna-reminder-test-'));t.after(()=>fs.rm(directory,{recursive:true,force:true}));return directory;}
+test('气泡完成只接受已到点的提醒，连续点击与延后竞争不会完成尚未到点的事项',async t=>{
+  const directory=await fixture(t);let now=1000;const reminders=await createReminders(directory,{now:()=>now});
+  const item=await reminders.save({title:'喝水',dueAt:2000});
+  await assert.rejects(reminders.action({id:item.id,action:'complete'},true),/尚未到时间/);now=2000;await reminders.check();
+  await reminders.action({id:item.id,action:'snooze'});await assert.rejects(reminders.action({id:item.id,action:'complete'},true),/已处理/);
+  now=reminders.list()[0].dueAt;await reminders.check();
+  const results=await Promise.allSettled([reminders.action({id:item.id,action:'complete'},true),reminders.action({id:item.id,action:'complete'},true)]);
+  assert.deepEqual(results.map(result=>result.status),['fulfilled','rejected']);assert.equal(reminders.list()[0].status,'done');
+  const reloaded=await createReminders(directory);assert.equal(reloaded.list()[0].status,'done');
+});
 test('倒计时按主进程保存时刻计算截止时间，重启继续倒数，到点一次触发',async t=>{
   const directory=await fixture(t);let now=1000,calls=0;
   let reminders=await createReminders(directory,{now:()=>now});
@@ -19,7 +29,7 @@ test('倒计时拒绝零/负/小数/超过七天/非法模式，编辑可切换�
   await reminders.save({id:item.id,title:'a',dueAt:5000});assert.equal(reminders.list()[0].mode,'scheduled');assert.equal(Object.hasOwn(reminders.list()[0],'durationSeconds'),false);
   await reminders.save({id:item.id,title:'a',mode:'countdown',durationSeconds:60});assert.equal(reminders.list()[0].dueAt,61000);
 });
-test('到点只触发一次，同一时刻多条提醒合并触发，重开不重复响',async t=>{
+test('到点事件只触发一次，同一时刻多条提醒合并，重新检查不重复触发',async t=>{
   const directory=await fixture(t);let now=1000,calls=[];
   const reminders=await createReminders(directory,{now:()=>now,onDue:items=>calls.push(items)});
   await Promise.all(['喝水','开会'].map(title=>reminders.save({title,dueAt:2000})));
