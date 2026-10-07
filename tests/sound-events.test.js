@@ -19,7 +19,7 @@ test('收藏成功、部分成功、全部失败与用户取消分别反馈，�
   assert.equal(operationSound('collection-add-clipboard',{kind:'files',saved:1,failed:['missing']}),'collect');
   assert.equal(operationSound('collection-add-clipboard',{kind:'text'}),'collect');
   assert.equal(operationSound('collection-copy',null,null,true),'error');
-  assert.equal(operationSound('weather-current',null,null,true),null);
+  assert.equal(operationSound('background-check',null,null,true),null);
   assert.equal(operationSound('reminder-list',[]),null);
   assert.equal(operationSound('reminder-action',true,{action:'snooze'}),'snooze');
   assert.equal(operationSound('reminder-action',true,{action:'complete'}),'complete');

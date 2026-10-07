@@ -1,0 +1,98 @@
+{
+  "luna-bob-jk.png": {
+    "sourceWidth": 887,
+    "sourceHeight": 1774,
+    "width": 512,
+    "height": 1024,
+    "center": 256.2,
+    "transparent": 73
+  },
+  "luna-bob-nurse.png": {
+    "sourceWidth": 887,
+    "sourceHeight": 1774,
+    "width": 512,
+    "height": 1024,
+    "center": 257.7,
+    "transparent": 75
+  },
+  "luna-bob-original.png": {
+    "sourceWidth": 887,
+    "sourceHeight": 1774,
+    "width": 512,
+    "height": 1024,
+    "center": 261.6,
+    "transparent": 69
+  },
+  "luna-bob-secretary.png": {
+    "sourceWidth": 887,
+    "sourceHeight": 1774,
+    "width": 512,
+    "height": 1024,
+    "center": 259.5,
+    "transparent": 76
+  },
+  "luna-original-nurse.png": {
+    "sourceWidth": 887,
+    "sourceHeight": 1774,
+    "width": 512,
+    "height": 1024,
+    "center": 255.7,
+    "transparent": 70
+  },
+  "luna-original-secretary.png": {
+    "sourceWidth": 887,
+    "sourceHeight": 1774,
+    "width": 512,
+    "height": 1024,
+    "center": 258,
+    "transparent": 72
+  },
+  "luna-straight-nurse.png": {
+    "sourceWidth": 887,
+    "sourceHeight": 1774,
+    "width": 512,
+    "height": 1024,
+    "center": 256.5,
+    "transparent": 73
+  },
+  "luna-straight-secretary.png": {
+    "sourceWidth": 887,
+    "sourceHeight": 1774,
+    "width": 512,
+    "height": 1024,
+    "center": 259,
+    "transparent": 72
+  },
+  "luna-twintails-jk.png": {
+    "sourceWidth": 887,
+    "sourceHeight": 1774,
+    "width": 512,
+    "height": 1024,
+    "center": 255.9,
+    "transparent": 65
+  },
+  "luna-twintails-nurse.png": {
+    "sourceWidth": 887,
+    "sourceHeight": 1774,
+    "width": 512,
+    "height": 1024,
+    "center": 258.9,
+    "transparent": 69
+  },
+  "luna-twintails-original.png": {
+    "sourceWidth": 887,
+    "sourceHeight": 1774,
+    "width": 512,
+    "height": 1024,
+    "center": 263.8,
+    "transparent": 60
+  },
+  "luna-twintails-secretary.png": {
+    "sourceWidth": 887,
+    "sourceHeight": 1774,
+    "width": 512,
+    "height": 1024,
+    "center": 260,
+    "transparent": 70
+  }
+}

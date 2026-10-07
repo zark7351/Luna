@@ -9,33 +9,8 @@
 </head>
 <body>
   <div id="companion">
-    <section id="today-panel" class="interactive" aria-label="时间和天气">
-      <div class="clock-block">
-        <svg id="day-cycle" viewBox="0 0 32 32" role="img" aria-label="当前时段">
-          <defs><clipPath id="time-above-horizon"><rect width="32" height="23"/></clipPath></defs>
-          <g class="time-sun"><g class="sun-disc" transform="translate(16 16)"><circle r="9" fill="currentColor" opacity=".12"/><circle r="5.5" fill="currentColor"/><g stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M0-11v2M0 9v2M-11 0h2M9 0h2M-8-8l1.5 1.5M6.5 6.5 8 8M-8 8l1.5-1.5M6.5-6.5 8-8"/></g></g></g>
-          <path class="time-moon" d="M19 6a10 10 0 1 0 7 17A10 10 0 0 1 19 6Z" fill="#a995cd"/>
-          <path class="time-horizon" d="M3 23h26m-20 4h14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
-        <div class="calendar"><span id="calendar-weekday"></span></div>
-      </div>
-      <button id="weather-button" title="设置天气城市" aria-label="设置天气城市">
-        <svg id="weather-icon" viewBox="0 0 64 56" aria-hidden="true" data-kind="unset">
-          <g class="sun"><g class="sun-rays" fill="none" stroke="#e6b464" stroke-width="2.5" stroke-linecap="round"><path d="M30 4v4m0 32v4M10 24h4m32 0h4M16 10l3 3m22 22 3 3M16 38l3-3m22-22 3-3"/></g><circle cx="30" cy="24" r="10" fill="#f5d58e"/></g>
-          <path class="moon" d="M39 8a17 17 0 1 0 11 29A17 17 0 0 1 39 8Z" fill="#bbb2e9"/>
-          <g class="cloud"><path d="M16 39a9 9 0 0 1 0-18 12 12 0 0 1 23-3 10 10 0 1 1 9 21Z" fill="#fff" stroke="#c8b9df" stroke-width="1.7"/></g>
-          <g class="rain" stroke="#a3badd" stroke-width="2.5" stroke-linecap="round"><path d="m21 44-2 5"/><path d="m32 44-2 5"/><path d="m43 44-2 5"/></g>
-          <g class="snow" fill="#aab7d9"><circle cx="20" cy="47" r="2"/><circle cx="32" cy="45" r="2"/><circle cx="44" cy="48" r="2"/></g>
-          <path class="lightning" d="m34 36-9 12h7l-3 8 13-13h-8l4-7Z" fill="#edbf73"/>
-          <g class="fog" stroke="#b8accc" stroke-width="2" stroke-linecap="round"><path d="M13 43h34M19 48h32"/></g>
-          <g class="stars" fill="#b9a3d1"><path d="m19 14 1.5 4L25 19l-4.5 1.5L19 25l-1.5-4.5L13 19l4.5-1Z"/><circle cx="43" cy="12" r="2"/></g>
-        </svg>
-        <div class="weather-copy"><span id="weather-temperature">天气</span><span id="weather-description">选择城市</span></div>
-      </button>
-      <div class="weather-footer"><span id="weather-city">今日陪伴</span><span id="weather-status">✦</span></div>
-    </section>
-    <button id="bubble" class="interactive" type="button" aria-live="polite" data-ui-sound="none" hidden disabled></button>
-    <button id="pet" class="interactive" aria-label="点击互动，按住拖动宠物" title="点击互动 · 按住拖动"></button>
+    <div id="bubble" class="interactive" role="group" aria-label="露娜消息" hidden><button id="bubble-body" type="button" data-ui-sound="none"><span id="bubble-message" aria-live="polite"></span></button><button id="bubble-complete" type="button" title="完成提醒" aria-label="完成提醒" data-ui-sound="none" hidden><svg data-icon="check" viewBox="0 0 24 24" aria-hidden="true"></svg></button></div>
+    <button id="pet" class="interactive" aria-label="点击身体使用快捷功能，按住拖动露娜" title="点击身体使用快捷功能 · 按住拖动"></button>
     <div class="petbar interactive" aria-hidden="true" role="group" aria-label="露娜操作">
       <button id="library-button" title="收藏夹" aria-label="收藏夹"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/><path d="m12 10 1.3 2.6 2.9.4-2.1 2 .5 2.9-2.6-1.4-2.6 1.4.5-2.9-2.1-2 2.9-.4Z"/></svg></button>
       <button id="screenshot-button" title="截图收藏 · Ctrl+Alt+A" aria-label="截图收藏"><svg data-icon="capture" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m8 0h5v-5M8 8h8v8H8Z"/></svg></button>
@@ -50,29 +25,23 @@
     <div class="help-content">
       <p class="help-intro">桌面上的小伙伴，帮你收好临时内容。</p>
       <dl>
-        <dt>互动与移动</dt><dd>点击露娜触发表情和短暂气泡，按住角色可拖动位置。气泡和时间天气条只显示一个；移到露娜身上显示下方按钮。电脑连续 5 分钟没有键鼠操作，她会自动休息；恢复操作后自动唤醒。</dd>
+        <dt>互动与移动</dt><dd>点击脑袋、胸部、手臂、腿或脚，使用设置里的对应快捷功能并触发表情；连续点击胸部会生气。普通气泡点击关闭，按住角色可拖动位置；移到露娜身上显示下方按钮。电脑连续 5 分钟没有键鼠操作，她会自动休息；恢复操作后自动唤醒。</dd>
         <dt>拖来就能收藏</dt><dd>将文件、文字或网页链接拖到露娜身上。收藏夹按类型显示，图片和视频可以预览。</dd>
         <dt>截图收藏</dt><dd>点击框选图标或按 Ctrl + Alt + A，拖动框选后松开鼠标，截图自动收藏到图片与视频。Esc 或右键取消；每次在一块屏幕内框选。设置里可关闭快捷键。</dd>
         <dt>复制与定位</dt><dd>收藏卡片的复制图标可复制内容，文件夹图标可定位文件。本地文件只保存路径，移动或删除原文件会使收藏失效。</dd>
         <dt>录屏</dt><dd>圆点按钮打开录屏窗口，框选范围后持续显示边框，录制 MP4，点击方块停止并收藏。录制画面，不录声音；设置可选择帧率（默认 60 FPS）及新文件保存位置，已有文件保留原位置。</dd>
-        <dt>提醒</dt><dd>铃铛里填写内容，选择定时或时长倒计时，到点气泡持续显示，点击完成当前一条；未完成时每 15 秒响一次，也可在提醒窗口完成或延后 5 分钟；设置中的声音开关控制所有声音。关闭露娜时不会提醒，重启或休眠恢复后会补提示。</dd>
-        <dt>时段与天气</dt><dd>太阳、月亮和地平线表示大致时段，Mon 等表示星期。右键托盘图标进入设置选择天气城市，支持自动定位与手动搜索。</dd>
+        <dt>提醒</dt><dd>铃铛里填写内容，选择定时或时长倒计时，到点气泡持续显示，点击右侧勾号完成，点击消息打开提醒面板；未完成时每 15 秒响一次，也可在提醒窗口完成或延后 5 分钟；设置中的声音开关控制所有声音。关闭露娜时不会提醒，重启或休眠恢复后会补提示。</dd>
+        <dt>身体快捷功能</dt><dd>设置里先选部位，再选收藏、截图、录屏、提醒、换装、日期时间、系统占用、天气或设置。日期气泡包含年月日、时间和星期；系统占用气泡动态显示 5 秒。天气在设置选择城市后按点击查询，可手动搜索或点击 IP 定位；提醒优先显示。</dd>
         <dt>设置与隐藏</dt><dd>右键托盘图标进入设置，可修改名字、称呼和置顶，下方衣架按钮可分别选择发型与服装。向下箭头隐藏露娜，双击系统托盘图标可再次显示。</dd>
       </dl>
-      <details class="weather-sources"><summary>天气来源</summary><p><button type="button" data-provider="weather">Open-Meteo</button> · <button type="button" data-provider="cities">GeoNames</button> · <button type="button" data-provider="location">ipwho.is</button></p><p>自动定位通过公网 IP 估算城市，代理可能影响结果。</p></details>
     </div>
   </dialog>
   <section id="settings" class="interactive" hidden>
     <header><h1>设置</h1><button id="settings-close" title="关闭设置" aria-label="关闭设置"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header>
     <form id="settings-form">
+      <fieldset class="body-settings"><legend>身体快捷功能</legend><div id="body-region-tabs" role="group" aria-label="选择身体部位"></div><div id="body-action-grid" aria-label="选择快捷功能"></div></fieldset>
+      <div class="weather-settings"><label for="weather-query">天气城市</label><div class="weather-search-row"><input id="weather-query" maxlength="80" placeholder="搜索城市"><button id="weather-search" type="button" title="搜索城市" aria-label="搜索城市"><svg data-icon="search" viewBox="0 0 24 24"></svg></button><button id="weather-locate" type="button" title="IP 城市定位" aria-label="IP 城市定位"><svg data-icon="location" viewBox="0 0 24 24"></svg></button></div><div id="weather-selected"></div><div id="weather-results" hidden></div><div id="weather-setting-status" role="status"></div></div>
       <div class="identity-settings"><label>名字<input id="name" maxlength="24"></label><label>称呼<input id="nickname" maxlength="40" placeholder="你的昵称"></label></div>
-      <div class="weather-settings">
-        <div class="weather-heading">天气<button id="weather-locate" type="button" title="自动定位城市（IP 定位，代理可能影响结果）" aria-label="自动定位城市"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg></button></div>
-        <div class="city-search"><input id="weather-query" maxlength="80" placeholder="城市名" aria-label="搜索天气城市"><button id="weather-search" type="button" title="搜索城市" aria-label="搜索城市"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></button></div>
-        <select id="weather-results" aria-label="选择城市" hidden></select>
-        <div class="city-selection"><span id="weather-selected">未设置城市</span><button id="weather-clear" type="button" title="清除城市，保存后关闭天气" aria-label="清除天气城市"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17"/></svg></button></div>
-        <div id="weather-setting-status" role="status"></div>
-      </div>
 <div class="storage-settings"><label for="save-directory">保存位置</label><div class="storage-row"><input id="save-directory" readonly aria-label="新截图、录屏和临时收藏的保存位置"><button id="storage-choose" type="button" title="选择保存文件夹" aria-label="选择保存文件夹"><svg data-icon="folder" viewBox="0 0 24 24"><path d="M3 7V4h6l3 3h9v13H3Z"/></svg></button><button id="storage-reset" type="button" title="恢复默认保存位置" aria-label="恢复默认保存位置"><svg viewBox="0 0 24 24"><path d="M4 8V3m0 5h5M4 8a9 9 0 1 1-1 8"/></svg></button></div></div>
       <label class="recording-setting"><span>录屏帧率</span><select id="record-frame-rate" aria-label="录屏帧率"><option value="15">15 FPS</option><option value="24">24 FPS</option><option value="30">30 FPS</option><option value="60" selected>60 FPS</option></select></label>
       <label class="check"><span>置顶</span><input type="checkbox" id="top" role="switch"></label>
@@ -82,11 +51,11 @@
       <div class="settings-actions"><button id="settings-help" type="button" title="使用说明" aria-label="使用说明"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.2 8.5a3 3 0 0 1 5.8 1c0 2-3 2.2-3 4M12 17h.01"/></svg></button><button class="primary" type="submit" title="保存设置" aria-label="保存设置"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg></button></div>
     </form>
   </section>
-  <section id="wardrobe" class="bottom-sheet interactive" hidden aria-labelledby="wardrobe-title"><header><h1 id="wardrobe-title">换装</h1><button id="wardrobe-close" title="关闭换装" aria-label="关闭换装"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header><form id="wardrobe-form"><div id="wardrobe-options"><div id="look-preview" role="img" aria-label="露娜搭配预览"></div><input id="hair" type="hidden" value="original"><input id="outfit" type="hidden" value="original"><div class="wardrobe-tabs" role="tablist" aria-label="换装分类"><button id="wardrobe-tab-hair" type="button" role="tab" aria-selected="true" aria-controls="hair-items" title="发型" aria-label="发型"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V10a7 7 0 0 1 14 0v10l-4-2M5 20l4-2M7 10c3 0 4-2 5-5 0 3 2 5 5 5M8 10v4a4 4 0 0 0 8 0v-4"/></svg></button><button id="wardrobe-tab-outfit" type="button" role="tab" aria-selected="false" aria-controls="outfit-items" tabindex="-1" title="服装" aria-label="服装"><svg data-icon="shirt" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 3-5 3 2 5 3-1v11h8V10l3 1 2-5-5-3a4 4 0 0 1-8 0Z"/></svg></button></div><div id="hair-items" class="choice-grid" role="tabpanel" aria-labelledby="wardrobe-tab-hair"><button type="button" class="look-card" data-group="hair" data-choice="original" aria-pressed="false" title="银紫长卷发" aria-label="银紫长卷发"><span class="choice-thumb hair"><span class="choice-sprite" aria-hidden="true"></span></span></button><button type="button" class="look-card" data-group="hair" data-choice="straight" aria-pressed="false" title="黑长直 · 齐刘海" aria-label="黑长直 · 齐刘海"><span class="choice-thumb hair"><span class="choice-sprite" aria-hidden="true"></span></span></button></div><div id="outfit-items" class="choice-grid" role="tabpanel" aria-labelledby="wardrobe-tab-outfit" hidden><button type="button" class="look-card" data-group="outfit" data-choice="original" aria-pressed="false" title="紫色长裙" aria-label="紫色长裙"><span class="choice-thumb outfit"><span class="choice-sprite" aria-hidden="true"></span></span></button><button type="button" class="look-card" data-group="outfit" data-choice="jk" aria-pressed="false" title="JK 制服 · 白色膝下袜" aria-label="JK 制服 · 白色膝下袜"><span class="choice-thumb outfit"><span class="choice-sprite" aria-hidden="true"></span></span></button></div></div><div id="wardrobe-status" role="status"></div><button class="primary" type="submit" title="保存搭配" aria-label="保存搭配"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg></button></form></section>
+  <section id="wardrobe" class="bottom-sheet interactive" hidden aria-labelledby="wardrobe-title"><header><h1 id="wardrobe-title">换装</h1><button id="wardrobe-close" title="关闭换装" aria-label="关闭换装"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header><form id="wardrobe-form"><div id="wardrobe-options"><div id="look-preview" role="img" aria-label="露娜搭配预览"></div><input id="hair" type="hidden" value="original"><input id="outfit" type="hidden" value="original"><div class="wardrobe-tabs" role="tablist" aria-label="换装分类"><button id="wardrobe-tab-hair" type="button" role="tab" aria-selected="true" aria-controls="hair-items" title="发型" aria-label="发型"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V10a7 7 0 0 1 14 0v10l-4-2M5 20l4-2M7 10c3 0 4-2 5-5 0 3 2 5 5 5M8 10v4a4 4 0 0 0 8 0v-4"/></svg></button><button id="wardrobe-tab-outfit" type="button" role="tab" aria-selected="false" aria-controls="outfit-items" tabindex="-1" title="服装" aria-label="服装"><svg data-icon="shirt" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 3-5 3 2 5 3-1v11h8V10l3 1 2-5-5-3a4 4 0 0 1-8 0Z"/></svg></button></div><div id="hair-items" class="choice-grid" role="tabpanel" aria-labelledby="wardrobe-tab-hair"><button type="button" class="look-card" data-group="hair" data-choice="original" aria-pressed="false" title="银紫长卷发" aria-label="银紫长卷发"><span class="choice-thumb hair"><span class="choice-sprite" aria-hidden="true"></span></span></button><button type="button" class="look-card" data-group="hair" data-choice="straight" aria-pressed="false" title="黑长直 · 齐刘海" aria-label="黑长直 · 齐刘海"><span class="choice-thumb hair"><span class="choice-sprite" aria-hidden="true"></span></span></button><button type="button" class="look-card" data-group="hair" data-choice="bob" aria-pressed="false" title="银色短发" aria-label="银色短发"><span class="choice-thumb hair"><span class="choice-sprite" aria-hidden="true"></span></span></button><button type="button" class="look-card" data-group="hair" data-choice="twintails" aria-pressed="false" title="粉色双马尾" aria-label="粉色双马尾"><span class="choice-thumb hair"><span class="choice-sprite" aria-hidden="true"></span></span></button></div><div id="outfit-items" class="choice-grid" role="tabpanel" aria-labelledby="wardrobe-tab-outfit" hidden><button type="button" class="look-card" data-group="outfit" data-choice="original" aria-pressed="false" title="紫色长裙" aria-label="紫色长裙"><span class="choice-thumb outfit"><span class="choice-sprite" aria-hidden="true"></span></span></button><button type="button" class="look-card" data-group="outfit" data-choice="jk" aria-pressed="false" title="JK 制服 · 白色膝下袜" aria-label="JK 制服 · 白色膝下袜"><span class="choice-thumb outfit"><span class="choice-sprite" aria-hidden="true"></span></span></button><button type="button" class="look-card" data-group="outfit" data-choice="secretary" aria-pressed="false" title="秘书制服" aria-label="秘书制服"><span class="choice-thumb outfit"><span class="choice-sprite" aria-hidden="true"></span></span></button><button type="button" class="look-card" data-group="outfit" data-choice="nurse" aria-pressed="false" title="护士制服 · 膝下白袜" aria-label="护士制服 · 膝下白袜"><span class="choice-thumb outfit"><span class="choice-sprite" aria-hidden="true"></span></span></button></div></div><div id="wardrobe-status" role="status"></div><button class="primary" type="submit" title="保存搭配" aria-label="保存搭配"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg></button></form></section>
   <section id="library-sheet" class="bottom-sheet interactive" aria-label="收藏夹" hidden><iframe id="library-frame" src="library.html" title="收藏夹" allow="fullscreen *" allowfullscreen></iframe></section>
   <section id="reminder-sheet" class="bottom-sheet interactive" aria-label="提醒" hidden><iframe id="reminder-frame" src="reminder.html" title="提醒事项"></iframe></section>
   <section id="recording-sheet" class="bottom-sheet interactive" aria-label="录屏" hidden><iframe id="recording-frame" src="recording.html" title="区域录屏" allow="camera; display-capture"></iframe></section>
-  <script src="icons.js"></script><script src="ui-effects.js"></script><script src="ui-sounds.js"></script><script src="weather-ui.js"></script>
-  <script src="character.js"></script><script src="pet-feedback.js"></script><script src="renderer.js"></script>
+  <script src="icons.js"></script><script src="ui-effects.js"></script><script src="ui-sounds.js"></script><script src="weather-ui.js"></script><script src="body-shortcuts.js"></script><script src="shortcut-bubbles.js"></script>
+  <script src="character-assets.js"></script><script src="character.js"></script><script src="pet-feedback.js"></script><script src="renderer.js"></script>
 </body>
 </html>

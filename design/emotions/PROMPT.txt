@@ -1,0 +1,6 @@
+Built-in image_gen edit, transparent_background=true.
+Reference neutral-face-reference.png is a technical crop of the original leftmost neutral frame in assets/character.png (180,40,160,160), enlarged for editing.
+
+Use case: identity-preserve. Edit the provided cropped face of Luna, an original ADULT woman age 24, into a gently annoyed cute anime expression for a desktop pet. Change ONLY eyebrows, eyelids, eye expression and mouth: slightly inward tilted furrowed eyebrows, mildly narrowed still-open violet eyes, a small closed pouting mouth. She looks annoyed yet charming, not threatening. Preserve EXACT framing, face tilt, eye centers, nose, hair, violet irises, skin tone and face proportions. Face is anchored: left eye center approximately x=378 y=493, right eye center x=730 y=435, mouth center x=589 y=672 in the 1024 square reference. Output same square composition, no repositioning, no head tilt change, no new outfit, no symbols or effects, no text. Match the original delicate painted rendering and soft skin shadows. Preserve existing transparent corners, do not flatten to black.
+
+Runtime: resize the square source to 160x160 while preserving alpha; use eyes at (59,77)/(114,68) and mouth at (92,105). Only feathered local facial patches are composited at each existing look's anchors; hair/body stay in their original drawing.

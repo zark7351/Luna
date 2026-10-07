@@ -1,5 +1,6 @@
 # Dependencies and packaged binaries (rebuild on each computer)
 node_modules/
+.build-tools/
 dist/
 release/
 LunaPet-Windows/

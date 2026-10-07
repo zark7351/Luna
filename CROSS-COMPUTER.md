@@ -52,8 +52,10 @@ node build-portable.cjs
 
 输出位于仓库同级的 LunaPet-Windows。开发者通过 Git 传源码，运行时和便携 exe 重新生成。角色素材与 package-lock.json 已纳入源码。
 
+露娜 1.0 安装包执行 `node build-installer.cjs`，输出到仓库同级 `LunaPet-Release`；使用时无需 Node.js。首次开发构建会下载固定版本并校验 SHA256 的官方 rcedit / Inno Setup 工具到 `.build-tools`，该缓存不随 Git 同步。安装规则与工具来源见 [安装包指南](installer/README.md)。安装版与便携版保持同一用户数据目录，卸载不删除个人数据。
+
 该 Node.js 入口不受 PowerShell 的 `.ps1` 执行策略影响，无需管理员权限或调整策略。如果 npm.ps1 也被拦截，可使用 `npm.cmd ci`、`npm.cmd test` 和 `npm.cmd start`。
 
 ## 哪些不随 Git 同步
 
-宠物个人设置与位置、天气城市与缓存、node_modules、便携 exe、Codex 本地聊天记录和电脑级工具配置。项目交接只保存开发背景和测试结论。当前版本以本地运行为主，网页卡片预览、天气、城市搜索以及用户点击的 IP 城市定位匿名联网，不需要 API Key，也不保存聊天记录。更换网络后定位不会自动变化，可在设置中重新定位或手动选择城市。
+宠物个人设置与位置、node_modules、便携 exe、Codex 本地聊天记录和电脑级工具配置。项目交接只保存开发背景和测试结论。当前版本以本地运行为主，网页卡片预览按用户要求匿名联网；天气恢复为按点击查询，城市可搜索或手动点击 IP 定位，不保存公网 IP、不持续跟踪；天气缓存保存在用户数据目录。日期/时间、CPU/内存/GPU 信息通过配置的身体部位点击后显示气泡，来自本机，系统读数不保存、不上传；不需要 API Key，也不保存聊天记录。

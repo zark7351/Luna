@@ -1,10 +1,17 @@
 {
   "name": "luna-desktop-pet",
   "productName": "LunaPet",
-  "version": "0.1.1",
+  "version": "1.0.0",
   "private": true,
   "description": "轻量 2D 桌面陪伴宠物",
   "main": "main.js",
-  "scripts": { "start": "electron .", "test": "node --test tests/*.test.js", "build": "node build-portable.cjs" },
-  "devDependencies": { "electron": "44.4.5" }
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test tests/*.test.js",
+    "build": "node build-portable.cjs",
+    "build:installer": "node build-installer.cjs"
+  },
+  "devDependencies": {
+    "electron": "44.4.5"
+  }
 }

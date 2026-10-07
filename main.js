@@ -1,6 +1,8 @@
 const { app, BrowserWindow, ipcMain, screen, Tray, Menu, nativeImage, shell, clipboard, ClipboardItem, dialog, protocol, net, powerMonitor, desktopCapturer, globalShortcut } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
+const {APP_ID,appIcon,createTrayIcon}=require('./app-branding');
+if(process.platform==='win32')app.setAppUserModelId(APP_ID);
 const {pathToFileURL}=require('node:url');
 const reportFatal = error => { fs.writeFileSync(path.join(app.getPath('temp'),'lunapet-startup-error.log'),String(error.stack || error)); app.exit(1); };
 process.on('uncaughtException', reportFatal);
@@ -10,7 +12,9 @@ const {createCollection} = require('./collection');
 const {mediaResponse}=require('./media');
 const {copyFileToClipboard,readClipboardFiles,requireFile}=require('./file-actions');
 const {fetchLinkPreview}=require('./link-preview');
+const {createSystemStats}=require('./system-stats');
 const {createWeather}=require('./weather');
+const {createEdgeDock}=require('./edge-dock');
 const {startIdleMonitor}=require('./idle');
 const {createScreenshot}=require('./screenshot');
 const {createReminders}=require('./reminders');
@@ -21,9 +25,9 @@ const {effectNames,operationEffect}=require('./effect-events');
 protocol.registerSchemesAsPrivileged([{scheme:'luna-media',privileges:{standard:true,secure:true,stream:true}}]);
 const smoke = process.argv.includes('--smoke-test');
 if (smoke) app.setPath('userData', path.join(app.getPath('temp'), 'lunapet-smoke-' + process.pid));
-let recording, win, libraryWin, tray, state, stateFile, collection, weather, idle, screenshot, reminders, reminderTimer, reminderAlertTimer, drag=null;
+let recording, win, libraryWin, tray, state, stateFile, collection, systemStats, systemStatsTimer, weather, idle, screenshot, reminders, reminderTimer, reminderAlertTimer, drag=null;
 const reminderPauses=new Set();
-let reminderAlerts,petVideoFullscreen=false;
+let reminderAlerts,edgeDock,petVideoFullscreen=false;
 function configureAudio(current){current.webContents.setAudioMuted(!state.settings.soundEnabled);}
 const playSound=createSoundDispatch({enabled:()=>!quitting&&state?.settings.soundEnabled,live:()=>liveWindow()&&!win.webContents.isDestroyed(),send:name=>win.webContents.send('sound-play',name)});
 function playEffect(name){if(quitting||!effectNames.includes(name))return;for(const current of [win,libraryWin])if(current&&!current.isDestroyed()&&!current.webContents.isDestroyed())current.webContents.send('ui-effect',name);}
@@ -60,18 +64,18 @@ function persist() {
   fs.writeFileSync(stateFile+'.tmp',JSON.stringify(state,null,2),'utf8');
   fs.renameSync(stateFile+'.tmp',stateFile);
 }
-function publicState() { return { settings:state.settings,sleeping:idle?.isSleeping()||false,fileDirectory:state.settings.saveDirectory||path.join(app.getPath('userData'),'collection-files') }; }
+function publicState() { return { settings:state.settings,edgeDock:edgeDock?.read()||{side:null,collapsed:false},sleeping:idle?.isSleeping()||false,fileDirectory:state.settings.saveDirectory||path.join(app.getPath('userData'),'collection-files') }; }
 function safePosition(x,y) {
   const a=screen.getDisplayNearestPoint({x:Math.round(x+WINDOW_WIDTH/2),y:Math.round(y+WINDOW_HEIGHT/2)}).workArea;
   return [Math.round(clamp(x,a.x,a.x+Math.max(0,a.width-WINDOW_WIDTH))),Math.round(clamp(y,a.y,a.y+Math.max(0,a.height-WINDOW_HEIGHT)))];
 }
 function liveWindow() { return win && !win.isDestroyed(); }
 function allowFullscreen(contents,permission){return permission==='fullscreen' && ((liveWindow()&&contents===win.webContents&&contents.getURL()===pathToFileURL(path.join(__dirname,'index.html')).href)||(libraryWin&&!libraryWin.isDestroyed()&&contents===libraryWin.webContents&&contents.getURL()===pathToFileURL(path.join(__dirname,'library.html')).href));}
-function restore() {if(!liveWindow())return;win.setIgnoreMouseEvents(false);win.show();win.focus();}
+function restore() {if(!liveWindow())return;edgeDock?.expand();win.setIgnoreMouseEvents(false);win.show();win.focus();}
 async function showLibrary(view){
   const initial=view&&['media','files','text','links'].includes(view.tab)?{tab:view.tab,query:typeof view.query==='string'?view.query.slice(0,300):''}:null;
   if(libraryWin && !libraryWin.isDestroyed()){libraryWin.show();libraryWin.focus();if(initial)libraryWin.webContents.send('library-view',initial);playSound('open');return;}
-  libraryWin=new BrowserWindow({width:1100,height:760,minWidth:560,minHeight:400,frame:false,title:'露娜收藏夹',backgroundColor:'#fcf9ff',show:false,webPreferences:{preload:path.join(__dirname,'preload.js'),contextIsolation:true,nodeIntegration:false,sandbox:true}});
+  libraryWin=new BrowserWindow({width:1100,height:760,minWidth:560,minHeight:400,frame:false,title:'露娜收藏夹',icon:appIcon,backgroundColor:'#fcf9ff',show:false,webPreferences:{preload:path.join(__dirname,'preload.js'),contextIsolation:true,nodeIntegration:false,sandbox:true}});
   configureAudio(libraryWin);
   const current=libraryWin;
   current.webContents.setWindowOpenHandler(()=>({action:'deny'}));
@@ -87,10 +91,9 @@ function notifyReminders(){
   if(liveWindow())win.webContents.send('reminder-count',reminders.list().filter(item=>item.status!=='done').length);
   reminderAlerts?.tick();
 }
-async function showReminders(alert=false){
+async function showReminders(){
   if(quitting||!liveWindow())return;
-  if(alert){win.showInactive();win.webContents.send('panel-open','reminder');}
-  else openPetPanel('reminder');
+  openPetPanel('reminder');
 }
 function presentReminders(){
   if(quitting || reminderPauses.size)return;
@@ -98,7 +101,7 @@ function presentReminders(){
   if(screenshot?.isActive()||recording?.isActive()){reminderAlertTimer=setTimeout(presentReminders,500);return;}
   reminderAlerts?.tick();
   if(!reminders.list().some(item=>item.status==='fired'))return;
-  showReminders(true).catch(()=>{});
+  if(liveWindow())win.showInactive();
 }
 if (!app.requestSingleInstanceLock() && !smoke) app.quit();
 else {
@@ -110,17 +113,18 @@ app.whenReady().then(async()=>{
   try { state=migrateState(JSON.parse(fs.readFileSync(stateFile,'utf8')));persist(); } catch {}
   collection=await createCollection(app.getPath('userData'),{getDirectory:()=>state.settings.saveDirectory});
   reminders=await createReminders(app.getPath('userData'),{now:smoke?()=>smokeReminderNow:Date.now,onChange:notifyReminders,onDue:()=>presentReminders()});
-  reminderAlerts=createReminderAlerts({getDue:()=>reminders.list().filter(item=>item.status==='fired'),isPaused:()=>quitting||reminderPauses.size>0||screenshot?.isActive()||recording?.isActive(),send:value=>{if(!liveWindow())return false;win.webContents.send('reminder-due',value);if(value)win.showInactive();return true;},play:()=>playSound('reminder'),now:smoke?()=>smokeReminderNow:Date.now});
-  weather=createWeather({directory:app.getPath('userData'),fetch:smoke?async url=>{
-    const host=new URL(url).hostname;
-    return new Response(JSON.stringify(host==='ipwho.is'?{success:true,city:'杭州',region:'浙江',country:'中国',latitude:30.27,longitude:120.15}:host==='geocoding-api.open-meteo.com'?{results:[{name:'杭州',admin1:'浙江',country:'中国',latitude:30.27,longitude:120.15}]}:{current:{temperature_2m:22,weather_code:2,is_day:1}}));
-  }:net.fetch.bind(net)});
+  reminderAlerts=createReminderAlerts({getDue:()=>reminders.list().filter(item=>item.status==='fired'),isPaused:()=>quitting||reminderPauses.size>0||screenshot?.isActive()||recording?.isActive(),send:value=>{if(!liveWindow())return false;if(value)edgeDock?.expand();win.webContents.send('reminder-due',value);if(value)win.showInactive();return true;},play:()=>playSound('reminder'),now:smoke?()=>smokeReminderNow:Date.now});
+  systemStats=smoke?{read:()=>({cpu:25,memory:50,gpu:75}),stop:()=>{}}:null;
+  const smokePlace={name:'杭州',latitude:30.27,longitude:120.15,detail:'浙江 · 中国',source:'manual'};
+  weather=smoke?{current:async place=>place?{status:'ready',location:place,reading:{label:'晴',temperature:24}}:{status:'unset'},search:async()=>[smokePlace],locate:async()=>({...smokePlace,source:'ip'})}:createWeather({directory:app.getPath('userData'),fetch:(...args)=>net.fetch(...args)});
   protocol.handle('luna-media',request=>mediaResponse(request,collection));
   const area=screen.getPrimaryDisplay().workArea;
   const p=state.position || [area.x+area.width-WINDOW_WIDTH-30,area.y+area.height-WINDOW_HEIGHT-20];
   const [x,y]=safePosition(Number(p[0])||0,Number(p[1])||0);
-  win=new BrowserWindow({width:WINDOW_WIDTH,height:WINDOW_HEIGHT,x,y,transparent:true,frame:false,resizable:false,hasShadow:false,alwaysOnTop:state.settings.top,show:false,skipTaskbar:false,backgroundColor:'#00000000',webPreferences:{preload:path.join(__dirname,'preload.js'),contextIsolation:true,nodeIntegration:false,sandbox:true,backgroundThrottling:false,autoplayPolicy:'no-user-gesture-required'}});
+  win=new BrowserWindow({width:WINDOW_WIDTH,height:WINDOW_HEIGHT,x,y,icon:appIcon,transparent:true,frame:false,resizable:false,hasShadow:false,alwaysOnTop:state.settings.top,show:false,skipTaskbar:false,backgroundColor:'#00000000',webPreferences:{preload:path.join(__dirname,'preload.js'),contextIsolation:true,nodeIntegration:false,sandbox:true,backgroundThrottling:false,autoplayPolicy:'no-user-gesture-required'}});
   configureAudio(win);
+  let normalPetBounds=win.getBounds();
+  edgeDock=createEdgeDock({getWindow:()=>win,getArea:bounds=>screen.getDisplayMatching(bounds).workArea,onChange:value=>{if(liveWindow()&&!win.webContents.isDestroyed()){if(!value.collapsed)normalPetBounds=win.getBounds();win.webContents.send('edge-dock-changed',value);}},onPosition:position=>{state.position=position;persist();},canCollapse:()=>!quitting&&!drag&&!petVideoFullscreen&&!screenshot?.isActive()&&!recording?.isActive()&&!reminders.list().some(item=>item.status==='fired')});
   win.webContents.setWindowOpenHandler(()=>({action:'deny'}));
   win.webContents.on('will-navigate',e=>e.preventDefault());
   const panelURLs=new Set(['library.html','recording.html','reminder.html'].map(file=>pathToFileURL(path.join(__dirname,file)).href));
@@ -128,14 +132,12 @@ app.whenReady().then(async()=>{
   win.webContents.session.setPermissionRequestHandler((contents,permission,cb,details)=>cb((allowFullscreen(contents,permission)||(['display-capture','media'].includes(permission)&&!details.mediaTypes?.includes('audio')&&recording?.canCapture(contents)===true))));
   win.webContents.session.setPermissionCheckHandler((contents,permission)=>allowFullscreen(contents,permission)||(['display-capture','media'].includes(permission)&&recording?.canCapture(contents)===true));
   win.once('ready-to-show',()=>{if(liveWindow())win.show();});
-  let normalPetBounds=win.getBounds();
   win.webContents.on('enter-html-full-screen',()=>{petVideoFullscreen=true;win.setIgnoreMouseEvents(false);});
   win.webContents.on('leave-html-full-screen',()=>{petVideoFullscreen=false;const restoreBounds={...normalPetBounds};setTimeout(()=>{if(liveWindow()&&!petVideoFullscreen)win.setBounds(restoreBounds);},0);});
-  win.on('moved',()=>{if(!liveWindow()||petVideoFullscreen)return;const bounds=win.getBounds();if(Math.abs(bounds.width-WINDOW_WIDTH)<=16&&Math.abs(bounds.height-WINDOW_HEIGHT)<=16){normalPetBounds={...normalPetBounds,x:bounds.x,y:bounds.y};state.position=win.getPosition();}});
-  screen.on('display-removed',()=>{if(liveWindow())win.setPosition(...safePosition(...win.getPosition()));});
-  // Tray artwork is derived from a small in-memory RGBA buffer, independent of character assets.
-  const b=Buffer.alloc(32*32*4);for(let yy=0;yy<32;yy++)for(let xx=0;xx<32;xx++){const i=(yy*32+xx)*4;const inside=(xx-16)**2+(yy-16)**2<210;b[i]=170;b[i+1]=132;b[i+2]=232;b[i+3]=inside?255:0;}
-  tray=new Tray(nativeImage.createFromBitmap(b,{width:32,height:32}));
+  win.on('moved',()=>{if(!liveWindow()||petVideoFullscreen||edgeDock.read().collapsed||edgeDock.isAdjusting())return;const bounds=win.getBounds();if(Math.abs(bounds.width-WINDOW_WIDTH)<=16&&Math.abs(bounds.height-WINDOW_HEIGHT)<=16){edgeDock.noteMove(bounds);normalPetBounds={...normalPetBounds,x:bounds.x,y:bounds.y};state.position=win.getPosition();}});
+  const reflowPet=()=>{if(liveWindow()&&!petVideoFullscreen)edgeDock.reflow();};screen.on('display-removed',reflowPet);screen.on('display-metrics-changed',reflowPet);
+  win.once('closed',()=>{edgeDock.stop();screen.removeListener('display-removed',reflowPet);screen.removeListener('display-metrics-changed',reflowPet);});
+  tray=new Tray(createTrayIcon(nativeImage));
   tray.setToolTip('露娜 · 桌面伙伴');trayMenu=Menu.buildFromTemplate([{id:'settings',label:'设置',click:()=>openPetPanel('settings')},{id:'help',label:'使用说明',click:()=>openPetPanel('help')},{type:'separator'},{label:'区域录屏',click:()=>recording?.show().catch(()=>{})},{label:'提醒',click:()=>showReminders().catch(()=>{})},{label:'截图收藏（Ctrl+Alt+A）',click:()=>{if(!recording?.isActive())screenshot?.start();}},{type:'separator'},{label:'显示宠物',click:restore},{label:'隐藏宠物',click:()=>{if(liveWindow())win.hide();}},{type:'separator'},{label:'退出',click:()=>app.quit()}]);tray.setContextMenu(trayMenu);tray.on('double-click',restore);
   const handle=(name,fn,allowLibrary=false)=>ipcMain.handle(name,async(e,...args)=>{const petSender=liveWindow() && e.sender===win.webContents;const librarySender=allowLibrary && libraryWin && !libraryWin.isDestroyed() && e.sender===libraryWin.webContents;if(quitting || (!petSender && !librarySender))return {ok:false,error:'窗口已关闭'};try{const value=await fn(...args);const sound=operationSound(name,value,args[0]);if(sound)playSound(sound);const effect=operationEffect(name,value,args[0]);if(effect)playEffect(effect);return {ok:true,value};}catch(err){const sound=operationSound(name,null,args[0],true);if(sound)playSound(sound);return {ok:false,error:err.message || '操作失败'};}});
   handle('ui-sound',name=>playSound(name),true);
@@ -161,19 +163,16 @@ app.whenReady().then(async()=>{
   handle('reminder-save',input=>reminders.save(input),false);
   handle('reminder-action',input=>reminders.action(input),false);
   handle('state',()=>publicState());
+  handle('system-stats',()=>{if(!systemStats)systemStats=createSystemStats();if(!smoke){clearTimeout(systemStatsTimer);systemStatsTimer=setTimeout(()=>{systemStats?.stop();systemStats=null;},7000);}return systemStats.read();});
   handle('weather-current',()=>weather.current(state.settings.weatherLocation));
   handle('weather-search',query=>weather.search(query));
   handle('weather-locate',()=>weather.locate());
-  handle('weather-provider',provider=>{
-    const urls={weather:'https://open-meteo.com/',cities:'https://www.geonames.org/',location:'https://ipwhois.io/'};
-    if(!Object.hasOwn(urls,provider))throw Error('未知天气来源。');
-    return shell.openExternal(urls[provider]);
-  });
+  handle('edge-expand',()=>edgeDock.expand());
   handle('settings',async input=>{
-    const next=validate({...input,hair:state.settings.hair,outfit:state.settings.outfit,recordFrameRate:input?.recordFrameRate??state.settings.recordFrameRate,recordFormat:state.settings.recordFormat});
+    const next=validate({...input,bodyShortcuts:input?.bodyShortcuts??state.settings.bodyShortcuts,weatherLocation:Object.hasOwn(input||{},'weatherLocation')?input.weatherLocation:state.settings.weatherLocation,hair:state.settings.hair,outfit:state.settings.outfit,recordFrameRate:input?.recordFrameRate??state.settings.recordFrameRate,recordFormat:state.settings.recordFormat});
     if(next.saveDirectory!==state.settings.saveDirectory){if(recording.isActive())throw Error('停止录屏后再修改保存位置。');if(next.saveDirectory){await fs.promises.mkdir(next.saveDirectory,{recursive:true});await fs.promises.access(next.saveDirectory,fs.constants.W_OK);}}
     const previous=state;state={...state,settings:next};try{persist();}catch(e){state=previous;throw e;}
-    if(liveWindow())win.setAlwaysOnTop(next.top);for(const current of [win,libraryWin])if(current && !current.isDestroyed())configureAudio(current);syncCaptureShortcut();return publicState();
+    if(liveWindow()){win.setAlwaysOnTop(next.top);win.webContents.send('settings-changed',next);}for(const current of [win,libraryWin])if(current && !current.isDestroyed())configureAudio(current);syncCaptureShortcut();return publicState();
   });
   handle('appearance',input=>{const next=validate({...state.settings,hair:input?.hair,outfit:input?.outfit});const previous=state;state={...state,settings:next};try{persist();}catch(error){state=previous;throw error;}return publicState();});
   handle('hide',()=>win.hide());handle('quit',()=>app.quit());
@@ -232,16 +231,18 @@ app.whenReady().then(async()=>{
   handle('collection-reveal',async id=>{const item=collection.openTarget(id);if(item.kind!=='file')throw Error('只有文件可打开所在文件夹。');await requireFile(item.target);shell.showItemInFolder(item.target);return true;},true);
   handle('collection-file-icon',async id=>{const item=collection.openTarget(id);if(item.kind!=='file')throw Error('不是文件。');await requireFile(item.target);return (await app.getFileIcon(item.target,{size:'large'})).toDataURL();},true);
   handle('collection-delete',id=>mutateCollection(async()=>{const removed=await collection.remove(id);notifyCollection();return removed;}),true);
-  ipcMain.on('passthrough',(e,value)=>{if(liveWindow() && e.sender===win.webContents && !drag)win.setIgnoreMouseEvents(value===true,{forward:true});});
+  ipcMain.on('passthrough',(e,value)=>{if(liveWindow() && e.sender===win.webContents && !drag)win.setIgnoreMouseEvents(edgeDock.read().collapsed?false:value===true,{forward:true});});
+  ipcMain.on('edge-hold',(e,value)=>{if(liveWindow()&&e.sender===win.webContents)edgeDock.hold(value===true);});
   ipcMain.on('drag',(e,start)=>{
     if(!liveWindow() || e.sender!==win.webContents)return;
-    if(start){drag={cursor:screen.getCursorScreenPoint(),pos:win.getPosition()};win.setIgnoreMouseEvents(false);}
-    else{drag=null;state.position=win.getPosition();persist();}
+    if(start){if(petVideoFullscreen||screenshot?.isActive())return;edgeDock.beginDrag();drag={cursor:screen.getCursorScreenPoint(),pos:win.getPosition()};win.setIgnoreMouseEvents(false);}
+    else if(drag){drag=null;edgeDock.finishDrag();}
   });
   const timer=setInterval(()=>{if(drag && !win.isDestroyed()){const c=screen.getCursorScreenPoint();win.setPosition(...safePosition(drag.pos[0]+c.x-drag.cursor.x,drag.pos[1]+c.y-drag.cursor.y));}},16);
   win.on('closed',()=>{drag=null;clearInterval(timer);idle?.stop();});
   idle=startIdleMonitor({powerMonitor,getWindow:()=>win,readIdleSeconds:()=>smoke?smokeIdleSeconds:powerMonitor.getSystemIdleTime()});
   win.webContents.on('did-finish-load',()=>{if(liveWindow())idle.check(true);});
+  if(smoke)win.webContents.on('console-message',details=>{if(details.level==='error')console.error('SMOKE_RENDERER_ERROR',details.message);});
   await win.loadFile('index.html');
   if(smoke)await win.webContents.executeJavaScript(`Object.values(sounds).forEach(sound=>sound.volume=0);window.smokeUiSounds=[];window.smokeUiEffects=[];window.pet.onEffect(name=>window.smokeUiEffects.push(name));window.pet.onSound(name=>window.smokeUiSounds.push(name));void 0;`);
   notifyReminders();
@@ -252,6 +253,7 @@ app.whenReady().then(async()=>{
   app.once('before-quit',()=>{for(const [name,listener] of [['suspend',suspendReminders],['lock-screen',lockReminders],['resume',resumeReminders],['unlock-screen',unlockReminders]])powerMonitor.removeListener(name,listener);});
   if(!smoke){reminderTimer=setInterval(checkReminders,1000);checkReminders();}
   if(smoke){
+    let smokeStage='startup';
     try{
       await new Promise(r=>setTimeout(r,1200));
       win.hide();trayMenu.getMenuItemById('settings').click();await new Promise(r=>setTimeout(r,200));
@@ -260,33 +262,21 @@ app.whenReady().then(async()=>{
       const migrated=JSON.parse(fs.readFileSync(stateFile,'utf8'));
       if(Object.hasOwn(migrated,'key') || Object.hasOwn(migrated,'history') || Object.hasOwn(migrated.settings,'online') || migrated.layoutVersion!==3)throw Error('legacy storage migration');
       result.legacyStorage=true;
+      smokeStage='info-hover';
+      // Isolate synthetic hover regression from the OS forwarded cursor stream. Native clicks below remain visible.
+      win.hide();
       const today=await win.webContents.executeJavaScript(`(async()=>{
-        const wait=async check=>{const end=Date.now()+4000;while(!check()){if(Date.now()>end)throw Error('weather UI timeout');await new Promise(r=>setTimeout(r,30));}};
-        if(document.querySelector('#clock-hour')||document.querySelector('#calendar-date'))throw Error('numeric time remains');
-        const sky=document.querySelector('#day-cycle'),horizon=document.querySelector('.time-horizon');
-        const visible=node=>getComputedStyle(node).display!=='none';
-        window.lunaWeather.updateTime(new Date(2026,9,5,6));
-        if(document.querySelector('#calendar-weekday').textContent!=='Mon'||sky.dataset.period!=='sunrise'||!visible(horizon))throw Error('weekday or sunrise');
-        window.lunaWeather.updateTime(new Date(2026,9,5,12));
-        if(sky.dataset.period!=='day'||visible(horizon)||!visible(document.querySelector('.time-sun')))throw Error('noon icon');
-        window.lunaWeather.updateTime(new Date(2026,9,5,18));
-        if(sky.dataset.period!=='sunset'||!visible(horizon))throw Error('sunset icon');
-        window.lunaWeather.updateTime(new Date(2026,9,6,0));
-        if(sky.dataset.period!=='night'||visible(horizon)||visible(document.querySelector('.time-sun'))||document.querySelector('#calendar-weekday').textContent!=='Tue'||!visible(document.querySelector('.time-moon')))throw Error('moon or midnight weekday');
-        window.lunaWeather.updateTime();
-        openSettings();await wait(()=>!document.querySelector('#settings').hidden);
-        document.querySelector('#weather-locate').click();await wait(()=>document.querySelector('#weather-selected').textContent.includes('IP 定位'));
-        document.querySelector('#settings-form').requestSubmit();await wait(()=>document.querySelector('#settings').hidden);await wait(()=>document.querySelector('#weather-temperature').textContent==='22°');
-        if(document.querySelector('#weather-city').textContent!=='杭州'||document.querySelector('#weather-icon').dataset.kind!=='partly')throw Error('weather view');
-        showMessage('');
-        const panel=document.querySelector('#today-panel').getBoundingClientRect();
-        if(!document.querySelector('#bubble').hidden||document.querySelector('#today-panel').hidden||panel.height>50||sky.getBoundingClientRect().width>28)throw Error('compact today layout');
-        showMessage('短暂消息',60);if(document.querySelector('#bubble').hidden||!document.querySelector('#today-panel').hidden)throw Error('bubble and information overlap');
-        await new Promise(r=>setTimeout(r,100));if(!document.querySelector('#bubble').hidden||document.querySelector('#today-panel').hidden)throw Error('temporary bubble timeout');
+        document.querySelector('.petbar').style.transition='none';
+        const wait=async check=>{const end=Date.now()+4000;while(!check()){if(Date.now()>end)throw Error('information UI timeout');await new Promise(r=>setTimeout(r,30));}};
+        if(document.querySelector('#today-panel,#info-bar-enabled,#time-clock'))throw Error('permanent information UI remains');
+        if(document.querySelectorAll('#body-region-tabs button').length!==5||document.querySelectorAll('#body-action-grid button').length!==9)throw Error('body shortcut choices');
+        const stats=await window.pet.call('system-stats');if(!stats.ok||JSON.stringify(stats.value)!==JSON.stringify({cpu:25,memory:50,gpu:75}))throw Error('system stats bridge');
+        openSettings();await wait(()=>!document.querySelector('#settings').hidden);document.querySelector('#settings-form').requestSubmit();await wait(()=>document.querySelector('#settings').hidden);showMessage('');
+        showMessage('短暂消息',60);if(document.querySelector('#bubble').hidden)throw Error('bubble missing');await new Promise(r=>setTimeout(r,100));if(!document.querySelector('#bubble').hidden)throw Error('temporary bubble timeout');
         hideControls();if(getComputedStyle(document.querySelector('.petbar')).visibility!=='hidden')throw Error('toolbar not hidden');
         document.querySelector('#pet').dispatchEvent(new MouseEvent('mousemove',{bubbles:true}));await new Promise(r=>setTimeout(r,200));if(getComputedStyle(document.querySelector('.petbar')).visibility!=='visible')throw Error('pet hover toolbar');
         document.querySelector('.petbar').dispatchEvent(new MouseEvent('mousemove',{bubbles:true}));await new Promise(r=>setTimeout(r,100));if(!document.querySelector('#companion').classList.contains('controls-visible'))throw Error('toolbar hover retention');
-        document.body.dispatchEvent(new MouseEvent('mousemove',{bubbles:true}));await new Promise(r=>setTimeout(r,550));if(getComputedStyle(document.querySelector('.petbar')).visibility!=='hidden')throw Error('toolbar hover leave');
+        document.body.dispatchEvent(new MouseEvent('mousemove',{bubbles:true}));await new Promise(r=>setTimeout(r,550));if(getComputedStyle(document.querySelector('.petbar')).visibility!=='hidden')throw Error('toolbar hover leave: '+JSON.stringify({class:document.querySelector('#companion').className,visible:getComputedStyle(document.querySelector('.petbar')).visibility,hidden:document.hidden}));
         const bar=document.querySelector('.petbar'),point=()=>{const box=bar.getBoundingClientRect();return {clientX:box.left+3,clientY:(box.top+box.bottom)/2};};
         document.body.dispatchEvent(new MouseEvent('mousemove',{bubbles:true,...point()}));await new Promise(r=>setTimeout(r,550));if(ignore||getComputedStyle(bar).visibility!=='visible')throw Error('hidden toolbar cannot be recovered by position');
         const petBox=document.querySelector('#pet').getBoundingClientRect(),barBox=bar.getBoundingClientRect(),gap={clientX:(barBox.left+barBox.right)/2,clientY:(petBox.bottom+barBox.top)/2};
@@ -294,21 +284,36 @@ app.whenReady().then(async()=>{
         document.body.dispatchEvent(new MouseEvent('mousemove',{bubbles:true,clientX:0,clientY:0}));await new Promise(r=>setTimeout(r,100));document.body.dispatchEvent(new MouseEvent('mousemove',{bubbles:true,...point()}));document.dispatchEvent(new MouseEvent('mouseleave',point()));await new Promise(r=>setTimeout(r,550));if(ignore||getComputedStyle(bar).visibility!=='visible')throw Error('toolbar reentry or internal leave hides controls');
         document.dispatchEvent(new MouseEvent('mouseleave',{clientX:-20,clientY:-20}));await new Promise(r=>setTimeout(r,550));if(!ignore||getComputedStyle(bar).visibility!=='hidden')throw Error('toolbar outside leave');
         if(Number(document.querySelector('#recording-button circle').getAttribute('r'))<6)throw Error('recording dot too small');
-        openSettings();await wait(()=>!document.querySelector('#settings').hidden);
-        document.querySelector('#weather-query').value='杭州';document.querySelector('#weather-search').click();await wait(()=>!document.querySelector('#weather-results').hidden);
-        const select=document.querySelector('#weather-results');select.value='0';select.dispatchEvent(new Event('change'));document.querySelector('#settings-form').requestSubmit();await wait(()=>document.querySelector('#settings').hidden);
-        return {dayCycle:true,englishWeekday:true,weatherIcons:true,ipLocation:true,citySearch:true,todayLayout:true,transientBubble:true,exclusiveInfo:true,hoverToolbar:true,toolbarGap:true,hiddenToolbarRecovery:true,toolbarReentry:true,largerRecordingDot:true};
+        return {noInfoBar:true,bodyShortcutChoices:true,localStats:true,transientBubble:true,hoverToolbar:true,toolbarGap:true,hiddenToolbarRecovery:true,toolbarReentry:true,largerRecordingDot:true};
       })()`);
-      Object.assign(result,today);
+      Object.assign(result,today);await win.webContents.executeJavaScript(`document.querySelector('.petbar').style.removeProperty('transition');void 0;`);win.show();await new Promise(r=>setTimeout(r,250));
       const toolbarPoint=await win.webContents.executeJavaScript(`(()=>{showControls();const box=document.querySelector('#library-button').getBoundingClientRect();return {x:Math.round((box.left+box.right)/2),y:Math.round((box.top+box.bottom)/2)};})()`);
       win.webContents.sendInputEvent({type:'mouseMove',...toolbarPoint});await new Promise(r=>setTimeout(r,180));
       win.webContents.sendInputEvent({type:'mouseDown',...toolbarPoint,button:'left',clickCount:1});win.webContents.sendInputEvent({type:'mouseUp',...toolbarPoint,button:'left',clickCount:1});await new Promise(r=>setTimeout(r,250));
-      if(!await win.webContents.executeJavaScript(`!document.querySelector('#library-sheet').hidden && !ignore`))throw Error('toolbar input cannot open library');
+      if(!await win.webContents.executeJavaScript(`!document.querySelector('#library-sheet').hidden && !ignore`))throw Error('toolbar input cannot open library: '+await win.webContents.executeJavaScript(`JSON.stringify({hidden:document.querySelector('#library-sheet').hidden,ignore,controls:document.querySelector('#companion').className,visibility:getComputedStyle(document.querySelector('.petbar')).visibility,hit:document.elementFromPoint(${toolbarPoint.x},${toolbarPoint.y})?.outerHTML})`));
       await win.webContents.executeJavaScript(`window.lunaPanels.closeSheet('library')`);result.toolbarInputClick=true;
       await win.webContents.executeJavaScript(`showMessage('');hideControls();void 0;`);await new Promise(r=>setTimeout(r,200));
       fs.writeFileSync(path.join(app.getPath('temp'),'luna-quiet-preview.png'),(await win.webContents.capturePage()).toPNG());
       await win.webContents.executeJavaScript(`document.querySelector('#pet').dispatchEvent(new MouseEvent('mousemove',{bubbles:true}));void 0;`);await new Promise(r=>setTimeout(r,200));
       fs.writeFileSync(path.join(app.getPath('temp'),'luna-hover-preview.png'),(await win.webContents.capturePage()).toPNG());
+      await win.webContents.executeJavaScript(`(async()=>{await performBodyShortcut('head');void 0;})()`);
+      fs.writeFileSync(path.join(app.getPath('temp'),'luna-info-system-preview.png'),(await win.webContents.capturePage()).toPNG());
+      await win.webContents.executeJavaScript(`showMessage('');void 0;`);
+      if(process.argv.includes('--stats-live-test')){
+        const probe=createSystemStats();
+        try{
+          const until=Date.now()+12000;let measured=probe.read();const cold=measured;
+          if(!cold.pending.cpu)throw Error('initial CPU sample not marked pending');
+          await win.webContents.executeJavaScript(`(async()=>{showMessage(${JSON.stringify(require('./shortcut-bubbles').statsText(cold))},0);await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));void 0;})()`);
+          fs.writeFileSync(path.join(app.getPath('temp'),'luna-stats-loading-preview.png'),(await win.webContents.capturePage()).toPNG());
+          while((measured.cpu===null||measured.gpu===null)&&Date.now()<until){await new Promise(r=>setTimeout(r,250));measured=probe.read();}
+          if(measured.cpu===null||measured.memory===null||['cpu','memory','gpu'].some(key=>measured[key]!==null&&(!Number.isFinite(measured[key])||measured[key]<0||measured[key]>100)))throw Error('live Windows system stats');
+          result.liveSystemStats={initialLoading:true,cpuSampled:true,memorySampled:true,gpuAvailable:measured.gpu!==null,reading:measured};
+          await win.webContents.executeJavaScript(`showMessage(${JSON.stringify(require('./shortcut-bubbles').statsText(measured))},0);void 0;`);
+          fs.writeFileSync(path.join(app.getPath('temp'),'luna-info-live-preview.png'),(await win.webContents.capturePage()).toPNG());
+          await win.webContents.executeJavaScript(`showMessage('');void 0;`);
+        }finally{probe.stop();const stopped=probe.read();if(['cpu','memory','gpu'].some(key=>stopped[key]!==null)||stopped.pending.cpu||stopped.pending.gpu)throw Error('system stats accepted reads after stop');}
+      }
       await win.webContents.executeJavaScript(`hideControls();void 0;`);
 
       win.hide();trayMenu.getMenuItemById('help').click();await new Promise(r=>setTimeout(r,100));
@@ -329,16 +334,18 @@ app.whenReady().then(async()=>{
       win.webContents.sendInputEvent({type:'keyUp',keyCode:'Escape'});
       await new Promise(r=>setTimeout(r,100));
       await win.webContents.executeJavaScript(`{if(document.querySelector('#help').open)throw Error('help Escape');openHelp();document.querySelector('#help-close').click();if(document.querySelector('#help').open)throw Error('help close');}`);
+      smokeStage='bubble-and-wardrobe';
       result.helpClose=true;
-      for(const file of ['luna-silver-jk.png','luna-straight-original.png','luna-straight-jk.png','wardrobe-items.png']){const image=nativeImage.createFromPath(path.join(__dirname,'assets',file));if(image.isEmpty())throw Error('wardrobe decode');const pixels=image.toBitmap();let transparent=0;for(let i=3;i<pixels.length;i+=4)if(pixels[i]===0)transparent++;if(transparent/pixels.length*4<.15)throw Error('wardrobe alpha');}
-      for(const hair of ['original','straight'])for(const outfit of ['original','jk']){
-        await win.webContents.executeJavaScript(`(async()=>{document.querySelector('#wardrobe-button').click();await new Promise(r=>setTimeout(r,150));document.querySelector('#wardrobe-tab-hair').click();document.querySelector('.look-card[data-group=hair][data-choice=${hair}]').click();document.querySelector('#wardrobe-tab-outfit').click();document.querySelector('.look-card[data-group=outfit][data-choice=${outfit}]').click();if([...document.querySelectorAll('.look-card')].some(card=>card.textContent.trim()||!getComputedStyle(card.querySelector('.choice-sprite')).backgroundImage.includes('wardrobe-items.png'))||document.querySelectorAll('.look-card[aria-pressed=true]').length!==2||document.querySelector('#wardrobe select'))throw Error('wardrobe grid selection');if(document.querySelector('#wardrobe').hidden||document.querySelector('#look-preview').dataset.hair!=='${hair}')throw Error('wardrobe preview');document.querySelector('#wardrobe-form').requestSubmit();await new Promise(r=>setTimeout(r,150));if(document.querySelector('#pet').dataset.hair!=='${hair}'||document.querySelector('#pet').dataset.outfit!=='${outfit}')throw Error('wardrobe applied');})()`);
+      result.bubbleInteraction=await require('./bubble-smoke').checkOrdinary(win);result.bodyShortcuts=await require('./body-shortcut-smoke').check(win,app.getPath('temp'),stateFile,systemStats);
+      for(const file of new Set([...Object.values(require('./character-assets').looks).map(look=>look.body.file),'wardrobe-items.png','wardrobe-items-v2.png'])){const image=nativeImage.createFromPath(path.join(__dirname,'assets',file));if(image.isEmpty())throw Error('wardrobe decode');const pixels=image.toBitmap();let transparent=0;for(let i=3;i<pixels.length;i+=4)if(pixels[i]===0)transparent++;if(transparent/pixels.length*4<.15)throw Error('wardrobe alpha');}
+      for(const hair of ['original','straight','bob','twintails'])for(const outfit of ['original','jk','secretary','nurse']){
+        await win.webContents.executeJavaScript(`(async()=>{document.querySelector('#wardrobe-button').click();await new Promise(r=>setTimeout(r,150));document.querySelector('#wardrobe-tab-hair').click();document.querySelector('.look-card[data-group=hair][data-choice=${hair}]').click();document.querySelector('#wardrobe-tab-outfit').click();document.querySelector('.look-card[data-group=outfit][data-choice=${outfit}]').click();if([...document.querySelectorAll('.look-card')].some(card=>card.textContent.trim()||!getComputedStyle(card.querySelector('.choice-sprite')).backgroundImage.includes('wardrobe-items'))||document.querySelectorAll('.look-card[aria-pressed=true]').length!==2||document.querySelector('#wardrobe select'))throw Error('wardrobe grid selection');if(document.querySelector('#wardrobe').hidden||document.querySelector('#look-preview').dataset.hair!=='${hair}')throw Error('wardrobe preview');document.querySelector('#wardrobe-form').requestSubmit();for(let i=0;i<60&&!document.querySelector('#wardrobe').hidden;i++)await new Promise(r=>setTimeout(r,50));if(document.querySelector('#pet').dataset.bodyFile!==window.lunaCharacterAssets.getLook('${hair}','${outfit}').body.file||document.querySelector('#pet').dataset.hair!=='${hair}'||document.querySelector('#pet').dataset.outfit!=='${outfit}')throw Error('wardrobe applied');})()`);
         const saved=JSON.parse(fs.readFileSync(stateFile,'utf8')).settings;if(saved.hair!==hair||saved.outfit!==outfit)throw Error('wardrobe persisted');
         await win.webContents.executeJavaScript(`document.querySelector('#pet').classList.remove('happy','blink','sleeping');`);
         fs.writeFileSync(path.join(app.getPath('temp'),'luna-look-'+hair+'-'+outfit+'.png'),(await win.webContents.capturePage()).toPNG());
         await require('./character-smoke').checkCharacter(win,app.getPath('temp'),hair+'-'+outfit);
       }
-      await win.webContents.executeJavaScript(`(async()=>{const before=(await window.pet.call('state')).value.settings;const changed=(await window.pet.call('appearance',{hair:'straight',outfit:'jk',name:'不应覆盖',soundEnabled:!before.soundEnabled})).value.settings;if(changed.name!==before.name||changed.soundEnabled!==before.soundEnabled||JSON.stringify(changed.weatherLocation)!==JSON.stringify(before.weatherLocation))throw Error('appearance changed general settings');const saved=(await window.pet.call('settings',{...before,hair:'original',outfit:'original'})).value.settings;if(saved.hair!=='straight'||saved.outfit!=='jk')throw Error('general settings reset wardrobe');})()`);
+      await win.webContents.executeJavaScript(`(async()=>{const before=(await window.pet.call('state')).value.settings;const changed=(await window.pet.call('appearance',{hair:'straight',outfit:'jk',name:'不应覆盖',soundEnabled:!before.soundEnabled})).value.settings;if(changed.name!==before.name||changed.soundEnabled!==before.soundEnabled)throw Error('appearance changed general settings');const saved=(await window.pet.call('settings',{...before,hair:'original',outfit:'original'})).value.settings;if(saved.hair!=='straight'||saved.outfit!=='jk')throw Error('general settings reset wardrobe');})()`);
       await win.webContents.executeJavaScript(`(async()=>{await openWardrobe();document.querySelector('#hair').value='original';document.querySelector('#outfit').value='original';document.querySelector('#wardrobe-form').requestSubmit();await new Promise(r=>setTimeout(r,150));})()`);
       await win.webContents.executeJavaScript(`(async()=>{await openWardrobe();document.querySelector('#hair').value='straight';document.querySelector('#outfit').value='jk';document.querySelector('#hair').dispatchEvent(new Event('change'));if(document.querySelector('#pet').dataset.hair!=='original'||document.querySelector('#wardrobe-form .primary').getBoundingClientRect().bottom>document.body.clientHeight)throw Error('wardrobe draft layout');})()`);
       await new Promise(r=>setTimeout(r,200));
@@ -347,7 +354,7 @@ app.whenReady().then(async()=>{
       fs.writeFileSync(path.join(app.getPath('temp'),'luna-wardrobe-settings.png'),(await win.webContents.capturePage()).toPNG());
       await win.webContents.executeJavaScript(`(()=>{const pane=document.querySelector('#wardrobe'),box=pane.getBoundingClientRect();if(Math.abs(box.bottom-(document.body.clientHeight-60))>1||getComputedStyle(pane).animationName!=='sheet-in'||!['library','recording','reminder'].every(name=>document.querySelector('#'+name+'-sheet').hidden))throw Error('wardrobe bottom sheet layout');})()`);
       await win.webContents.executeJavaScript(`(async()=>{document.querySelector('#wardrobe-close').click();await openWardrobe();if(document.querySelector('#hair').value!=='original'||document.querySelector('#outfit').value!=='original')throw Error('wardrobe cancel');document.querySelector('#wardrobe-close').click();})()`);
-      result.wardrobe={iconTabs:true,keyboardTabs:true,scrollGrid:true,itemOnlyThumbnails:true,noCardText:true,cardGrid:true,separatePanel:true,preserveGeneralSettings:true,cancelDraft:true,independentChoices:true,fourCombinations:true,alignedExpressions:true,centeredCharacter:true,compactFeedbackPlacement:true,fixedHeadAndBody:true,localPaintedExpressions:true,preview:true,persisted:true,expressions:true,transparent:true};
+      result.wardrobe={iconTabs:true,keyboardTabs:true,scrollGrid:true,itemOnlyThumbnails:true,noCardText:true,cardGrid:true,separatePanel:true,preserveGeneralSettings:true,cancelDraft:true,independentChoices:true,sixteenCombinations:true,alignedExpressions:true,centeredCharacter:true,compactFeedbackPlacement:true,fixedHeadAndBody:true,localPaintedExpressions:true,preview:true,persisted:true,expressions:true,transparent:true};
       const measuredIdle=powerMonitor.getSystemIdleTime();
       if(!Number.isFinite(measuredIdle)||measuredIdle<0)throw Error('system idle API');
       result.systemIdleAPI=true;
@@ -358,16 +365,19 @@ app.whenReady().then(async()=>{
       smokeIdleSeconds=0;idle.check();await new Promise(r=>setTimeout(r,50));
       if(await win.webContents.executeJavaScript(`document.querySelector('#pet').classList.contains('sleeping')`))throw Error('automatic wake');
       result.automaticIdleRest=true;
-      await win.webContents.executeJavaScript(`(async()=>{openSettings();await new Promise(r=>setTimeout(r,100));if(document.querySelector('#settings-form .primary').getBoundingClientRect().bottom>document.body.clientHeight)throw Error('settings clipped');const buttons=[...document.querySelectorAll('#settings button')];if(buttons.some(button=>button.textContent.trim()||!button.querySelector('svg')||!button.title||!button.getAttribute('aria-label'))||document.querySelector('#settings [data-provider]')||document.querySelector('#top').getAttribute('role')!=='switch')throw Error('settings icon actions');})()`);
+      await win.webContents.executeJavaScript(`(async()=>{openSettings();await new Promise(r=>setTimeout(r,100));const panel=document.querySelector('#settings');panel.scrollTop=panel.scrollHeight;await new Promise(r=>setTimeout(r,80));if(document.querySelector('#settings-form .primary').getBoundingClientRect().bottom>document.body.clientHeight)throw Error('settings footer inaccessible');panel.scrollTop=0;const buttons=[...document.querySelectorAll('#settings header button,#settings .settings-actions button,#settings .storage-row button,#settings .weather-search-row button')];if(buttons.some(button=>button.textContent.trim()||!button.querySelector('svg')||!button.title||!button.getAttribute('aria-label'))||document.querySelector('#settings [data-provider]')||document.querySelector('#top').getAttribute('role')!=='switch')throw Error('settings icon actions');})()`);
       result.settingsIconActions=true;
-      fs.writeFileSync(path.join(app.getPath('temp'),'luna-weather-settings.png'),(await win.webContents.capturePage()).toPNG());
+      fs.writeFileSync(path.join(app.getPath('temp'),'luna-settings-preview.png'),(await win.webContents.capturePage()).toPNG());
       await win.webContents.executeJavaScript(`document.querySelector('#settings-close').click()`);
       // Windows may expand a shown window to its native minimum width at higher DPI.
       if(win.getSize()[0]<WINDOW_WIDTH || await win.webContents.executeJavaScript('document.body.clientWidth')!==WINDOW_WIDTH)throw Error('window width: '+win.getSize()[0]);
+      const waitDroppedCount=async count=>{const until=Date.now()+4000;while(collection.list().length<count){if(Date.now()>until)throw Error('drop save did not finish: '+await win.webContents.executeJavaScript(`document.querySelector('#bubble-message').textContent`));await new Promise(r=>setTimeout(r,40));}};
       await win.webContents.executeJavaScript(`(async()=>{const data=new DataTransfer();data.setData('text/plain','https://example.com/for-luna');document.querySelector('#pet').dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:data}));await new Promise(r=>setTimeout(r,300));})()`);
+      await waitDroppedCount(1);
       if(collection.list().length!==1 || collection.list()[0].kind!=='link')throw Error('collection drop');
       result.collectionDrop=true;
       await win.webContents.executeJavaScript(`(async()=>{const data=new DataTransfer();data.items.add(new File([new Uint8Array([0,1,2,255])],'临时图片.png',{type:'image/png'}));document.querySelector('#pet').dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:data}));await new Promise(r=>setTimeout(r,300));})()`);
+      await waitDroppedCount(2);
       if(collection.list().length!==2 || collection.list()[0].kind!=='file')throw Error('virtual file drop: '+await win.webContents.executeJavaScript(`document.querySelector('#bubble').textContent`));
       result.virtualFileDrop=true;
       const videoPath=path.join(app.getPath('userData'),'本地视频.mp4');
@@ -380,6 +390,7 @@ app.whenReady().then(async()=>{
         await win.webContents.debugger.sendCommand('DOM.setFileInputFiles',{nodeId,files:[videoPath]});
         await win.webContents.executeJavaScript(`(async()=>{const input=document.querySelector('#smoke-file');const data=new DataTransfer();data.items.add(input.files[0]);document.querySelector('#pet').dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:data}));await new Promise(r=>setTimeout(r,300));input.remove();})()`);
       }finally{if(!win.isDestroyed() && win.webContents.debugger.isAttached())win.webContents.debugger.detach();}
+      await waitDroppedCount(3);
       if(collection.list().length!==3 || collection.list()[0].title!=='本地视频.mp4')throw Error('local file drop: '+await win.webContents.executeJavaScript(`document.querySelector('#bubble').textContent`));
       if(!fs.readFileSync(collection.openTarget(collection.list()[0].id).target).equals(fs.readFileSync(videoPath)))throw Error('local file bytes');
       if(collection.openTarget(collection.list()[0].id).target!==videoPath || collection.list()[0].storage!=='reference')throw Error('local file reference');
@@ -493,6 +504,7 @@ app.whenReady().then(async()=>{
       await libraryWin.webContents.executeJavaScript(`document.querySelector('#tab-media').click()`);
       await libraryWin.webContents.executeJavaScript(`{document.querySelector('#search').value='预览';document.querySelector('#search').dispatchEvent(new Event('input'));}`);
       fs.writeFileSync(path.join(app.getPath('temp'),'luna-library-preview.png'),(await libraryWin.webContents.capturePage()).toPNG());
+      smokeStage='screenshots';
       const countBeforeCapture=collection.list().length;
       if(!await screenshot.start() || await screenshot.start())throw Error('screenshot single session');
       let capture=screenshot.getWindows()[0];
@@ -523,6 +535,7 @@ app.whenReady().then(async()=>{
       await win.webContents.executeJavaScript(`(async()=>{openSettings();await new Promise(r=>setTimeout(r,120));if(document.querySelector('#screenshot-shortcut').checked)throw Error('shortcut reopened preference');document.querySelector('#screenshot-shortcut').checked=true;document.querySelector('#settings-form').requestSubmit();await new Promise(r=>setTimeout(r,150));})()`);
       if(!shortcutStatus().enabled || !JSON.parse(fs.readFileSync(stateFile,'utf8')).settings.screenshotShortcut)throw Error('shortcut reenable');
       result.screenshotShortcutSettings=true;
+      smokeStage='recording';
       const waitRecording=async phase=>{const until=Date.now()+18000;while(true){const current=recording.getWindow();if(!current||current.isDestroyed())throw Error('recording window destroyed');const status=await current.webContents.executeJavaScript(`document.querySelector('#recording-frame').contentDocument.body.classList.contains('recording')`);if(phase==='recording'&&status)return;if(!recording.isActive())throw Error('recording failed: '+await current.webContents.executeJavaScript(`document.querySelector('#recording-frame').contentDocument.querySelector('#status').textContent`));if(Date.now()>until)throw Error('recording start timeout');await new Promise(r=>setTimeout(r,50));}};
       await win.webContents.executeJavaScript(`(async()=>{document.querySelector('#recording-button').click();await new Promise(r=>setTimeout(r,150));})()`);
       if(recording.getWindow()!==win||!await win.webContents.executeJavaScript(`!document.querySelector('#recording-sheet').hidden && document.querySelector('#library-sheet').hidden`))throw Error('recording not embedded');
@@ -558,10 +571,11 @@ app.whenReady().then(async()=>{
       if(!fs.existsSync(collection.openTarget(collection.list()[0].id).target))throw Error('custom file lost on reset');
       await win.webContents.executeJavaScript(`window.lunaPanels.closeSheet('recording')`);result.recording={formats:recordingFormats,frameRates:true,persistentBorder:true,compactControls:true,crop:true,encodedPlayback:true,autoCollection:true,customDirectory:true,preservedExistingFiles:true,embeddedPanel:true,closedThinBorder:true};
       await win.webContents.executeJavaScript(`sounds.reminder.volume=0;window.smokeSoundCount=0;window.pet.onSound(name=>{if(name==='reminder')window.smokeSoundCount++;});void 0;`);
+      smokeStage='reminders';
       const reminderWindowCount=BrowserWindow.getAllWindows().length;
       await showReminders();await new Promise(r=>setTimeout(r,200));
       result.reminderInput=await require('./reminder-input-smoke')(win);
-      const reminderFrame=()=>win.webContents.mainFrame.frames.find(frame=>frame.url===pathToFileURL(path.join(__dirname,'reminder.html')).href);
+      const reminderFrame=()=>{const frame=win.webContents.mainFrame.frames.find(frame=>frame.url===pathToFileURL(path.join(__dirname,'reminder.html')).href);return frame&&{executeJavaScript:async source=>{try{return await frame.executeJavaScript(source);}catch(error){console.error('REMINDER_SMOKE_SOURCE',source);throw error;}}};};
       if(!reminderFrame()||BrowserWindow.getAllWindows().length!==reminderWindowCount)throw Error('reminder opened native window');
       if(!await win.webContents.executeJavaScript(`!document.querySelector('#reminder-sheet').hidden && document.querySelector('#library-sheet').hidden && document.querySelector('#recording-sheet').hidden`))throw Error('reminder sheet mutual exclusion');
       await win.webContents.executeJavaScript(`(()=>{const pane=document.querySelector('#reminder-sheet'),box=pane.getBoundingClientRect();if(Math.abs(box.bottom-(document.body.clientHeight-60))>1||getComputedStyle(pane).animationName!=='sheet-in'||!document.querySelector('#wardrobe').hidden)throw Error('reminder bottom sheet layout');})()`);
@@ -573,12 +587,17 @@ app.whenReady().then(async()=>{
       const reminderItem=reminders.list()[0];if(!reminderItem || reminderItem.status!=='pending')throw Error('reminder saved');
       await win.webContents.executeJavaScript(`window.lunaPanels.closeSheet('reminder')`);lockReminders();smokeReminderNow=reminderItem.dueAt+1;checkReminders();await new Promise(r=>setTimeout(r,30));if(reminders.list()[0].status!=='pending'||!await win.webContents.executeJavaScript(`document.querySelector('#reminder-sheet').hidden`))throw Error('reminder lock deferral');unlockReminders();await reminders.settled();
       const reminderUntil=Date.now()+4000;
-      while(!await win.webContents.executeJavaScript(`!document.querySelector('#reminder-sheet').hidden`)){if(Date.now()>reminderUntil)throw Error('reminder alert window');await new Promise(r=>setTimeout(r,40));}
+      while(!await win.webContents.executeJavaScript(`feedback.getReminder()?.id==='${reminderItem.id}'`)){if(Date.now()>reminderUntil)throw Error('reminder alert bubble');await new Promise(r=>setTimeout(r,40));}
       await new Promise(r=>setTimeout(r,150));
-      if(!win.isVisible() || !await reminderFrame().executeJavaScript(`!!document.querySelector('.item.fired')`))throw Error('reminder visible alert');
+      if(!win.isVisible()||!await win.webContents.executeJavaScript(`document.querySelector('#reminder-sheet').hidden`))throw Error('reminder auto opened panel');
+      await require('./bubble-smoke').checkReminderLayout(win);
+      fs.writeFileSync(path.join(app.getPath('temp'),'luna-reminder-inline-action.png'),(await win.webContents.capturePage()).toPNG());
+      await require('./bubble-smoke').click(win,'bubble-body');
+      if(!await win.webContents.executeJavaScript(`!document.querySelector('#reminder-sheet').hidden && feedback.getReminder()?.id==='${reminderItem.id}'`))throw Error('reminder body click did not open panel');
+      if(reminders.list().find(item=>item.id===reminderItem.id).status!=='fired'||!await reminderFrame().executeJavaScript(`!!document.querySelector('.item.fired')`))throw Error('reminder body click completed instead of opening');
       if(!await win.webContents.executeJavaScript(`window.smokeSoundCount===1 && !sounds.reminder.paused && sounds.reminder.readyState>=2`))throw Error('reminder sound playback');
       presentReminders();await new Promise(r=>setTimeout(r,40));
-      if(!await win.webContents.executeJavaScript(`window.smokeSoundCount===1 && !document.querySelector('#bubble').hidden && document.querySelector('#today-panel').hidden && feedback.getReminder()?.id==='${reminderItem.id}'`))throw Error('persistent reminder bubble');
+      if(!await win.webContents.executeJavaScript(`window.smokeSoundCount===1 && !document.querySelector('#bubble').hidden && feedback.getReminder()?.id==='${reminderItem.id}'`))throw Error('persistent reminder bubble');
       await win.webContents.executeJavaScript(`showMessage('普通消息不应覆盖提醒',10);void 0;`);await new Promise(r=>setTimeout(r,40));
       if(!await win.webContents.executeJavaScript(`document.querySelector('#bubble').textContent.includes('喝水')`))throw Error('ordinary message overrides reminder');
       fs.writeFileSync(path.join(app.getPath('temp'),'luna-reminder-bubble.png'),(await win.webContents.capturePage()).toPNG());
@@ -591,7 +610,7 @@ app.whenReady().then(async()=>{
       fs.writeFileSync(path.join(app.getPath('temp'),'luna-reminder-preview.png'),(await win.webContents.capturePage()).toPNG());
       await reminderFrame().executeJavaScript(`(async()=>{document.querySelector('button[aria-label="稍后 5 分钟"]').click();await new Promise(r=>setTimeout(r,150));if(document.querySelector('.item.fired'))throw Error('reminder snooze UI');})()`);
       if(reminders.list()[0].dueAt!==smokeReminderNow+300000 || reminders.list()[0].status!=='pending')throw Error('reminder snooze');
-      await reminderFrame().executeJavaScript(`(async()=>{document.querySelector('button[aria-label="完成"]').click();await new Promise(r=>setTimeout(r,150));document.querySelector('#done').click();if(!document.querySelector('.item.done'))throw Error('reminder complete UI');})()`);
+      await reminderFrame().executeJavaScript(`(async()=>{document.querySelector('button[aria-label="完成"]').click();document.querySelector('#done').click();const until=Date.now()+4000;while(!document.querySelector('.item.done')){if(Date.now()>until)throw Error('reminder complete UI: '+document.querySelector('#status').textContent);await new Promise(r=>setTimeout(r,40));}})()`);
       if(reminders.list()[0].status!=='done' || JSON.parse(fs.readFileSync(path.join(app.getPath('userData'),'reminders.json'),'utf8'))[0].status!=='done')throw Error('reminder persistence');
       await reminderFrame().executeJavaScript(`(async()=>{document.querySelector('#mode-countdown').click();document.querySelector('[data-minutes="60"]').click();if(!document.querySelector('#time').disabled||document.querySelector('#hours').value!=='1'||document.querySelector('#minutes').value!=='0')throw Error('countdown mode preset');document.querySelector('#hours').value='0';document.querySelector('#minutes').value='0';document.querySelector('#seconds').value='10';document.querySelector('#title').value='倒计时测试';document.querySelector('#form').requestSubmit();await new Promise(r=>setTimeout(r,150));if(!document.querySelector('.item.countdown time')?.textContent.includes('剩余'))throw Error('countdown display');})()`);
       const countdownItem=reminders.list().find(item=>item.title==='倒计时测试');
@@ -606,17 +625,33 @@ app.whenReady().then(async()=>{
       await win.webContents.executeJavaScript(`(async()=>{await Promise.all(Object.values(sounds).map(sound=>new Promise((resolve,reject)=>{if(sound.readyState>=2)return resolve();const timer=setTimeout(()=>reject(Error('UI sound decode: '+sound.src)),4000);sound.addEventListener('loadeddata',()=>{clearTimeout(timer);resolve();},{once:true});sound.load();})));for(const name of ['tab','select','open','save','collect','capture-start','capture-done','capture-cancel'])if(!window.smokeUiSounds.includes(name))throw Error('Missing UI feedback: '+name);const unknown=await window.pet.call('ui-sound','unknown');if(unknown.value!==false)throw Error('Unknown sound accepted');})()`);
       reminderAlerts.tick();await new Promise(r=>setTimeout(r,50));
       if(!await win.webContents.executeJavaScript(`window.smokeSoundCount===3`))throw Error('unmuted reminder resume');
-      await win.webContents.executeJavaScript(`document.querySelector('#bubble').click();void 0;`);
+      await win.webContents.executeJavaScript(`closeSheets();void 0;`);
+      await require('./bubble-smoke').click(win,'bubble-complete');
       const completeUntil=Date.now()+4000;while(reminders.list().find(item=>item.id===countdownItem.id).status!=='done'){if(Date.now()>completeUntil)throw Error('bubble reminder complete');await new Promise(r=>setTimeout(r,40));}
       smokeReminderNow+=15000;reminderAlerts.tick();await new Promise(r=>setTimeout(r,50));
       if(!await win.webContents.executeJavaScript(`window.smokeSoundCount===3 && !feedback.getReminder() && sounds.reminder.paused`))throw Error('completed reminder continued');
+      if(!await win.webContents.executeJavaScript(`document.querySelector('#reminder-sheet').hidden`))throw Error('complete opened reminder panel');
       result.sound={uiVariants:17,uiEvents:true,decodedPlayback:true,repeatedReminder:true,globalMute:true,persisted:true,reenabled:true};
       result.countdown={preset:true,customSeconds:true,remainingTime:true,due:true};
+      const simultaneous=[];for(const title of ['连续提醒第一条','连续提醒第二条'])simultaneous.push(await reminders.save({title,mode:'countdown',durationSeconds:1}));
+      await win.webContents.executeJavaScript(`closeSheets();void 0;`);smokeReminderNow+=1000;await reminders.check();await new Promise(r=>setTimeout(r,100));
+      for(const item of simultaneous){
+        if(!await win.webContents.executeJavaScript(`feedback.getReminder()?.id==='${item.id}' && document.querySelector('#reminder-sheet').hidden`))throw Error('simultaneous reminder did not advance in bubble');
+        await require('./bubble-smoke').checkReminderLayout(win);await require('./bubble-smoke').click(win,'bubble-complete');
+        if(reminders.list().find(value=>value.id===item.id).status!=='done')throw Error('inline complete did not finish item');
+      }
+      const afterInlineSound=await win.webContents.executeJavaScript(`window.smokeSoundCount`);smokeReminderNow+=15000;reminderAlerts.tick();await new Promise(r=>setTimeout(r,60));
+      if(!await win.webContents.executeJavaScript(`!feedback.getReminder() && document.querySelector('#reminder-sheet').hidden && window.smokeSoundCount===${afterInlineSound}`))throw Error('inline complete opened panel or kept sound');
+      result.bubbleInteraction.inlineMultiReminder=true;
+
       await win.webContents.executeJavaScript(`window.lunaPanels.closeSheet('reminder')`);
       notifyReminders();
-      result.reminders={form:true,duePanel:true,embeddedPanel:true,noExtraWindow:true,persistentBubble:true,bubbleComplete:true,snooze:true,complete:true,persisted:true};
+      result.reminders={form:true,dueBubble:true,bodyOpensPanel:true,inlineComplete:true,completeWithoutPanel:true,embeddedPanel:true,noExtraWindow:true,persistentBubble:true,bubbleComplete:true,snooze:true,complete:true,persisted:true};
       libraryWin.destroy();
+      smokeStage='hybrid-and-effects';
+      result.hybridCharacter=await require('./character-smoke').checkHybrid(win);
       result.effects=await require('./character-smoke').checkReactions(win);
+      smokeStage='edge-dock';result.edgeDock=await require('./edge-smoke').check({win,dock:edgeDock,screen,ipcMain,stateFile,fireReminder:async()=>{await reminders.save({title:'贴边提醒测试',mode:'countdown',durationSeconds:1});smokeReminderNow+=2000;await reminders.check();}});
       await new Promise(r=>setTimeout(r,250));
       const shot=await win.webContents.capturePage();fs.writeFileSync(path.join(__dirname,'preview.png'),shot.toPNG());
       const oldSender=win.webContents;
@@ -626,9 +661,9 @@ app.whenReady().then(async()=>{
       ipcMain.emit('drag',{sender:oldSender},false);
       result.lateEventsAfterWindowDestroyed=true;
       fs.writeFileSync(path.join(__dirname,'smoke-result.json'),JSON.stringify(result));console.log(JSON.stringify(result));app.exit(0);
-    }catch(e){console.error(e);app.exit(1);}
+    }catch(e){console.error('SMOKE_STAGE',smokeStage,e);app.exit(1);}
   }
 });
-app.on('before-quit',event=>{quitting=true;clearInterval(reminderTimer);reminderAlerts?.stop();clearTimeout(reminderAlertTimer);reminders?.stop();screenshot?.stop();globalShortcut.unregisterAll();if(stateFile && state)persist();if((reminders||recording) && !quitSettled){event.preventDefault();Promise.all([reminders?.settled(),recording?.stop()]).finally(()=>{quitSettled=true;app.quit();});}});
+app.on('before-quit',event=>{quitting=true;edgeDock?.stop();clearInterval(reminderTimer);clearTimeout(systemStatsTimer);systemStats?.stop();reminderAlerts?.stop();clearTimeout(reminderAlertTimer);reminders?.stop();screenshot?.stop();globalShortcut.unregisterAll();if(stateFile && state)persist();if((reminders||recording) && !quitSettled){event.preventDefault();Promise.all([reminders?.settled(),recording?.stop()]).finally(()=>{quitSettled=true;app.quit();});}});
 app.on('window-all-closed',()=>app.quit());
 }

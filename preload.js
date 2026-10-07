@@ -1,5 +1,5 @@
 const {contextBridge,ipcRenderer,webUtils}=require('electron');
-const allowed=new Set(['panel-focus','recording-show','storage-choose','ui-sound','reminder-show','reminder-list','reminder-complete','screenshot-start','screenshot-shortcut','state','settings','appearance','weather-current','weather-search','weather-locate','weather-provider','hide','quit','library-show','library-expand','library-window','collection-list','collection-add-text','collection-add-clipboard','library-add-files','collection-open','collection-delete','collection-copy','collection-reveal','collection-file-icon','collection-link-preview']);
+const allowed=new Set(['panel-focus','recording-show','storage-choose','ui-sound','reminder-show','reminder-list','reminder-complete','screenshot-start','screenshot-shortcut','state','settings','appearance','system-stats','weather-current','weather-search','weather-locate','edge-expand','hide','quit','library-show','library-expand','library-window','collection-list','collection-add-text','collection-add-clipboard','library-add-files','collection-open','collection-delete','collection-copy','collection-reveal','collection-file-icon','collection-link-preview']);
 contextBridge.exposeInMainWorld('pet',{
   call:(channel,payload)=>{if(!allowed.has(channel))throw Error('Unknown operation');return ipcRenderer.invoke(channel,payload);},
   saveDroppedFiles:async files=>{
@@ -25,6 +25,9 @@ contextBridge.exposeInMainWorld('pet',{
   onReminderCount:callback=>ipcRenderer.on('reminder-count',(_event,value)=>callback(value)),
   onReminderDue:callback=>ipcRenderer.on('reminder-due',(_event,value)=>callback(value)),
   onIdleChanged:callback=>ipcRenderer.on('idle-changed',(_event,value)=>callback(value===true)),
+  onSettingsChanged:callback=>ipcRenderer.on('settings-changed',(_event,value)=>callback(value)),
+  onEdgeDockChanged:callback=>ipcRenderer.on('edge-dock-changed',(_event,value)=>callback(value)),
+  edgeHold:value=>ipcRenderer.send('edge-hold',value===true),
   passthrough:value=>ipcRenderer.send('passthrough',!!value),
   drag:value=>ipcRenderer.send('drag',!!value)
 });

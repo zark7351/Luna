@@ -1,6 +1,7 @@
 const path=require('node:path');
+const bodyShortcuts=require('./body-shortcuts');
 const {location}=require('./weather');
-const defaults = { name: '露娜', nickname: '', top: true, screenshotShortcut:true, soundEnabled:true, hair:'original', outfit:'original', weatherLocation:null, saveDirectory:'', recordFrameRate:60, recordFormat:'mp4' };
+const defaults = { name: '露娜', nickname: '', top: true, screenshotShortcut:true, soundEnabled:true, bodyShortcuts:bodyShortcuts.defaults,weatherLocation:null, hair:'original', outfit:'original', saveDirectory:'', recordFrameRate:60, recordFormat:'mp4' };
 const WINDOW_WIDTH = 280;
 const WINDOW_HEIGHT = 640;
 const OLD_PET_OFFSET = 387;
@@ -15,12 +16,13 @@ function validate(input = {}) {
   s.top = input.top !== false;
   s.screenshotShortcut = input.screenshotShortcut !== false;
   s.soundEnabled = input.soundEnabled !== false;
-  s.hair=['original','straight'].includes(input.hair)?input.hair:'original';
-  s.outfit=['original','jk'].includes(input.outfit)?input.outfit:'original';
+  s.bodyShortcuts=bodyShortcuts.validate(input.bodyShortcuts);
+  s.weatherLocation=location(input.weatherLocation);
+  s.hair=['original','straight','bob','twintails'].includes(input.hair)?input.hair:'original';
+  s.outfit=['original','jk','secretary','nurse'].includes(input.outfit)?input.outfit:'original';
   s.saveDirectory=typeof input.saveDirectory==='string'&&input.saveDirectory.length<=4096&&path.isAbsolute(input.saveDirectory)?path.resolve(input.saveDirectory):'';
   s.recordFrameRate=[15,24,30,60].includes(input.recordFrameRate)?input.recordFrameRate:60;
   s.recordFormat='mp4';
-  s.weatherLocation=location(input.weatherLocation);
   return s;
 }
 

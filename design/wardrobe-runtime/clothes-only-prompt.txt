@@ -1,0 +1,4 @@
+Tool mode: built-in image_gen; transparent_background=true
+Reference: assets/wardrobe-items-v2.png (original atlas preserved as wardrobe-items-with-accessories.png)
+
+undefined
