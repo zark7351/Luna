@@ -9,14 +9,14 @@ const {pathToFileURL}=require('node:url');
 const reportFatal = error => { fs.writeFileSync(path.join(app.getPath('temp'),'lunapet-startup-error.log'),String(error.stack || error)); app.exit(1); };
 process.on('uncaughtException', reportFatal);
 process.on('unhandledRejection', reportFatal);
-const {defaults,validate,migrateState,WINDOW_WIDTH,WINDOW_HEIGHT} = require('./core');
+const {defaults,validate,migrateState,WINDOW_WIDTH,WINDOW_HEIGHT,TOOLBAR_WIDTH,TOOLBAR_INSET} = require('./core');
 const {createCollection} = require('./collection');
 const {mediaResponse}=require('./media');
 const {copyFileToClipboard,readClipboardFiles,requireFile}=require('./file-actions');
 const {fetchLinkPreview}=require('./link-preview');
 const {createSystemStats}=require('./system-stats');
 const {createWeather}=require('./weather');
-const {createEdgeDock}=require('./edge-dock');
+const {createEdgeDock,clampHorizontal}=require('./edge-dock');
 const {startIdleMonitor}=require('./idle');
 const {createScreenshot}=require('./screenshot');
 const {createReminders}=require('./reminders');
@@ -34,8 +34,15 @@ function configureAudio(current){current.webContents.setAudioMuted(!state.settin
 const playSound=createSoundDispatch({enabled:()=>!quitting&&state?.settings.soundEnabled,live:()=>liveWindow()&&!win.webContents.isDestroyed(),send:name=>win.webContents.send('sound-play',name)});
 function playEffect(name){if(quitting||!effectNames.includes(name))return;for(const current of [win,libraryWin])if(current&&!current.isDestroyed()&&!current.webContents.isDestroyed())current.webContents.send('ui-effect',name);}
 let smokeIdleSeconds=0;let smokeReminderNow=Date.now(),quitting=false,quitSettled=false;
-let pureExpanded=false,pureAnchor=null;
-function setPureLayout(expanded=false){if(!liveWindow()||!state.settings.pureMode)return;const current=win.getBounds();if(!pureExpanded&&current.height<=128)pureAnchor={...current};pureExpanded=expanded===true;const area=screen.getDisplayMatching(pureAnchor||current).workArea,anchor=pureAnchor||current,height=pureExpanded?WINDOW_HEIGHT:128;const bottom=anchor.y+anchor.height;win.setBounds({x:Math.round(Math.max(area.x,Math.min(anchor.x,area.x+area.width-WINDOW_WIDTH))),y:Math.round(Math.max(area.y,Math.min(bottom-height,area.y+area.height-height))),width:WINDOW_WIDTH,height});if(!pureExpanded)pureAnchor=win.getBounds();}
+let pureExpanded=false,pureAnchor=null,petPanelsOpen=false;
+function setPureLayout(expanded=false){
+  if(!liveWindow()||!state.settings.pureMode)return;
+  if(edgeDock?.read().collapsed){if(expanded!==true)return;edgeDock.expand();}
+  const current=win.getBounds();if(!pureExpanded&&current.height<=128)pureAnchor={...current};pureExpanded=expanded===true;
+  const area=screen.getDisplayMatching(pureAnchor||current).workArea,anchor=pureAnchor||current,height=pureExpanded?WINDOW_HEIGHT:128,bottom=anchor.y+anchor.height;
+  win.setBounds({x:Math.round(clampHorizontal(anchor.x,area,WINDOW_WIDTH,pureExpanded?0:TOOLBAR_INSET)),y:Math.round(Math.max(area.y,Math.min(bottom-height,area.y+area.height-height))),width:WINDOW_WIDTH,height});
+  edgeDock?.noteMove(win.getBounds());if(!pureExpanded)pureAnchor=win.getBounds();
+}
 let trayMenu,angerPhase='normal',absenceTimer=null,angerWatchdog=null;const angerLocked=()=>['angry','furious','absent'].includes(angerPhase);
 function openPetPanel(name){if(quitting || angerLocked() || !liveWindow())return;restore();win.webContents.send('panel-open',name);}
 let collectionOp=Promise.resolve();
@@ -68,14 +75,14 @@ function persist() {
   fs.writeFileSync(stateFile+'.tmp',JSON.stringify(state,null,2),'utf8');
   fs.renameSync(stateFile+'.tmp',stateFile);
 }
-function publicState() { return { settings:state.settings,edgeDock:edgeDock?.read()||{side:null,collapsed:false},sleeping:idle?.isSleeping()||false,fileDirectory:state.settings.saveDirectory||path.join(app.getPath('userData'),'collection-files') }; }
+function publicState() { return { settings:state.settings,toolbarWidth:TOOLBAR_WIDTH,edgeDock:edgeDock?.read()||{side:null,collapsed:false},sleeping:idle?.isSleeping()||false,fileDirectory:state.settings.saveDirectory||path.join(app.getPath('userData'),'collection-files') }; }
 function safePosition(x,y) {
   const a=screen.getDisplayNearestPoint({x:Math.round(x+WINDOW_WIDTH/2),y:Math.round(y+(liveWindow()?win.getBounds().height:state?.settings.pureMode?128:WINDOW_HEIGHT)/2)}).workArea;
-  return [Math.round(clamp(x,a.x,a.x+Math.max(0,a.width-WINDOW_WIDTH))),Math.round(clamp(y,a.y,a.y+Math.max(0,a.height-(liveWindow()?win.getBounds().height:state?.settings.pureMode?128:WINDOW_HEIGHT))))];
+  return [Math.round(clampHorizontal(x,a,WINDOW_WIDTH,petPanelsOpen?0:TOOLBAR_INSET)),Math.round(clamp(y,a.y,a.y+Math.max(0,a.height-(liveWindow()?win.getBounds().height:state?.settings.pureMode?128:WINDOW_HEIGHT))))];
 }
 function liveWindow() { return win && !win.isDestroyed(); }
 function allowFullscreen(contents,permission){return permission==='fullscreen' && ((liveWindow()&&contents===win.webContents&&contents.getURL()===pathToFileURL(path.join(__dirname,'index.html')).href)||(libraryWin&&!libraryWin.isDestroyed()&&contents===libraryWin.webContents&&contents.getURL()===pathToFileURL(path.join(__dirname,'library.html')).href));}
-function restore() {if(angerLocked()||!liveWindow())return;if(!state.settings.pureMode)edgeDock?.expand();win.setIgnoreMouseEvents(false);win.show();win.focus();}
+function restore() {if(angerLocked()||!liveWindow())return;edgeDock?.expand();win.setIgnoreMouseEvents(false);win.show();win.focus();}
 async function showLibrary(view){if(angerLocked())return;
   const initial=view&&['media','files','text','links'].includes(view.tab)?{tab:view.tab,query:typeof view.query==='string'?view.query.slice(0,300):''}:null;
   if(libraryWin && !libraryWin.isDestroyed()){libraryWin.show();libraryWin.focus();if(initial)libraryWin.webContents.send('library-view',initial);playSound('open');return;}
@@ -129,7 +136,7 @@ app.whenReady().then(async()=>{
   win.on('close',event=>{if(!quitting){event.preventDefault();if(liveWindow())win.hide();}});
   configureAudio(win);
   let normalPetBounds=win.getBounds();
-  edgeDock=createEdgeDock({getWindow:()=>win,getArea:bounds=>screen.getDisplayMatching(bounds).workArea,onChange:value=>{if(liveWindow()&&!win.webContents.isDestroyed()){if(!value.collapsed)normalPetBounds=win.getBounds();win.webContents.send('edge-dock-changed',value);}},onPosition:position=>{state.position=position;persist();},canCollapse:()=>!state.settings.pureMode&&!angerLocked()&&!quitting&&!drag&&!petVideoFullscreen&&!screenshot?.isActive()&&!recording?.isActive()&&!reminders.list().some(item=>item.status==='fired')});
+  edgeDock=createEdgeDock({getWindow:()=>win,getArea:bounds=>screen.getDisplayMatching(bounds).workArea,getInset:()=>petPanelsOpen?0:TOOLBAR_INSET,getHeight:()=>state.settings.pureMode?(pureExpanded?WINDOW_HEIGHT:128):WINDOW_HEIGHT,onChange:value=>{if(liveWindow()&&!win.webContents.isDestroyed()){if(!value.collapsed)normalPetBounds=win.getBounds();win.webContents.send('edge-dock-changed',value);}},onPosition:position=>{state.position=position;persist();},canCollapse:()=>!angerLocked()&&!quitting&&!drag&&!petVideoFullscreen&&!screenshot?.isActive()&&!recording?.isActive()&&!reminders.list().some(item=>item.status==='fired')});
   win.webContents.setWindowOpenHandler(()=>({action:'deny'}));
   win.webContents.on('will-navigate',e=>e.preventDefault());
   const panelURLs=new Set(['library.html','recording.html','reminder.html'].map(file=>pathToFileURL(path.join(__dirname,file)).href));
@@ -139,8 +146,8 @@ app.whenReady().then(async()=>{
   win.once('ready-to-show',()=>{if(liveWindow())win.show();});
   win.webContents.on('enter-html-full-screen',()=>{petVideoFullscreen=true;win.setIgnoreMouseEvents(false);});
   win.webContents.on('leave-html-full-screen',()=>{petVideoFullscreen=false;const restoreBounds={...normalPetBounds};setTimeout(()=>{if(liveWindow()&&!petVideoFullscreen){if(state.settings.pureMode)setPureLayout(pureExpanded);else win.setBounds(restoreBounds);}},0);});
-  win.on('moved',()=>{if(!liveWindow()||petVideoFullscreen||edgeDock.read().collapsed||edgeDock.isAdjusting())return;const bounds=win.getBounds();if(state.settings.pureMode){if(!pureExpanded){pureAnchor={...bounds};state.position=win.getPosition();}return;}if(Math.abs(bounds.width-WINDOW_WIDTH)<=16&&Math.abs(bounds.height-WINDOW_HEIGHT)<=16){edgeDock.noteMove(bounds);normalPetBounds={...normalPetBounds,x:bounds.x,y:bounds.y};state.position=win.getPosition();}});
-  const reflowPet=()=>{if(liveWindow()&&!petVideoFullscreen){if(state.settings.pureMode)setPureLayout(pureExpanded);else edgeDock.reflow();}};screen.on('display-removed',reflowPet);screen.on('display-metrics-changed',reflowPet);
+  win.on('moved',()=>{if(!liveWindow()||petVideoFullscreen||edgeDock.read().collapsed||edgeDock.isAdjusting())return;const bounds=win.getBounds();if(state.settings.pureMode){if(!pureExpanded){pureAnchor={...bounds};state.position=win.getPosition();}edgeDock.noteMove(bounds);return;}if(Math.abs(bounds.width-WINDOW_WIDTH)<=16&&Math.abs(bounds.height-WINDOW_HEIGHT)<=16){edgeDock.noteMove(bounds);normalPetBounds={...normalPetBounds,x:bounds.x,y:bounds.y};state.position=win.getPosition();}});
+  const reflowPet=()=>{if(liveWindow()&&!petVideoFullscreen){if(state.settings.pureMode&&!edgeDock.read().collapsed)setPureLayout(pureExpanded);else edgeDock.reflow();}};screen.on('display-removed',reflowPet);screen.on('display-metrics-changed',reflowPet);
   win.once('closed',()=>{edgeDock.stop();screen.removeListener('display-removed',reflowPet);screen.removeListener('display-metrics-changed',reflowPet);});
   tray=new Tray(createTrayIcon(nativeImage));
   function syncTray(){if(quitting||!tray||tray.isDestroyed())return;
@@ -188,7 +195,7 @@ app.whenReady().then(async()=>{
     const next=validate({...input,language:input?.language??state.settings.language,pureMode:input?.pureMode??state.settings.pureMode,bodyShortcuts:input?.bodyShortcuts??state.settings.bodyShortcuts,weatherLocation:Object.hasOwn(input||{},'weatherLocation')?input.weatherLocation:state.settings.weatherLocation,hair:state.settings.hair,outfit:state.settings.outfit,recordFrameRate:input?.recordFrameRate??state.settings.recordFrameRate,recordFormat:state.settings.recordFormat});
     if(next.saveDirectory!==state.settings.saveDirectory){if(recording.isActive())throw Error('停止录屏后再修改保存位置。');if(next.saveDirectory){await fs.promises.mkdir(next.saveDirectory,{recursive:true});await fs.promises.access(next.saveDirectory,fs.constants.W_OK);}}
     const previous=state;state={...state,settings:next};try{persist();}catch(e){state=previous;throw e;}
-    if(liveWindow()&&next.pureMode!==previous.settings.pureMode){edgeDock.expand();const bounds=win.getBounds();if(next.pureMode){pureAnchor={...bounds};pureExpanded=true;setPureLayout(false);}else{pureExpanded=false;const modeArea=screen.getDisplayMatching(bounds).workArea;const pos=[Math.max(modeArea.x,Math.min(bounds.x,modeArea.x+modeArea.width-WINDOW_WIDTH)),Math.max(modeArea.y,Math.min(bounds.y+bounds.height-WINDOW_HEIGHT,modeArea.y+modeArea.height-WINDOW_HEIGHT))];win.setBounds({x:pos[0],y:pos[1],width:WINDOW_WIDTH,height:WINDOW_HEIGHT});edgeDock.noteMove(win.getBounds());normalPetBounds=win.getBounds();}state.position=win.getPosition();persist();}
+    if(liveWindow()&&next.pureMode!==previous.settings.pureMode){edgeDock.beginDrag();const bounds=win.getBounds();if(next.pureMode){pureAnchor={...bounds};pureExpanded=true;setPureLayout(false);}else{pureExpanded=false;const modeArea=screen.getDisplayMatching(bounds).workArea;const pos=[clampHorizontal(bounds.x,modeArea,WINDOW_WIDTH,petPanelsOpen?0:TOOLBAR_INSET),Math.max(modeArea.y,Math.min(bounds.y+bounds.height-WINDOW_HEIGHT,modeArea.y+modeArea.height-WINDOW_HEIGHT))];win.setBounds({x:pos[0],y:pos[1],width:WINDOW_WIDTH,height:WINDOW_HEIGHT});edgeDock.noteMove(win.getBounds());normalPetBounds=win.getBounds();}state.position=win.getPosition();persist();}
     syncTray();for(const current of [win,libraryWin])if(current&&!current.isDestroyed()&&!current.webContents.isDestroyed())current.webContents.send('settings-changed',next);if(liveWindow())win.setAlwaysOnTop(next.top);for(const current of [win,libraryWin])if(current && !current.isDestroyed())configureAudio(current);syncCaptureShortcut();return publicState();
   });
   handle('appearance',input=>{const next=validate({...state.settings,hair:input?.hair,outfit:input?.outfit});const previous=state;state={...state,settings:next};try{persist();}catch(error){state=previous;throw error;}return publicState();});
@@ -250,11 +257,11 @@ app.whenReady().then(async()=>{
   handle('collection-file-icon',async id=>{const item=collection.openTarget(id);if(item.kind!=='file')throw Error('不是文件。');await requireFile(item.target);return (await app.getFileIcon(item.target,{size:'large'})).toDataURL();},true);
   handle('collection-delete',id=>mutateCollection(async()=>{const removed=await collection.remove(id);notifyCollection();return removed;}),true);
   ipcMain.on('passthrough',(e,value)=>{if(liveWindow() && e.sender===win.webContents && !drag)win.setIgnoreMouseEvents(edgeDock.read().collapsed?false:value===true,{forward:true});});
-  ipcMain.on('edge-hold',(e,value)=>{if(liveWindow()&&e.sender===win.webContents)edgeDock.hold(value===true);});
+  ipcMain.on('edge-hold',(e,value,expanded)=>{if(liveWindow()&&e.sender===win.webContents){const changed=petPanelsOpen!==(expanded===true);petPanelsOpen=expanded===true;edgeDock.hold(value===true);if(changed&&!state.settings.pureMode&&!petVideoFullscreen)edgeDock.reflow();}});
   ipcMain.on('drag',(e,start)=>{
     if(!liveWindow() || e.sender!==win.webContents)return;
-    if(start){if(angerLocked())return;if(petVideoFullscreen||screenshot?.isActive())return;if(!state.settings.pureMode)edgeDock.beginDrag();drag={cursor:screen.getCursorScreenPoint(),pos:win.getPosition()};win.setIgnoreMouseEvents(false);}
-    else if(drag){drag=null;if(!state.settings.pureMode)edgeDock.finishDrag();}
+    if(start){if(angerLocked())return;if(petVideoFullscreen||screenshot?.isActive())return;edgeDock.beginDrag();drag={cursor:screen.getCursorScreenPoint(),pos:win.getPosition()};win.setIgnoreMouseEvents(false);}
+    else if(drag){drag=null;edgeDock.finishDrag();}
   });
   const timer=setInterval(()=>{if(drag && !win.isDestroyed()){const c=screen.getCursorScreenPoint();win.setPosition(...safePosition(drag.pos[0]+c.x-drag.cursor.x,drag.pos[1]+c.y-drag.cursor.y));}},16);
   win.on('closed',()=>{drag=null;clearInterval(timer);idle?.stop();});
@@ -304,8 +311,8 @@ app.whenReady().then(async()=>{
         document.body.dispatchEvent(new MouseEvent('mousemove',{bubbles:true,...gap}));await new Promise(r=>setTimeout(r,550));if(ignore||!document.querySelector('#companion').classList.contains('controls-visible'))throw Error('toolbar gap enables click-through');
         document.body.dispatchEvent(new MouseEvent('mousemove',{bubbles:true,clientX:0,clientY:0}));await new Promise(r=>setTimeout(r,100));document.body.dispatchEvent(new MouseEvent('mousemove',{bubbles:true,...point()}));document.dispatchEvent(new MouseEvent('mouseleave',point()));await new Promise(r=>setTimeout(r,550));if(ignore||getComputedStyle(bar).visibility!=='visible')throw Error('toolbar reentry or internal leave hides controls');
         document.dispatchEvent(new MouseEvent('mouseleave',{clientX:-20,clientY:-20}));await new Promise(r=>setTimeout(r,550));if(!ignore||getComputedStyle(bar).visibility!=='hidden')throw Error('toolbar outside leave');
-        if(Number(document.querySelector('#recording-button circle').getAttribute('r'))<6)throw Error('recording dot too small');
-        return {noInfoBar:true,bodyShortcutChoices:true,localStats:true,transientBubble:true,hoverToolbar:true,toolbarGap:true,hiddenToolbarRecovery:true,toolbarReentry:true,largerRecordingDot:true};
+        if(!document.querySelector('#recording-button svg[data-icon=record] path')||document.querySelector('#recording-button circle')||document.querySelectorAll('#library-button path').length!==1)throw Error('toolbar camera/folder icons');
+        return {noInfoBar:true,bodyShortcutChoices:true,localStats:true,transientBubble:true,hoverToolbar:true,toolbarGap:true,hiddenToolbarRecovery:true,toolbarReentry:true,toolbarCameraFolder:true};
       })()`);
       Object.assign(result,today);await win.webContents.executeJavaScript(`document.querySelector('.petbar').style.removeProperty('transition');void 0;`);win.show();await new Promise(r=>setTimeout(r,250));
       const toolbarPoint=await win.webContents.executeJavaScript(`(()=>{showControls();const box=document.querySelector('#library-button').getBoundingClientRect();return {x:Math.round((box.left+box.right)/2),y:Math.round((box.top+box.bottom)/2)};})()`);
@@ -342,7 +349,7 @@ app.whenReady().then(async()=>{
       result.trayPanels=true;
       const controls=await win.webContents.executeJavaScript(`(()=>{
         const buttons=[...document.querySelectorAll('.petbar button:not(#edge-expand)')];
-        if(buttons.length!==6||getComputedStyle(document.querySelector('#edge-expand')).display!=='none'||document.querySelector('#hide')||buttons.some(button=>button.textContent.trim()||!button.querySelector('svg')||!button.title||!button.getAttribute('aria-label'))||document.querySelector('.caption')||document.querySelector('#sleep')||document.querySelector('#settings-button')||document.querySelector('#help-button'))throw Error('pet icon toolbar');
+        if(buttons.length!==7||getComputedStyle(document.querySelector('#edge-expand')).display!=='none'||!document.querySelector('#hide svg[data-icon=hide]')||buttons.some(button=>button.textContent.trim()||!button.querySelector('svg')||!button.title||!button.getAttribute('aria-label'))||document.querySelector('.caption')||document.querySelector('#sleep')||document.querySelector('#settings-button')||document.querySelector('#help-button'))throw Error('pet icon toolbar');
         openHelp();const help=document.querySelector('#help'),bounds=help.getBoundingClientRect();
         if(!help.open||!help.contains(document.activeElement)||!help.textContent.includes('本地文件只保存路径')||bounds.top<0||bounds.bottom>document.body.clientHeight)throw Error('help dialog');
         if(getComputedStyle(help,'::backdrop').backgroundColor!=='rgba(0, 0, 0, 0)')throw Error('help backdrop must be transparent');
@@ -575,7 +582,8 @@ app.whenReady().then(async()=>{
       for(const format of recordingFormats){
         await recording.select({format,fps:30},{rect:{x:40,y:30,width:160,height:100},bounds:{x:0,y:0,width:320,height:180},sourceId:'test'});
         await waitRecording('recording');if(recording.getBorders().length!==1||recording.getBorders().some(border=>border.isDestroyed()||!border.isVisible()))throw Error('recording border visibility');
-        const border=recording.getBorders()[0];const outline=await border.webContents.executeJavaScript(`(()=>{const css=getComputedStyle(document.querySelector('#outline')),body=getComputedStyle(document.body);return {edges:[css.borderTopWidth,css.borderRightWidth,css.borderBottomWidth,css.borderLeftWidth],center:body.backgroundColor};})()`);if(outline.center!=='rgba(0, 0, 0, 0)'||outline.edges.some(width=>parseFloat(width)!==3))throw Error('recording border not thick and transparent');
+        // Chromium rounds border widths to physical pixels at fractional display scales.
+        const border=recording.getBorders()[0];const outline=await border.webContents.executeJavaScript(`(()=>{const css=getComputedStyle(document.querySelector('#outline')),body=getComputedStyle(document.body);return {edges:[css.borderTopWidth,css.borderRightWidth,css.borderBottomWidth,css.borderLeftWidth],center:body.backgroundColor,scale:devicePixelRatio};})()`);if(outline.center!=='rgba(0, 0, 0, 0)'||outline.edges.some(width=>Math.abs(parseFloat(width)-3)>1/outline.scale+.0001))throw Error('recording border not thick and transparent: '+JSON.stringify(outline));
         fs.writeFileSync(path.join(app.getPath('temp'),'luna-recording-border.png'),(await border.webContents.capturePage()).toPNG());
         await new Promise(r=>setTimeout(r,1300));
         const spoof=await win.webContents.executeJavaScript(`(()=>{try{window.pet.call('recording-chunk',new ArrayBuffer(1));return false;}catch{return true;}})()`);if(!spoof)throw Error('recording bridge unrestricted');

@@ -28,7 +28,7 @@ contextBridge.exposeInMainWorld('pet',{
   onAbsence:callback=>ipcRenderer.on('pet-absence',(_event,value)=>callback(value)),
   onSettingsChanged:callback=>ipcRenderer.on('settings-changed',(_event,value)=>callback(value)),
   onEdgeDockChanged:callback=>ipcRenderer.on('edge-dock-changed',(_event,value)=>callback(value)),
-  edgeHold:value=>ipcRenderer.send('edge-hold',value===true),
+  edgeHold:(value,expanded=false)=>ipcRenderer.send('edge-hold',value===true,expanded===true),
   passthrough:value=>ipcRenderer.send('passthrough',!!value),
   drag:value=>ipcRenderer.send('drag',!!value)
 });

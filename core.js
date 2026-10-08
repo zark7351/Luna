@@ -5,6 +5,8 @@ const {location}=require('./weather');
 const defaults = { name: '露娜', language:'zh-CN', nickname: '', top: true, pureMode:false, screenshotShortcut:true, soundEnabled:true, bodyShortcuts:bodyShortcuts.defaults,weatherLocation:null, hair:'original', outfit:'original', saveDirectory:'', recordFrameRate:60, recordFormat:'mp4' };
 const WINDOW_WIDTH = 280;
 const WINDOW_HEIGHT = 640;
+const TOOLBAR_WIDTH = 236;
+const TOOLBAR_INSET = (WINDOW_WIDTH-TOOLBAR_WIDTH)/2;
 const OLD_PET_OFFSET = 387;
 const PET_OFFSET = 40;
 
@@ -38,4 +40,4 @@ function migrateState(saved = {}) {
   return state;
 }
 
-module.exports = { defaults, validate, migrateState, WINDOW_WIDTH, WINDOW_HEIGHT };
+module.exports = { defaults, validate, migrateState, WINDOW_WIDTH, WINDOW_HEIGHT, TOOLBAR_WIDTH, TOOLBAR_INSET };

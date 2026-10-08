@@ -117,8 +117,10 @@ button:disabled{cursor:wait;opacity:.5}
 #bubble.reminder-alert #bubble-message{-webkit-line-clamp:2}
 
 /* One continuous toolbar in both modes. */
-.petbar{gap:0;padding:4px;width:max-content;left:0;right:0;margin-inline:auto;align-items:center;border:1px solid #e7ddf0;border-radius:13px;background:#fffbfff2;box-shadow:0 3px 10px #43315316}
-.petbar button{flex:0 0 30px;width:30px;height:32px;padding:6px;background:transparent;border:0;border-radius:8px;box-shadow:none}
+.petbar{gap:0;padding:4px;width:var(--toolbar-width,236px);left:0;right:0;margin-inline:auto;align-items:center;border:1px solid #ffffffdc;border-radius:13px;background:linear-gradient(115deg,#fffafef5 0%,#f1eafcf5 50%,#fcecf6f5 100%);box-shadow:inset 0 1px 0 #ffffffcc,0 4px 14px #6e56871a}
+.petbar button{flex:0 0 30px;width:30px;height:32px;padding:6px;background:transparent;border:0;border-radius:9px;box-shadow:none;color:#8b6da1;transition:background .15s,color .15s,box-shadow .15s}
+.petbar button:hover{background:#fffaffcc;color:#76538f;box-shadow:inset 0 1px 0 #ffffffcc}
+.petbar button:active{background:#e8def3;box-shadow:inset 0 1px 3px #78569012}
 #toolbar-drag{flex:0 0 16px;display:grid;place-items:center;height:32px;cursor:grab;touch-action:none;color:#b7a1c8}
 #toolbar-drag svg{width:12px;stroke-width:2.8}
 body.pure-mode{height:100vh}
@@ -131,8 +133,9 @@ body[data-edge-collapsed=left] .petbar #toolbar-drag,body[data-edge-collapsed=ri
 .petbar #edge-expand{display:none}
 /* The edge handle has one silhouette; its hover fill follows the outer curve. */
 body[data-edge-collapsed=left] .petbar,body[data-edge-collapsed=right] .petbar{padding:0;width:100%;overflow:hidden}
+body.pure-mode[data-edge-collapsed=left] #companion,body.pure-mode[data-edge-collapsed=right] #companion{height:100%}
 body[data-edge-collapsed=left] .petbar{border-radius:0 13px 13px 0}
 body[data-edge-collapsed=right] .petbar{border-radius:13px 0 0 13px}
 body[data-edge-collapsed=left] #edge-expand,body[data-edge-collapsed=right] #edge-expand{display:grid;flex:1;width:100%;height:100%;border-radius:inherit}
 body[data-edge-collapsed=left] .petbar:hover,body[data-edge-collapsed=right] .petbar:hover{background:#eadff5}
-body[data-edge-collapsed=left] #edge-expand:hover,body[data-edge-collapsed=right] #edge-expand:hover{background:transparent}
+body[data-edge-collapsed=left] #edge-expand:hover,body[data-edge-collapsed=right] #edge-expand:hover{background:transparent;box-shadow:none}

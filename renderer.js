@@ -2,10 +2,10 @@ const t=window.lunaI18n.t;
 const $=id=>document.getElementById(id);
 window.lunaCharacter=createLunaCharacter($('pet'));
 let angerInteraction=null,heldReminder=null,returnSpeechUntil=0;
-let settings, sleeping=false, happyTimer, dragStart, dragging=false, ignore=false,edgeState={side:null,collapsed:false},viewStopped=false,lastDockHold,lastPureLayout;
+let settings, sleeping=false, happyTimer, dragStart, dragging=false, ignore=false,edgeState={side:null,collapsed:false},viewStopped=false,lastDockHold,lastDockPanels,lastPureLayout;
 const api=async(name,payload)=>{const r=await window.pet.call(name,payload);if(!r.ok)throw Error(t(r.error));return r.value;};
 function applySettings(value){settings=value;document.body.classList.toggle('pure-mode',value.pureMode);lastPureLayout=undefined;if(value.pureMode)showControls();syncDockHold();$('pet').removeAttribute('title');window.lunaI18n.setLanguage(value.language);}
-function syncDockHold(){if(viewStopped)return;const expanded=$('help').open||['settings','wardrobe','library-sheet','recording-sheet','reminder-sheet'].some(id=>!$(id).hidden);if(settings?.pureMode&&expanded!==lastPureLayout){lastPureLayout=expanded;api('pure-layout',expanded).catch(()=>{});}const held=settings?.pureMode||!!dragStart||$('help').open||['settings','wardrobe','library-sheet','recording-sheet','reminder-sheet'].some(id=>!$(id).hidden)||$('bubble').classList.contains('reminder-alert');if(held!==lastDockHold){lastDockHold=held;window.pet.edgeHold(held);}}
+function syncDockHold(){if(viewStopped)return;const expanded=$('help').open||['settings','wardrobe','library-sheet','recording-sheet','reminder-sheet'].some(id=>!$(id).hidden);if(settings?.pureMode&&expanded!==lastPureLayout){lastPureLayout=expanded;api('pure-layout',expanded).catch(()=>{});}const held=!!dragStart||expanded||$('bubble').classList.contains('reminder-alert');if(held!==lastDockHold||expanded!==lastDockPanels){lastDockHold=held;lastDockPanels=expanded;window.pet.edgeHold(held,expanded);}}
 function applyEdgeDock(value){if(viewStopped)return;edgeState=value;document.body.dataset.edgeCollapsed=value.collapsed?value.side:'';const button=$('edge-expand');button.title=t('展开露娜');button.setAttribute('aria-label',button.title);button.querySelector('path').setAttribute('d',value.side==='right'?'m15 6-6 6 6 6':'m9 6 6 6-6 6');if(value.collapsed){ignore=false;window.pet.passthrough(false);showControls();}syncDockHold();}
 window.pet.onSettingsChanged(value=>{if(!viewStopped)applySettings(value);});
 window.pet.onEdgeDockChanged(applyEdgeDock);
@@ -78,6 +78,7 @@ window.pet.onEffect(name=>{window.lunaEffects.burst(name);const buttons={collect
 window.pet.onReminderDue(value=>{if(angerInteraction?.protected||Date.now()<returnSpeechUntil){heldReminder=value;return;}infoBubbles.cancel();if(value){rest(false);if(feedback.getReminder()?.id!==value.id)window.lunaEffects.burst('reminder');}else{sounds.reminder.pause();sounds.reminder.currentTime=0;}feedback.updateReminder(value);});
 api('reminder-list').then(items=>{reminderCount(items.filter(item=>item.status!=='done').length);const due=items.filter(item=>item.status==='fired');if(due.length){window.lunaEffects.burst('reminder');feedback.updateReminder({id:due[0].id,title:due[0].title,remaining:due.length});}}).catch(()=>{});
 $('edge-expand').onclick=()=>api('edge-expand').catch(error=>showMessage(error.message));
+$('hide').onclick=()=>api('hide').catch(error=>showMessage(error.message));
 $('library-button').onclick=()=>openSheet('library');
 function rest(value){
   if(angerInteraction?.protected)return;
@@ -188,6 +189,6 @@ document.addEventListener('drop',async e=>{
   }catch(error){showMessage(error.message);}
 });
 function blink(){if(!sleeping&&!$('pet').classList.contains('happy')){$('pet').classList.add('blink');setTimeout(()=>$('pet').classList.remove('blink'),140);}setTimeout(blink,3200+Math.random()*2400);}setTimeout(blink,3000);
-(async()=>{try{const s=await api('state');applySettings(s.settings);applyEdgeDock(s.edgeDock);appearance($('pet'),settings.hair,settings.outfit);rest(s.sleeping===true);document.title=settings.name+t(' · 桌面宠物');}catch(e){showMessage(t('初始化失败：')+e.message);}})();
+(async()=>{try{const s=await api('state');document.documentElement.style.setProperty('--toolbar-width',s.toolbarWidth+'px');applySettings(s.settings);applyEdgeDock(s.edgeDock);appearance($('pet'),settings.hair,settings.outfit);rest(s.sleeping===true);document.title=settings.name+t(' · 桌面宠物');}catch(e){showMessage(t('初始化失败：')+e.message);}})();
 
 window.addEventListener('luna-language-changed',()=>{renderBodySettings();cancelInfo();feedback.show('');const due=feedback.getReminder();if(due)feedback.updateReminder(due);applyEdgeDock(edgeState);api('screenshot-shortcut').then(shortcutHint).catch(()=>{});api('reminder-list').then(items=>reminderCount(items.filter(item=>item.status!=='done').length)).catch(()=>{});if(settings)document.title=settings.name+t(' · 桌面宠物');});
