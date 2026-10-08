@@ -17,9 +17,7 @@ body[data-edge-collapsed=left]>:not(#companion),body[data-edge-collapsed=right]>
 body[data-edge-collapsed=left] #companion,body[data-edge-collapsed=right] #companion{left:0;bottom:0;width:100%;height:100%}
 body[data-edge-collapsed=left] #companion>:not(.petbar),body[data-edge-collapsed=right] #companion>:not(.petbar){display:none!important}
 body[data-edge-collapsed=left] .petbar,body[data-edge-collapsed=right] .petbar{inset:0;align-items:center;opacity:1;visibility:visible;pointer-events:auto;transition:none}
-body[data-edge-collapsed=left] .petbar button:not(#hide),body[data-edge-collapsed=right] .petbar button:not(#hide){display:none}
-body[data-edge-collapsed=left] #hide{border-radius:0 11px 11px 0}
-body[data-edge-collapsed=right] #hide{border-radius:11px 0 0 11px}
+body[data-edge-collapsed=left] .petbar button:not(#edge-expand),body[data-edge-collapsed=right] .petbar button:not(#edge-expand){display:none}
 .petbar svg,#help-close svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 #help{width:256px;max-height:calc(100% - 36px);padding:0;border:1px solid white;border-radius:21px;background:#fcf9ff;color:#655271;box-shadow:0 8px 25px #38245a20;overflow:auto}
 #help::backdrop{background:transparent}
@@ -58,7 +56,7 @@ input::placeholder{color:#bba8c7}
 #settings-status{font-size:11px;color:#a05478;line-height:1.5;padding-bottom:8px}
 .body-settings,.weather-settings{margin:0 0 12px;padding:10px;border:1px solid #e9e0f0;border-radius:15px;background:#ffffffb0}
 .body-settings legend{padding:0 5px;font-size:11px;color:#8c719f}
-#body-region-tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:3px;margin-bottom:9px}
+#body-region-tabs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:3px;margin-bottom:9px}
 #body-region-tabs button{padding:7px 0;font-size:11px;border-radius:8px;color:#9984ac}
 #body-region-tabs button[aria-pressed=true]{background:#eae0f3;color:#75578e}
 #body-action-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
@@ -117,3 +115,24 @@ button:disabled{cursor:wait;opacity:.5}
 .look-card[data-choice=bob] .choice-sprite{background-position:0% 0%}.look-card[data-choice=twintails] .choice-sprite{background-position:100% 0%}.look-card[data-choice=secretary] .choice-sprite{background-position:0% 100%}.look-card[data-choice=nurse] .choice-sprite{background-position:100% 100%}
 
 #bubble.reminder-alert #bubble-message{-webkit-line-clamp:2}
+
+/* One continuous toolbar in both modes. */
+.petbar{gap:0;padding:4px;width:max-content;left:0;right:0;margin-inline:auto;align-items:center;border:1px solid #e7ddf0;border-radius:13px;background:#fffbfff2;box-shadow:0 3px 10px #43315316}
+.petbar button{flex:0 0 30px;width:30px;height:32px;padding:6px;background:transparent;border:0;border-radius:8px;box-shadow:none}
+#toolbar-drag{flex:0 0 16px;display:grid;place-items:center;height:32px;cursor:grab;touch-action:none;color:#b7a1c8}
+#toolbar-drag svg{width:12px;stroke-width:2.8}
+body.pure-mode{height:100vh}
+body.pure-mode #companion{height:calc(100% - 24px)}
+body.pure-mode #pet{display:none}
+body.pure-mode .petbar{opacity:1;visibility:visible;pointer-events:auto;transition:none}
+body.pure-mode #bubble{bottom:54px;max-height:54px}
+body.pure-mode #bubble:not(.reminder-alert){display:none}
+body[data-edge-collapsed=left] .petbar #toolbar-drag,body[data-edge-collapsed=right] .petbar #toolbar-drag{display:none}
+.petbar #edge-expand{display:none}
+/* The edge handle has one silhouette; its hover fill follows the outer curve. */
+body[data-edge-collapsed=left] .petbar,body[data-edge-collapsed=right] .petbar{padding:0;width:100%;overflow:hidden}
+body[data-edge-collapsed=left] .petbar{border-radius:0 13px 13px 0}
+body[data-edge-collapsed=right] .petbar{border-radius:13px 0 0 13px}
+body[data-edge-collapsed=left] #edge-expand,body[data-edge-collapsed=right] #edge-expand{display:grid;flex:1;width:100%;height:100%;border-radius:inherit}
+body[data-edge-collapsed=left] .petbar:hover,body[data-edge-collapsed=right] .petbar:hover{background:#eadff5}
+body[data-edge-collapsed=left] #edge-expand:hover,body[data-edge-collapsed=right] #edge-expand:hover{background:transparent}

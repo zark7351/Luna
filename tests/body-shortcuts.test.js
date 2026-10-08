@@ -1,11 +1,16 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {validate,defaults,regionAt,createReactions,actions}=require('../body-shortcuts');
-test('五个部位可独立映射九种功能，非法值回退且不共享可变配置',()=>{assert.equal(Object.keys(actions).length,9);for(const action of Object.keys(actions)){const mapped=validate(Object.fromEntries(Object.keys(defaults).map(region=>[region,action])));assert.ok(Object.values(mapped).every(value=>value===action));}assert.deepEqual(validate({head:'../../command',extra:'quit'}),defaults);assert.deepEqual(validate(null),defaults);});
-test('源图坐标区分头胸、两侧手臂、交叉手、腿与脚；非法点无作用',()=>{assert.equal(regionAt(260,130),'head');assert.equal(regionAt(270,290,270),'chest');assert.equal(regionAt(170,290,270),'arms');assert.equal(regionAt(270,460,270),'arms');assert.equal(regionAt(260,740),'legs');assert.equal(regionAt(260,945),'feet');assert.equal(regionAt(-1,200),null);assert.equal(regionAt(260,NaN),null);});
-test('生气仅在五秒内连续三次胸部点击后，以 1% 独立概率触发',()=>{
-  let time=1000,rolls=0,value=.5;const reactions=createReactions({now:()=>time,random:()=>{rolls++;return value;}});
-  assert.equal(reactions.click('head').expression,'happy');assert.equal(reactions.click('chest').expression,'shy');assert.equal(reactions.click('arms').annoyed,false);assert.equal(reactions.click('chest').expression,'shy');assert.equal(rolls,0);
-  assert.equal(reactions.click('chest').expression,'shy');assert.equal(rolls,1);value=.009999;assert.equal(reactions.click('chest').expression,'angry');assert.equal(rolls,2);
-  value=.01;assert.equal(reactions.click('chest').expression,'shy');assert.equal(rolls,3);value=0;assert.equal(reactions.click('legs').expression,'smile');assert.equal(rolls,3);
-  time+=5001;assert.equal(reactions.click('chest').expression,'shy');assert.equal(rolls,3);reactions.reset();assert.equal(reactions.click('chest').annoyed,false);assert.equal(rolls,3);
+test('六个部位可独立映射九种功能，非法值回退且不共享可变配置',()=>{assert.equal(Object.keys(actions).length,9);for(const action of Object.keys(actions)){const mapped=validate(Object.fromEntries(Object.keys(defaults).map(region=>[region,action])));assert.ok(Object.values(mapped).every(value=>value===action));}assert.deepEqual(validate({head:'../../command',extra:'quit'}),defaults);assert.deepEqual(validate(null),defaults);});
+test('explicitly cleared shortcuts survive state migration while missing or invalid entries retain defaults',()=>{
+  const {validate:settings,migrateState}=require('../core');
+  const cleared=Object.fromEntries(Object.keys(defaults).map(region=>[region,'']));
+  assert.deepEqual(validate(cleared),cleared);assert.deepEqual(migrateState({settings:settings({bodyShortcuts:cleared})}).settings.bodyShortcuts,cleared);
+  assert.deepEqual(validate({head:'',chest:null}),{...defaults,head:''});assert.equal(Object.keys(actions).length,9);
 });
+test('十秒内三次敏感点击必定生气，恰好十秒排除旧点击',()=>{let time=0;const r=createReactions({now:()=>time});r.click('chest');time=6000;r.click('chest');time=9999;assert.equal(r.click('chest').annoyed,true);r.reset();time=0;r.click('chest');time=6000;r.click('chest');time=10000;assert.equal(r.click('chest').annoyed,false);});
+test('源图坐标区分头胸、两侧手臂、交叉手、腿与脚；非法点无作用',()=>{assert.equal(regionAt(260,130),'head');assert.equal(regionAt(270,290,270),'chest');assert.equal(regionAt(170,290,270),'arms');assert.equal(regionAt(270,460,270),'arms');assert.equal(regionAt(260,740),'legs');assert.equal(regionAt(260,945),'feet');assert.equal(regionAt(-1,200),null);assert.equal(regionAt(260,NaN),null);});
+test('频繁点击胸部或禁区必定触发，其他部位不增加计数且重置有效',()=>{let time=1000;const r=createReactions({now:()=>time});assert.equal(r.click('head').expression,'happy');assert.equal(r.click('chest').annoyed,false);r.click('arms');assert.equal(r.click('forbidden').annoyed,false);assert.equal(r.click('chest').annoyed,true);assert.equal(r.click('legs').expression,'smile');time+=10001;assert.equal(r.click('chest').annoyed,false);r.reset();assert.equal(r.click('chest').annoyed,false);});
+
+test('禁区在衣物覆盖中央小范围内，默认空配置；与胸部共用敏感点击计数',()=>{assert.equal(defaults.forbidden,'');assert.equal(regionAt(260,538),'forbidden');assert.equal(regionAt(305,580),'legs');assert.equal(regionAt(256,660),'legs');const r=createReactions({random:()=>0});assert.equal(r.click('forbidden').expression,'shy');assert.equal(r.click('chest').annoyed,false);assert.equal(r.click('forbidden').annoyed,true);r.reset();assert.equal(r.click('forbidden').annoyed,false);});
+
+test('全部16套装扮禁区在胯部小范围，护士膝盖及侧边不命中',()=>{const {looks}=require('../character-assets');for(const look of Object.values(looks)){const {center,forbidden}=look.body;assert.equal(regionAt(center,forbidden.y,center,forbidden),'forbidden');assert.notEqual(regionAt(center+forbidden.radiusX,forbidden.y,center,forbidden),'forbidden');assert.notEqual(regionAt(center,forbidden.y+forbidden.radiusY,center,forbidden),'forbidden');assert.equal(regionAt(center,665,center,forbidden),'legs');assert.ok(forbidden.y>=500&&forbidden.y<=552);}});

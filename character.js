@@ -4,18 +4,19 @@
     const assets=window.lunaCharacterAssets,resolveLook=options.resolveLook||assets.getLook;pet.classList.add('character-body');
     const canvas=document.createElement('canvas');canvas.width=512;canvas.height=1024;canvas.className='character-face';canvas.setAttribute('aria-hidden','true');pet.append(canvas);
     const ctx=canvas.getContext('2d'),images=new Map();let look,image,angryImage,alpha=null,revision=0,expression='neutral',reaction=null,timers=[],stopped=false;
+    ctx.imageSmoothingQuality='high';
     const reduced=matchMedia('(prefers-reduced-motion: reduce)');
     const loadImage=options.loadImage|| (async file=>{const asset=new Image();asset.src='assets/'+file;await asset.decode();return asset;});
     function getImage(file){
       if(!images.has(file)){const loading=Promise.resolve().then(()=>loadImage(file));images.set(file,loading);loading.catch(()=>{if(images.get(file)===loading)images.delete(file);});}
       return images.get(file);
     }
-    function paintPatch(sourceImage,source,target,rx,ry,pose){
+    function paintPatch(sourceImage,source,target,rx,ry,pose,box=false){
       const layer=document.createElement('canvas');layer.width=rx*2;layer.height=ry*2;const paint=layer.getContext('2d');
       paint.drawImage(sourceImage,source[0]-rx,source[1]-ry,rx*2,ry*2,0,0,rx*2,ry*2);
       const mask=paint.getImageData(0,0,layer.width,layer.height),scale=look.face.scale??pose.scale;
       for(let y=0;y<layer.height;y++)for(let x=0;x<layer.width;x++){
-        const distance=Math.hypot((x+.5-rx)/rx,(y+.5-ry)/ry),index=(y*layer.width+x)*4+3;
+        const distance=box?Math.max(Math.abs((x+.5-rx)/rx),Math.abs((y+.5-ry)/ry)):Math.hypot((x+.5-rx)/rx,(y+.5-ry)/ry),index=(y*layer.width+x)*4+3;
         mask.data[index]*=Math.max(0,Math.min(1,(1-distance)/.15));
       }
       paint.putImageData(mask,0,0);ctx.save();ctx.translate(target[0],target[1]);ctx.rotate(pose.rotation);ctx.scale(scale,scale);ctx.drawImage(layer,-rx,-ry,rx*2,ry*2);ctx.restore();
@@ -27,10 +28,16 @@
       const closedPose=assets.expressionPose(look.pack.closed,look.face.eyes),happyPose=assets.expressionPose(look.pack.happy,look.face.eyes),angryPose=assets.expressionPose([[59,77],[114,68]],look.face.eyes);
       if(['closed','wink','happy'].includes(expression))for(let i=0;i<(expression==='wink'?1:2);i++)patch(expression==='happy'?2:1,expression==='happy'?look.pack.happy[i]:look.pack.closed[i],look.face.eyes[i],21,16,expression==='happy'?happyPose:closedPose);
       if(['happy','wink','smile'].includes(expression))patch(2,look.pack.smile,look.face.mouth,17,12,happyPose);
-      // Keep annoyed eyes in the same local window as blinking; the old tall crop included silver fringe.
-      if(expression==='angry'&&angryImage){for(let i=0;i<2;i++)paintPatch(angryImage,[[59,77],[114,68]][i],look.face.eyes[i],21,16,angryPose);paintPatch(angryImage,[92,105],look.face.mouth,17,12,angryPose);}
+      if(expression==='angry'&&angryImage)paintPatch(angryImage,[92,105],look.face.mouth,17,12,angryPose);
+      if(expression==='furious'&&angryImage){
+        for(let i=0;i<2;i++)paintPatch(angryImage,[[59,77],[114,68]][i],look.face.eyes[i],21,16,angryPose);
+        paintPatch(angryImage,[92,105],look.face.mouth,17,12,angryPose);
+        // Compact comic anger mark; retain open eyes, a closed mouth and the same gentle blush.
+        ctx.save();ctx.translate(Math.min(...look.face.eyes.map(p=>p[0]))-20,Math.min(...look.face.eyes.map(p=>p[1]))-25);ctx.scale(look.face.scale||1,look.face.scale||1);ctx.strokeStyle='#79516a';ctx.lineWidth=2;ctx.lineCap='round';ctx.lineJoin='round';
+        for(const [x,y]of [[-1,-1],[1,-1],[-1,1],[1,1]]){ctx.beginPath();ctx.moveTo(x*8,y*2);ctx.quadraticCurveTo(x*2,y*2,x*2,y*8);ctx.stroke();}ctx.restore();
+      }
       if(expression==='pout'&&angryImage)paintPatch(angryImage,[92,105],look.face.mouth,17,12,angryPose);
-      if(expression==='shy')for(const eye of look.face.eyes){const radius=17*(look.face.scale||1),gradient=ctx.createRadialGradient(eye[0],eye[1]+radius,1,eye[0],eye[1]+radius,radius);gradient.addColorStop(0,'rgba(229,137,158,.38)');gradient.addColorStop(1,'rgba(229,137,158,0)');ctx.fillStyle=gradient;ctx.fillRect(eye[0]-radius,eye[1]+4,radius*2,radius*2);}
+      if(['shy','angry','furious'].includes(expression))for(const eye of look.face.eyes){const radius=17*(look.face.scale||1),gradient=ctx.createRadialGradient(eye[0],eye[1]+radius,1,eye[0],eye[1]+radius,radius);gradient.addColorStop(0,['angry','furious'].includes(expression)?'rgba(234,110,135,.30)':'rgba(229,137,158,.38)');gradient.addColorStop(1,'rgba(229,137,158,0)');ctx.fillStyle=gradient;ctx.fillRect(eye[0]-radius,eye[1]+4,radius*2,radius*2);}
     }
     function cancel(){for(const timer of timers)clearTimeout(timer);timers=[];reaction=null;draw();}
     async function setLook(hair,outfit){
@@ -45,15 +52,15 @@
       }catch(error){console.warn('角色素材加载失败',error.message);return false;}
     }
     function react(name){
-      const types={collect:'wink',capture:'wink',recording:'smile',wardrobe:'shy','reminder-save':'smile',reminder:'smile',complete:'happy',wink:'wink',smile:'smile',shy:'shy',happy:'happy',angry:'angry',pout:'pout'};
-      if(!Object.hasOwn(types,name)||stopped)return false;cancel();if(pet.classList.contains('sleeping'))return true;reaction=types[name];draw();
+      const types={collect:'wink',capture:'wink',recording:'smile',wardrobe:'shy','reminder-save':'smile',reminder:'smile',complete:'happy',wink:'wink',smile:'smile',shy:'shy',happy:'happy',angry:'angry',furious:'furious',pout:'pout'};
+      if(!Object.hasOwn(types,name)||stopped)return false;if(['angry','furious'].includes(reaction)&&!['angry','furious'].includes(name))return true;cancel();if(pet.classList.contains('sleeping'))return true;reaction=types[name];draw();
       if(!reduced.matches&&reaction==='wink')timers.push(setTimeout(()=>{reaction='smile';draw();},210));
-      timers.push(setTimeout(()=>{reaction=null;draw();},name==='reminder'?2400:1800));return true;
+      timers.push(setTimeout(()=>{reaction=null;draw();},['angry','furious'].includes(name)?3000:name==='reminder'?2400:1800));return true;
     }
     const observer=new MutationObserver(draw);observer.observe(pet,{attributes:true,attributeFilter:['class']});
     function stop(){if(stopped)return;stopped=true;revision++;cancel();observer.disconnect();reduced.removeEventListener('change',cancel);window.removeEventListener('pagehide',stop);}
     reduced.addEventListener('change',cancel);window.addEventListener('pagehide',stop);
-    function hitRegion(clientX,clientY){if(stopped||!look||!alpha)return null;const box=pet.getBoundingClientRect(),x=Math.floor((clientX-box.left)/box.width*512-(256-look.body.center)),y=Math.floor((clientY-box.top)/box.height*1024);if(x<0||x>=512||y<0||y>=1024||alpha[y*512+x]<32)return null;return window.lunaBodyShortcuts.regionAt(x,y,look.body.center);}
+    function hitRegion(clientX,clientY){if(stopped||!look||!alpha)return null;const box=pet.getBoundingClientRect(),x=Math.floor((clientX-box.left)/box.width*512-(256-look.body.center)),y=Math.floor((clientY-box.top)/box.height*1024);if(x<0||x>=512||y<0||y>=1024||alpha[y*512+x]<32)return null;return window.lunaBodyShortcuts.regionAt(x,y,look.body.center,look.body.forbidden);}
     return {setLook,react,cancel,draw,stop,hitRegion,get expression(){return expression;}};
   };
 })();

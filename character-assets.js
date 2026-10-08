@@ -28,6 +28,8 @@
     'straight-secretary':{body:{file:'luna-straight-secretary.png',columns:1,center:259},face:{pack:'silver-dress',eyes:[[226,114],[277,107]],mouth:[257,138]}},
     'straight-nurse':{body:{file:'luna-straight-nurse.png',columns:1,center:256.5},face:{pack:'silver-dress',eyes:[[226,133],[273,125]],mouth:[257,157]}}
   };
+  const forbiddenY={ 'original-original':538,'straight-original':540,'bob-original':535,'twintails-original':535,'original-jk':552,'straight-jk':552,'bob-jk':552,'twintails-jk':552,'original-secretary':510,'straight-secretary':512,'bob-secretary':508,'twintails-secretary':512,'original-nurse':534,'straight-nurse':520,'bob-nurse':526,'twintails-nurse':518 };
+  for(const [name,look]of Object.entries(looks))look.body.forbidden={y:forbiddenY[name],radiusX:26,radiusY:20};
   const file=value=>typeof value==='string'&&/^[a-z0-9][a-z0-9_-]*\.png$/i.test(value);
   const point=(value,rx,ry)=>Array.isArray(value)&&value.length===2&&value.every(Number.isFinite)&&value[0]>=rx&&value[0]<=stage.width-rx&&value[1]>=ry&&value[1]<=stage.height-ry;
   function validateLook(look,packs=facePacks){

@@ -2,7 +2,7 @@ const fs=require('node:fs'),path=require('node:path');
 const {ensureInno,run}=require('./prepare-build-tools.cjs');
 try{
   if(process.platform!=='win32')throw Error('Build the installer on Windows.');
-  run(process.execPath,[path.join(__dirname,'build-portable.cjs')]);
+  run(process.execPath,[path.join(__dirname,'build-portable.cjs')],{timeout:600000});
   const version=require('./package.json').version,output=path.resolve(__dirname,'..','LunaPet-Release');
   const source=path.resolve(__dirname,'..','LunaPet-Windows');fs.mkdirSync(output,{recursive:true});
   run(ensureInno(),['/Q','/DAppVersion='+version,'/DSourceDir='+source,'/DReleaseDir='+output,path.join(__dirname,'installer','LunaPet.iss')],{timeout:300000});

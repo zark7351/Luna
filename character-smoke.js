@@ -11,7 +11,7 @@ async function checkCharacter(win,output,label){
     const fixed=getComputedStyle(pet,'::before').transform;
     const pixels=ctx.getImageData(0,250,512,700).data;let sum=0,count=0;for(let p=0;p<pixels.length;p+=4)if(pixels[p+3]>200){sum+=(p/4)%512;count++;}
     if(Math.abs(sum/count+new DOMMatrix(fixed).m41*512/pet.clientWidth-256)>1)throw Error('character off centre');
-    for(const expression of ['closed','happy','wink','smile','shy','angry','pout']){
+    for(const expression of ['closed','happy','wink','smile','shy','angry','furious','pout']){
       window.lunaCharacter.cancel();pet.classList.remove('happy','blink','sleeping');
       if(expression==='closed')pet.classList.add('blink');else window.lunaCharacter.react(expression);window.lunaCharacter.draw();
       ctx.clearRect(0,0,512,1024);ctx.drawImage(source,0,0,512,1024,0,0,512,1024);ctx.drawImage(overlay,0,0);
@@ -19,9 +19,12 @@ async function checkCharacter(win,output,label){
       for(let i=0;i<changed.length;i+=4)if(changed[i]!==neutral[i]||changed[i+1]!==neutral[i+1]||changed[i+2]!==neutral[i+2]||changed[i+3]!==neutral[i+3]){
         const x=i/4%512,y=Math.floor(i/4/512);if(x<faceBounds.left||x>faceBounds.right||y<faceBounds.top||y>faceBounds.bottom)throw Error('expression changed hair or body: '+expression+' '+x+','+y);
         if(expression!=='shy'){
-          const pose=window.lunaCharacterAssets.expressionPose(expression==='angry'?[[59,77],[114,68]]:expression==='closed'||expression==='wink'?window.lunaCharacterAssets.getLook(pet.dataset.hair,pet.dataset.outfit).pack.closed:window.lunaCharacterAssets.getLook(pet.dataset.hair,pet.dataset.outfit).pack.happy,face.eyes),scale=face.scale??pose.scale;
-          const nearEye=['closed','happy','wink','angry'].includes(expression)&&face.eyes.some(p=>Math.hypot((x-p[0])/(24*scale),(y-p[1])/(19*scale))<1.05),nearMouth=expression!=='closed'&&Math.hypot((x-face.mouth[0])/(20*scale),(y-face.mouth[1])/(16*scale))<1.05;
-          if(!nearEye&&!nearMouth)throw Error('expression includes fringe/forehead outside feature: '+expression+' '+x+','+y);
+          const pose=window.lunaCharacterAssets.expressionPose(['angry','furious'].includes(expression)?[[59,77],[114,68]]:expression==='closed'||expression==='wink'?window.lunaCharacterAssets.getLook(pet.dataset.hair,pet.dataset.outfit).pack.closed:window.lunaCharacterAssets.getLook(pet.dataset.hair,pet.dataset.outfit).pack.happy,face.eyes),scale=face.scale??pose.scale;
+          const comic=expression==='angry'||expression==='furious';
+          const nearEye=['closed','happy','wink','angry','furious'].includes(expression)&&face.eyes.some(p=>Math.hypot((x-p[0])/((comic?26:24)*scale),(y-p[1])/((comic?22:19)*scale))<1.05),nearMouth=expression==='furious'?Math.abs(x-face.mouth[0])<38*scale&&Math.abs(y-face.mouth[1])<28*scale:expression!=='closed'&&Math.hypot((x-face.mouth[0])/((expression==='furious'?36:20)*scale),(y-face.mouth[1])/((expression==='furious'?25:16)*scale))<1.05;
+          const nearCheek=['angry','furious'].includes(expression)&&face.eyes.some(p=>Math.hypot(x-p[0],y-p[1]-17*(face.scale||1))<=18*(face.scale||1));
+          const nearAngerMark=expression==='furious'&&Math.hypot(x-Math.min(...face.eyes.map(p=>p[0]))+20,y-Math.min(...face.eyes.map(p=>p[1]))+25)<13*(face.scale||1);
+          if(!nearEye&&!nearMouth&&!nearCheek&&!nearAngerMark)throw Error('expression includes fringe/forehead outside feature: '+expression+' '+x+','+y);
         }
         differences++;
       }
@@ -30,7 +33,7 @@ async function checkCharacter(win,output,label){
     window.lunaCharacter.cancel();pet.classList.remove('happy','blink','sleeping');window.lunaCharacter.draw();
     const bounds=pet.getBoundingClientRect();showMessage('较长的消息'.repeat(12),0);const bubble=document.querySelector('#bubble').getBoundingClientRect();if(bubble.bottom>bounds.top-8)throw Error('long bubble overlaps head');showMessage('');
   })()`);
-  for(const name of ['closed','wink','smile','shy','happy','angry','pout']){
+  for(const name of ['closed','wink','smile','shy','happy','angry','furious','pout']){
     const face=await win.webContents.executeJavaScript(`(async()=>{
       const pet=document.querySelector('#pet');pet.classList.remove('happy','blink');window.lunaCharacter.cancel();
       if('${name}'==='closed')pet.classList.add('blink');else window.lunaCharacter.react('${name}');window.lunaCharacter.draw();

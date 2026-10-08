@@ -1,7 +1,8 @@
 const path=require('node:path');
+const {normalize}=require('./i18n');
 const bodyShortcuts=require('./body-shortcuts');
 const {location}=require('./weather');
-const defaults = { name: '露娜', nickname: '', top: true, screenshotShortcut:true, soundEnabled:true, bodyShortcuts:bodyShortcuts.defaults,weatherLocation:null, hair:'original', outfit:'original', saveDirectory:'', recordFrameRate:60, recordFormat:'mp4' };
+const defaults = { name: '露娜', language:'zh-CN', nickname: '', top: true, pureMode:false, screenshotShortcut:true, soundEnabled:true, bodyShortcuts:bodyShortcuts.defaults,weatherLocation:null, hair:'original', outfit:'original', saveDirectory:'', recordFrameRate:60, recordFormat:'mp4' };
 const WINDOW_WIDTH = 280;
 const WINDOW_HEIGHT = 640;
 const OLD_PET_OFFSET = 387;
@@ -13,7 +14,9 @@ function validate(input = {}) {
     s[key] = String(input[key] ?? defaults[key]).trim().slice(0, max);
   }
   s.name ||= defaults.name;
+  s.language=normalize(input.language);
   s.top = input.top !== false;
+  s.pureMode=input.pureMode===true;
   s.screenshotShortcut = input.screenshotShortcut !== false;
   s.soundEnabled = input.soundEnabled !== false;
   s.bodyShortcuts=bodyShortcuts.validate(input.bodyShortcuts);

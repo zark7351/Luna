@@ -16,7 +16,7 @@ function cropBounds(rect,bounds,size){
   return {x,y,width,height};
 }
 
-function createScreenshot({BrowserWindow,ipcMain,screen,getSources,getWindows,save,onMessage,onEvent=()=>{}}){
+function createScreenshot({BrowserWindow,ipcMain,screen,getSources,getWindows,save,onMessage,onEvent=()=>{},getLanguage=()=>'zh-CN'}){
   let session=null,disposed=false;
   const entry=sender=>session?.entries.find(item=>!item.window.isDestroyed() && item.window.webContents===sender);
   function close(current,reason='closed'){
@@ -30,14 +30,14 @@ function createScreenshot({BrowserWindow,ipcMain,screen,getSources,getWindows,sa
   }
   ipcMain.handle('screenshot-state',event=>{
     const item=entry(event.sender);
-    return item?{image:item.image.toDataURL(),width:item.bounds.width,height:item.bounds.height,purpose:session.onSelect?'recording':'screenshot'}:null;
+    return item?{language:getLanguage(),live:!!session.onSelect,image:item.image?item.image.toDataURL():null,width:item.bounds.width,height:item.bounds.height,purpose:session.onSelect?'recording':'screenshot'}:null;
   });
   ipcMain.handle('screenshot-cancel',(event,reason)=>{if(entry(event.sender)){close(session,'cancel-'+reason);onEvent('capture-cancel');}return true;});
   ipcMain.handle('screenshot-select',async(event,rect)=>{
     const item=entry(event.sender),current=session;
     if(!item || current.saving)return {ok:false,error:'截图已结束。'};
     try{
-      if(current.onSelect){cropBounds(rect,item.bounds,item.image.getSize());current.saving=true;const choose=current.onSelect;const selected={rect,bounds:item.bounds,sourceId:item.sourceId,displayId:item.displayId};close(current);await choose(selected);return {ok:true};}
+      if(current.onSelect){cropBounds(rect,item.bounds,item.bounds);current.saving=true;const choose=current.onSelect;const selected={rect,bounds:item.bounds,sourceId:item.sourceId,displayId:item.displayId};close(current);await choose(selected);return {ok:true};}
       const png=item.image.crop(cropBounds(rect,item.bounds,item.image.getSize())).toPNG();
       current.saving=true;close(current);
       await save(png);
@@ -60,13 +60,15 @@ function createScreenshot({BrowserWindow,ipcMain,screen,getSources,getWindows,sa
       for(const window of getWindows())if(window && !window.isDestroyed() && window.isVisible()){current.hidden.push(window);window.hide();}
       await new Promise(resolve=>setTimeout(resolve,160));
       if(session!==current)return false;
-      const sources=await getSources({types:['screen'],thumbnailSize:{width:Math.max(...displays.map(d=>Math.ceil(d.size.width*d.scaleFactor))),height:Math.max(...displays.map(d=>Math.ceil(d.size.height*d.scaleFactor)))}});
+      const live=!!onSelect;
+      const sources=await getSources({types:['screen'],thumbnailSize:live?{width:0,height:0}:{width:Math.max(...displays.map(d=>Math.ceil(d.size.width*d.scaleFactor))),height:Math.max(...displays.map(d=>Math.ceil(d.size.height*d.scaleFactor)))}});
       if(session!==current)return false;
       for(const display of displays){
         const source=sources.find(source=>source.display_id===String(display.id));
-        if(!source || source.thumbnail.isEmpty())throw Error('无法获取屏幕图像，请重试。');
-        const window=new BrowserWindow({...display.bounds,fullscreen:true,frame:false,resizable:false,show:false,skipTaskbar:true,backgroundColor:'#191521',webPreferences:{preload:path.join(__dirname,'screenshot-preload.js'),contextIsolation:true,sandbox:true,nodeIntegration:false}});
-        const item={window,image:source.thumbnail,bounds:display.bounds,sourceId:source.id,displayId:display.id};current.entries.push(item);
+        if(!source || (!live&&source.thumbnail.isEmpty()))throw Error('无法获取屏幕图像，请重试。');
+        // Transparent, manually sized overlays keep the real desktop visible at its native pixels.
+        const window=new BrowserWindow({...display.bounds,fullscreen:!live,transparent:live,hasShadow:false,roundedCorners:false,frame:false,resizable:false,show:false,skipTaskbar:true,backgroundColor:live?'#00000000':'#191521',webPreferences:{preload:path.join(__dirname,'screenshot-preload.js'),contextIsolation:true,sandbox:true,nodeIntegration:false}});
+        const item={window,image:live?null:source.thumbnail,bounds:display.bounds,sourceId:source.id,displayId:display.id};current.entries.push(item);
         window.setAlwaysOnTop(true,'screen-saver');
         window.webContents.setWindowOpenHandler(()=>({action:'deny'}));
         window.webContents.on('will-navigate',event=>event.preventDefault());

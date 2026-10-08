@@ -1,11 +1,36 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs/promises'),path=require('node:path'),os=require('node:os');
 const {createCollection}=require('../collection');
-const {region,validateOptions}=require('../recording-options');
+const {region,validateOptions,captureOptions,bitrate}=require('../recording-options');
+test('原生编码器启动中停止会等待句柄并保存一次，不回退发送浏览器开始事件',async()=>{
+  const {EventEmitter}=require('node:events'),{createRecording}=require('../recording');
+  const handlers=new Map(),sent=[];let release,callbacks,commits=0,stops=0;
+  class Window extends EventEmitter{
+    constructor(){super();this.webContents=new EventEmitter();this.webContents.send=(...args)=>sent.push(args);this.webContents.setWindowOpenHandler=()=>{};}
+    isDestroyed(){return !!this.dead;}async loadFile(){}setContentProtection(){}setIgnoreMouseEvents(){}setAlwaysOnTop(){}showInactive(){}isVisible(){return true;}destroy(){this.dead=true;this.emit('closed');}
+  }
+  const window=new Window(),screen=new EventEmitter(),powerMonitor=new EventEmitter();screen.getDisplayNearestPoint=()=>({scaleFactor:1});
+  const controller=createRecording({getHostWindow:()=>window,onShow:()=>{},BrowserWindow:Window,ipcMain:{handle:(name,fn)=>handlers.set(name,fn),removeHandler:name=>handlers.delete(name)},screen,powerMonitor,screenshot:{isActive:()=>false},collection:{beginRecording:async()=>({append:async()=>{},abort:async()=>{}})},getWindows:()=>[],getSettings:()=>({recordFrameRate:60,recordFormat:'mp4'}),remember:()=>{},commit:async()=>commits++,onMessage:()=>{},onSound:()=>{},smoke:true,nativeRecorder:{available:true,start:async(_config,values)=>{callbacks=values;return new Promise(resolve=>release=resolve);}}});
+  const selecting=controller.select({fps:60,format:'mp4'},{rect:{x:0,y:0,width:320,height:180},bounds:{x:0,y:0,width:1920,height:1080},sourceId:'test',test:false});
+  while(!release)await new Promise(resolve=>setImmediate(resolve));
+  const stopped=controller.stop();release({stop:()=>{stops++;callbacks.onFinish();},abort:async()=>{}});await selecting;await stopped;
+  assert.equal(commits,1);assert.equal(stops,1);assert.ok(!sent.some(([name])=>name==='recording-start'||name==='recording-stop'));assert.equal(controller.isActive(),false);await controller.dispose();
+});
 test('录屏帧率/格式白名单，区域裁剪按实际视频尺寸处理 DPI 与偶数编码尺寸',()=>{
   for(const fps of [15,24,30,60])for(const format of ['mp4'])assert.deepEqual(validateOptions({fps,format,extra:1}),{fps,format});
   for(const input of [{fps:120,format:'mp4'},{fps:30,format:'avi'},{fps:30,format:'webm'},null])assert.throws(()=>validateOptions(input));
-  assert.deepEqual(region({x:100,y:40,width:201,height:81},{width:1280,height:720},1920,1080),{x:150,y:60,width:301.5,height:121.5,outputWidth:300,outputHeight:120});
+  assert.deepEqual(region({x:100,y:40,width:201,height:81},{width:1280,height:720},1920,1080),{x:150,y:60,width:300,height:120,outputWidth:300,outputHeight:120});
   assert.throws(()=>region({x:2000,y:0,width:100,height:100},{width:1280,height:720},1920,1080));
+});
+test('高 DPI 录屏请求原生像素；4K/60FPS 有足够码率，8K 与超宽区域不缩小',()=>{
+  const constraints=captureOptions({captureSize:{width:3840,height:2160},sourceId:'screen:1',fps:60});
+  assert.equal(constraints.audio,false);assert.equal(constraints.video.mandatory.minWidth,3840);assert.equal(constraints.video.mandatory.maxHeight,2160);
+  const crop=region({x:101.5,y:40.5,width:801,height:451},{width:1920,height:1080},3840,2160);
+  assert.equal(crop.x,203);assert.equal(crop.y,81);assert.equal(crop.width,crop.outputWidth);assert.equal(crop.height,crop.outputHeight);
+  assert.ok(bitrate(1920,1080,60)>30000000);assert.equal(bitrate(3840,2160,60),100000000);
+  for(const [width,height]of [[7680,4320],[5120,1440]]){
+    const large=region({x:0,y:0,width,height},{width,height},width,height);
+    assert.equal(large.outputWidth,width);assert.equal(large.outputHeight,height);
+  }
 });
 test('保存目录变更只影响新副本；重启保留旧副本位置，删除副本不触及引用原文件',async()=>{
   const root=await fs.mkdtemp(path.join(os.tmpdir(),'luna-storage-test-'));try{
@@ -60,7 +85,7 @@ test('录屏边框以单个透明窗口闭合覆盖负坐标屏幕、穿透鼠�
     await host.show();await host.select({fps:60,format:'mp4'},{rect:{x:0,y:0,width:1920,height:1080},bounds:{x:-1920,y:0,width:1920,height:1080},sourceId:'test'});
     const borders=host.getBorders();assert.equal(borders.length,1);
     assert.deepEqual(borders.map(b=>({x:b.options.x,y:b.options.y,width:b.options.width,height:b.options.height})),[{x:-1920,y:0,width:1920,height:1080}]);
-    for(const border of borders){assert.equal(border.ignore,true);assert.equal(border.protected,true);assert.equal(border.options.focusable,false);assert.equal(border.visible,true);}
+    for(const border of borders){assert.equal(border.ignore,true);assert.equal(border.protected,true);assert.equal(border.options.focusable,true);assert.equal(border.visible,true);}
     const sender=host.getWindow().webContents;await handlers.get('recording-started')({sender});
     if(mode==='close'){petWindow.close();assert.equal(petWindow.isDestroyed(),false);assert.equal(host.isActive(),true);}
     await handlers.get(fail?'recording-error':'recording-finish')({sender},'test failure');

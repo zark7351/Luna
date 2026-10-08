@@ -1,5 +1,5 @@
 const {contextBridge,ipcRenderer,webUtils}=require('electron');
-const allowed=new Set(['panel-focus','recording-show','storage-choose','ui-sound','reminder-show','reminder-list','reminder-complete','screenshot-start','screenshot-shortcut','state','settings','appearance','system-stats','weather-current','weather-search','weather-locate','edge-expand','hide','quit','library-show','library-expand','library-window','collection-list','collection-add-text','collection-add-clipboard','library-add-files','collection-open','collection-delete','collection-copy','collection-reveal','collection-file-icon','collection-link-preview']);
+const allowed=new Set(['pure-layout','anger-mode','anger-hide','panel-focus','recording-show','storage-choose','ui-sound','reminder-show','reminder-list','reminder-complete','screenshot-start','screenshot-shortcut','state','settings','appearance','system-stats','weather-current','weather-search','weather-locate','edge-expand','hide','quit','library-show','library-expand','library-window','collection-list','collection-add-text','collection-add-clipboard','library-add-files','collection-open','collection-delete','collection-copy','collection-reveal','collection-file-icon','collection-link-preview']);
 contextBridge.exposeInMainWorld('pet',{
   call:(channel,payload)=>{if(!allowed.has(channel))throw Error('Unknown operation');return ipcRenderer.invoke(channel,payload);},
   saveDroppedFiles:async files=>{
@@ -25,6 +25,7 @@ contextBridge.exposeInMainWorld('pet',{
   onReminderCount:callback=>ipcRenderer.on('reminder-count',(_event,value)=>callback(value)),
   onReminderDue:callback=>ipcRenderer.on('reminder-due',(_event,value)=>callback(value)),
   onIdleChanged:callback=>ipcRenderer.on('idle-changed',(_event,value)=>callback(value===true)),
+  onAbsence:callback=>ipcRenderer.on('pet-absence',(_event,value)=>callback(value)),
   onSettingsChanged:callback=>ipcRenderer.on('settings-changed',(_event,value)=>callback(value)),
   onEdgeDockChanged:callback=>ipcRenderer.on('edge-dock-changed',(_event,value)=>callback(value)),
   edgeHold:value=>ipcRenderer.send('edge-hold',value===true),
@@ -33,7 +34,7 @@ contextBridge.exposeInMainWorld('pet',{
 });
 
 
-const recordingAllowed=new Set(['recording-state','recording-select','recording-started','recording-chunk','recording-finish','recording-error','recording-stop']);
+const recordingAllowed=new Set(['recording-state','recording-start','recording-select','recording-started','recording-chunk','recording-finish','recording-error','recording-stop']);
 contextBridge.exposeInMainWorld('recorder',{
   call:(name,payload)=>{if(!recordingAllowed.has(name))throw Error('未知录屏操作');return ipcRenderer.invoke(name,payload);},
   onStart:callback=>ipcRenderer.on('recording-start',(_event,value)=>callback(value)),
