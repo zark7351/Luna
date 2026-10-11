@@ -6,7 +6,7 @@
 
 - 版本 1.0.0，分支 main。功能见 README.md；需求方向见 ROADMAP.md。
 - 已实现：16 套装扮（4 发型 × 4 服装）＋共用局部表情；五个身体部位＋禁区各可配置九种快捷功能；收藏夹（文本/链接卡片/文件引用/媒体）；截图（Ctrl+Alt+A）；FFmpeg 原像素区域录屏（NVENC，失败回退 x264）；提醒；日期/系统占用/天气气泡；生气两阶段互动；左右贴边收起；纯净模式；关闭到托盘；中英文；空闲自动休息；UI 音效。
-- 安装包 `LunaPet-Release/LunaPet-1.0.0-Setup.exe`（仓库同级，未签名）**不包含**提交 5c0b865 的「功能条最右侧隐藏到托盘按钮」，该改动只在便携版中。需要时重新执行 `node build-installer.cjs`。
+- 便携版 `LunaPet-Windows/` 和安装包 `LunaPet-Release/LunaPet-1.0.0-Setup.exe`（都在仓库同级，未签名）已于 2026-10-11 用当前源码重新构建，包含功能条最右侧的「隐藏到托盘」按钮。安装包 SHA256：86f2186e7f9a9b0ffba0dfa8b79a992bf82ad8b3f4f19c0ad5379332170f8dc0。本机真实安装目录尚未升级，需要用户自己运行新安装包。
 - 打字聊天、AI、旧 API Key 均已移除，不要恢复（见 AGENTS.md）。
 
 ## 代码结构速览
@@ -21,7 +21,7 @@
 ## 开发与验证
 
 - 新电脑：`npm ci` → `node node_modules/electron/install.js` → `npm start`（详见 CROSS-COMPUTER.md）。
-- 单元测试：`npm test`（当前 100 项）。没装 Node.js 时可用 Electron 自带的 Node：`ELECTRON_RUN_AS_NODE=1 node_modules/electron/dist/electron.exe --test tests/*.test.js`（bash 写法）。
+- 单元测试：`npm test`（当前 100 项）。没装 Node.js 时可用 Electron 自带的 Node：`ELECTRON_RUN_AS_NODE=1 node_modules/electron/dist/electron.exe --test tests/*.test.js`（bash 写法）。注意这个环境变量会传给子进程：跑 `tests/installer-smoke.cjs` 这类会启动 LunaPet.exe 的脚本时，要先在脚本进程里删除它，例如 `electron.exe -e "delete process.env.ELECTRON_RUN_AS_NODE; require('./tests/installer-smoke.cjs')"`，否则 LunaPet.exe 也会以 Node 模式启动，报 `bad option: --smoke-test`。
 - 桌面集成检查：`node_modules/electron/dist/electron.exe . --smoke-test`，约 2 分钟，退出码 0 为通过，结果写入被忽略的 smoke-result.json。可加专项参数：`--capture-debug`、`--pure-mode-test`、`--edge-dock-test`、`--anger-sequence-test`、`--recording-live-test`（真实桌面录制）、`--stats-live-test`（真实 CPU/内存/GPU）。`--anger-preview` 让本次启动第一次必定触发生气，便于人工预览。
 - 安装包检查：`node tests/installer-smoke.cjs`（隔离安装→安装版 smoke→重复安装→卸载），`--package-only` 只做文件一致性。
 - 代码格式：Prettier 3.9.9（`.prettierrc.json`）。提交前执行 `npm run format`，或用 `npm run format:check` 检查。Markdown、assets、installer、package-lock 不参与格式化。
@@ -51,21 +51,16 @@
 
 ## 最近一次工作（2026-10-11）
 
-### 拆分 smoke 脚本
+工程整理，产品功能没有变化：
 
-- `main.js` 里约 1310 行的 `--smoke-test` 代码块原样移到 `desktop-smoke.js`。用 AST 分析找出它依赖的外部变量，通过上下文对象传入；只是把运行中会变化的 8 个变量加上了 `live.` 前缀。`build-portable.cjs` 文件清单加入新文件，`main.js` 去掉不再使用的 `ClipboardItem` 导入。
-- 校验：去掉 `live.` 前缀和空白后，新文件与原代码块逐字符一致。单元测试 100/100；完整 `--smoke-test` 退出 0，结果 JSON 与拆分前完全相同；`--pure-mode-test`、`--edge-dock-test`、`--anger-sequence-test` 均退出 0。首次生成时脚本把对象简写 `{ libraryWin }` 重复替换成了错误名称，被完整 smoke 的语言检查发现，修正后重新生成。未重新打包便携版或安装包，打包后的 smoke 尚未验证。
-
-### 格式化与交接精简（已提交 94bef16）
-
-- 引入 Prettier 3.9.9 作为开发依赖，新增 `.prettierrc.json`、`.prettierignore`、`npm run format` / `format:check`，全仓库 JS/CJS/HTML/CSS 一次性格式化。纯格式变化，逻辑未改；`main.js` 从约 700 行超长单行变为 2439 行可读代码。
-- `.gitattributes` 增加 `*.cjs text eol=lf`。
-- 旧 HANDOFF（151 KB）原样移到 `docs/HANDOFF-ARCHIVE.md`，本文件改写为当前状态摘要。
-- 验证：格式化前后单元测试均为 100/100 通过；格式化前后 `--smoke-test` 均退出 0，结果 JSON 逐项一致。本机没有安装 Node.js，以上命令用 Electron 自带的 Node 24.21 运行。Prettier 的 package-lock 条目是手工写入的（版本、resolved、integrity 来自 npm registry，已校验 tarball 的 sha512）。下次有 npm 的电脑执行一次 `npm ci` 确认无差异。未重新打包便携版或安装包。
+- 引入 Prettier 3.9.9（`npm run format`），全仓库一次性格式化；`.gitattributes` 增加 `*.cjs text eol=lf`。Prettier 的 package-lock 条目是手工写入的（integrity 已对照 npm registry 校验），下次在有 npm 的电脑上执行一次 `npm ci` 确认无差异。
+- `main.js` 里约 1310 行 smoke 代码原样移到 `desktop-smoke.js`：去掉 `live.` 前缀和空白后，与原代码逐字符一致。
+- 旧 HANDOFF、ROADMAP 分别移到 `docs/HANDOFF-ARCHIVE.md`、`docs/ROADMAP-ARCHIVE.md`，根目录两份改写为当前状态。AGENTS.md 补充两条规则：文档只改写不追加、提交前格式化；并更正过时的“三帧精灵图”描述。
+- 验证（本机没装 Node.js，用 Electron 自带的 Node 24.21 运行）：单元测试 100/100；源码完整 `--smoke-test` 退出 0，结果与整理前完全相同；`--pure-mode-test`、`--edge-dock-test`、`--anger-sequence-test` 均退出 0。
+- 打包：便携版和安装包已重新构建，SHA256SUMS.txt 已更新。第一次构建时 rcedit 报 `Unable to commit changes`，原因是新复制的 exe 被临时锁住（推测是杀毒扫描），重试后成功。`tests/installer-smoke.cjs` 完整通过：隔离安装、安装版完整桌面 smoke、重复安装与卸载都保留数据，测试数据都在临时目录里。
 
 ## 下一步（需用户确认）
 
-1. 把主进程 `main.js` 按窗口/托盘/IPC/生气状态拆分。
-2. 把根目录的 `*-smoke.js` 移到 `tests/`（需同步 `main.js` 的 require 路径和 `build-portable.cjs` 的文件清单）。
-3. ROADMAP.md 的「当前方向」同样是按日期堆叠的流水，可以整理成「当前产品定义＋待办候选」。
-4. 产品方向候选（未授权）：待机姿势与时段行为、根据用户活动提醒休息、好感度与换装解锁。
+1. `main.js` 按窗口/托盘/IPC/生气状态继续拆分。它依赖大量共享的可变状态，拆分时要逐块验证；收益一般，可以先不做。
+2. 根目录的 `*-smoke.js` 移到 `tests/`，需同步 require 路径和 `build-portable.cjs` 文件清单，优先级低。
+3. 产品方向候选（未授权）见 ROADMAP.md「待定方向」。
