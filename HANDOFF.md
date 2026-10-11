@@ -11,10 +11,11 @@
 
 ## 代码结构速览
 
-- `main.js`：主进程。前约 1100 行是窗口、托盘、IPC 注册、纯净模式、生气状态机；**之后约 1300 行是 `--smoke-test` 集成检查脚本**（大量以模板字符串形式注入渲染进程执行的代码）。
+- `main.js`：主进程（约 1180 行），包括窗口、托盘、IPC 注册、纯净模式、生气状态机。
+- `desktop-smoke.js`：`--smoke-test` 完整集成检查（约 1350 行，大量以模板字符串形式注入渲染进程执行的代码）。由 `main.js` 在 smoke 模式下按需 require，并传入一个上下文对象：稳定的对象和函数直接传值，运行中会变化的状态（`state`、`libraryWin`、`angerPhase`、`trayMenu`、`captureShortcut`、`systemStats`、两个假时钟）用 getter/setter 读写，脚本里写作 `live.xxx`。它会随便携版一起打包，安装版 smoke 也要用到。
 - 主进程模块：`core.js`（状态默认值/校验/迁移、窗口尺寸常量）、`collection.js`、`reminders.js`/`reminder-alerts.js`、`screenshot.js`、`recording.js`/`native-recording.js`（FFmpeg）、`edge-dock.js`、`idle.js`、`weather.js`、`system-stats.js`、`link-preview.js`、`media.js`（luna-media 协议）、`file-actions.js`、`app-branding.js`、`sound-events.js`/`effect-events.js`、`i18n.js`＋`translations.js`。
 - 渲染进程：`index.html`＋`renderer.js`（宠物主界面）、`character.js`/`character-assets.js`（装扮与局部表情）、`anger-interaction.js`、`body-shortcuts.js`、`pet-feedback.js`/`shortcut-bubbles.js`（气泡）、`library.*`（收藏夹）、`recording*`/`reminder*`/`screenshot*`（各自窗口与 preload）。
-- 根目录 `*-smoke.js` 是被 `main.js` 集成检查调用的专项检查；`tests/*.test.js` 是单元测试，`tests/*-smoke.cjs` 是安装包/联网/录屏分辨率等独立检查。
+- 根目录其他 `*-smoke.js` 是被 `desktop-smoke.js` 调用的专项检查；`tests/*.test.js` 是单元测试，`tests/*-smoke.cjs` 是安装包/联网/录屏分辨率等独立检查。
 - `design/`：素材生成提示词、原图与导出脚本（只做保留 alpha 的导出，不重绘）。
 
 ## 开发与验证
@@ -50,6 +51,13 @@
 
 ## 最近一次工作（2026-10-11）
 
+### 拆分 smoke 脚本
+
+- `main.js` 里约 1310 行的 `--smoke-test` 代码块原样移到 `desktop-smoke.js`。用 AST 分析找出它依赖的外部变量，通过上下文对象传入；只是把运行中会变化的 8 个变量加上了 `live.` 前缀。`build-portable.cjs` 文件清单加入新文件，`main.js` 去掉不再使用的 `ClipboardItem` 导入。
+- 校验：去掉 `live.` 前缀和空白后，新文件与原代码块逐字符一致。单元测试 100/100；完整 `--smoke-test` 退出 0，结果 JSON 与拆分前完全相同；`--pure-mode-test`、`--edge-dock-test`、`--anger-sequence-test` 均退出 0。首次生成时脚本把对象简写 `{ libraryWin }` 重复替换成了错误名称，被完整 smoke 的语言检查发现，修正后重新生成。未重新打包便携版或安装包，打包后的 smoke 尚未验证。
+
+### 格式化与交接精简（已提交 94bef16）
+
 - 引入 Prettier 3.9.9 作为开发依赖，新增 `.prettierrc.json`、`.prettierignore`、`npm run format` / `format:check`，全仓库 JS/CJS/HTML/CSS 一次性格式化。纯格式变化，逻辑未改；`main.js` 从约 700 行超长单行变为 2439 行可读代码。
 - `.gitattributes` 增加 `*.cjs text eol=lf`。
 - 旧 HANDOFF（151 KB）原样移到 `docs/HANDOFF-ARCHIVE.md`，本文件改写为当前状态摘要。
@@ -57,7 +65,7 @@
 
 ## 下一步（需用户确认）
 
-1. 把 `main.js` 里约 1300 行的 smoke 脚本拆到独立文件（如 `tests/desktop-smoke.js`），再把主进程按窗口/托盘/IPC/生气状态拆分。
+1. 把主进程 `main.js` 按窗口/托盘/IPC/生气状态拆分。
 2. 把根目录的 `*-smoke.js` 移到 `tests/`（需同步 `main.js` 的 require 路径和 `build-portable.cjs` 的文件清单）。
 3. ROADMAP.md 的「当前方向」同样是按日期堆叠的流水，可以整理成「当前产品定义＋待办候选」。
 4. 产品方向候选（未授权）：待机姿势与时段行为、根据用户活动提醒休息、好感度与换装解锁。

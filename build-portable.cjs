@@ -12,6 +12,7 @@ try {
     'i18n.js',
     'language-smoke.js',
     'pure-mode-smoke.js',
+    'desktop-smoke.js',
     'package.json',
     'app-branding.js',
     'effect-events.js',
