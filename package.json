@@ -9,9 +9,12 @@
     "start": "electron .",
     "test": "node --test tests/*.test.js",
     "build": "node build-portable.cjs",
-    "build:installer": "node build-installer.cjs"
+    "build:installer": "node build-installer.cjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
-    "electron": "44.4.5"
+    "electron": "44.4.5",
+    "prettier": "3.9.9"
   }
 }

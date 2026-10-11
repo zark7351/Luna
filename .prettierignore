@@ -1,0 +1,8 @@
+node_modules/
+.build-tools/
+assets/
+installer/
+design/**/*.json
+*.md
+package-lock.json
+smoke-result.json

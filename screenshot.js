@@ -1,89 +1,203 @@
-const path=require('node:path');
+const path = require('node:path');
 
 // Selection coordinates are CSS/DIP units; use the returned image size, not
 // an assumed DPI multiplier (desktopCapturer may resize its thumbnail).
-function cropBounds(rect,bounds,size){
-  if(!rect || !['x','y','width','height'].every(key=>Number.isFinite(rect[key])))throw Error('截图区域无效。');
-  if(rect.width<2 || rect.height<2)throw Error('请框选稍大一些的区域。');
-  const left=Math.max(0,Math.min(bounds.width,rect.x));
-  const top=Math.max(0,Math.min(bounds.height,rect.y));
-  const right=Math.max(left,Math.min(bounds.width,rect.x+rect.width));
-  const bottom=Math.max(top,Math.min(bounds.height,rect.y+rect.height));
-  const x=Math.floor(left*size.width/bounds.width),y=Math.floor(top*size.height/bounds.height);
-  const width=Math.min(size.width-x,Math.ceil(right*size.width/bounds.width)-x);
-  const height=Math.min(size.height-y,Math.ceil(bottom*size.height/bounds.height)-y);
-  if(width<1 || height<1)throw Error('截图区域不在屏幕内。');
-  return {x,y,width,height};
+function cropBounds(rect, bounds, size) {
+  if (!rect || !['x', 'y', 'width', 'height'].every(key => Number.isFinite(rect[key]))) throw Error('截图区域无效。');
+  if (rect.width < 2 || rect.height < 2) throw Error('请框选稍大一些的区域。');
+  const left = Math.max(0, Math.min(bounds.width, rect.x));
+  const top = Math.max(0, Math.min(bounds.height, rect.y));
+  const right = Math.max(left, Math.min(bounds.width, rect.x + rect.width));
+  const bottom = Math.max(top, Math.min(bounds.height, rect.y + rect.height));
+  const x = Math.floor((left * size.width) / bounds.width),
+    y = Math.floor((top * size.height) / bounds.height);
+  const width = Math.min(size.width - x, Math.ceil((right * size.width) / bounds.width) - x);
+  const height = Math.min(size.height - y, Math.ceil((bottom * size.height) / bounds.height) - y);
+  if (width < 1 || height < 1) throw Error('截图区域不在屏幕内。');
+  return { x, y, width, height };
 }
 
-function createScreenshot({BrowserWindow,ipcMain,screen,getSources,getWindows,save,onMessage,onEvent=()=>{},getLanguage=()=>'zh-CN'}){
-  let session=null,disposed=false;
-  const entry=sender=>session?.entries.find(item=>!item.window.isDestroyed() && item.window.webContents===sender);
-  function close(current,reason='closed'){
-    if(session!==current)return;
-    if(process.argv.includes('--capture-debug'))console.log('CAPTURE_CLOSE '+reason);
-    session=null;
-    for(const item of current.entries)if(!item.window.isDestroyed())item.window.destroy();
-    for(const window of current.hidden)if(!window.isDestroyed())window.showInactive();
-    current.entries.length=0;
-    if(!current.saving)current.onCancel?.();
+function createScreenshot({
+  BrowserWindow,
+  ipcMain,
+  screen,
+  getSources,
+  getWindows,
+  save,
+  onMessage,
+  onEvent = () => {},
+  getLanguage = () => 'zh-CN'
+}) {
+  let session = null,
+    disposed = false;
+  const entry = sender =>
+    session?.entries.find(item => !item.window.isDestroyed() && item.window.webContents === sender);
+  function close(current, reason = 'closed') {
+    if (session !== current) return;
+    if (process.argv.includes('--capture-debug')) console.log('CAPTURE_CLOSE ' + reason);
+    session = null;
+    for (const item of current.entries) if (!item.window.isDestroyed()) item.window.destroy();
+    for (const window of current.hidden) if (!window.isDestroyed()) window.showInactive();
+    current.entries.length = 0;
+    if (!current.saving) current.onCancel?.();
   }
-  ipcMain.handle('screenshot-state',event=>{
-    const item=entry(event.sender);
-    return item?{language:getLanguage(),live:!!session.onSelect,image:item.image?item.image.toDataURL():null,width:item.bounds.width,height:item.bounds.height,purpose:session.onSelect?'recording':'screenshot'}:null;
+  ipcMain.handle('screenshot-state', event => {
+    const item = entry(event.sender);
+    return item
+      ? {
+          language: getLanguage(),
+          live: !!session.onSelect,
+          image: item.image ? item.image.toDataURL() : null,
+          width: item.bounds.width,
+          height: item.bounds.height,
+          purpose: session.onSelect ? 'recording' : 'screenshot'
+        }
+      : null;
   });
-  ipcMain.handle('screenshot-cancel',(event,reason)=>{if(entry(event.sender)){close(session,'cancel-'+reason);onEvent('capture-cancel');}return true;});
-  ipcMain.handle('screenshot-select',async(event,rect)=>{
-    const item=entry(event.sender),current=session;
-    if(!item || current.saving)return {ok:false,error:'截图已结束。'};
-    try{
-      if(current.onSelect){cropBounds(rect,item.bounds,item.bounds);current.saving=true;const choose=current.onSelect;const selected={rect,bounds:item.bounds,sourceId:item.sourceId,displayId:item.displayId};close(current);await choose(selected);return {ok:true};}
-      const png=item.image.crop(cropBounds(rect,item.bounds,item.image.getSize())).toPNG();
-      current.saving=true;close(current);
+  ipcMain.handle('screenshot-cancel', (event, reason) => {
+    if (entry(event.sender)) {
+      close(session, 'cancel-' + reason);
+      onEvent('capture-cancel');
+    }
+    return true;
+  });
+  ipcMain.handle('screenshot-select', async (event, rect) => {
+    const item = entry(event.sender),
+      current = session;
+    if (!item || current.saving) return { ok: false, error: '截图已结束。' };
+    try {
+      if (current.onSelect) {
+        cropBounds(rect, item.bounds, item.bounds);
+        current.saving = true;
+        const choose = current.onSelect;
+        const selected = { rect, bounds: item.bounds, sourceId: item.sourceId, displayId: item.displayId };
+        close(current);
+        await choose(selected);
+        return { ok: true };
+      }
+      const png = item.image.crop(cropBounds(rect, item.bounds, item.image.getSize())).toPNG();
+      current.saving = true;
+      close(current);
       await save(png);
-      if(!disposed){onMessage('截图已收藏。',true);onEvent('capture-done');}
-      return {ok:true};
-    }catch(error){
-      if(session===current)close(current);
-      if(!disposed){onMessage(error.message || '截图失败，请重试。',false);onEvent('error');}
-      return {ok:false,error:error.message};
+      if (!disposed) {
+        onMessage('截图已收藏。', true);
+        onEvent('capture-done');
+      }
+      return { ok: true };
+    } catch (error) {
+      if (session === current) close(current);
+      if (!disposed) {
+        onMessage(error.message || '截图失败，请重试。', false);
+        onEvent('error');
+      }
+      return { ok: false, error: error.message };
     }
   });
-  const changed=(_event,_display,metrics)=>{if(Array.isArray(metrics)&&!metrics.some(name=>['bounds','scaleFactor','rotation'].includes(name)))return;if(session){close(session,'display-'+JSON.stringify(metrics));onMessage('屏幕配置已改变，请重新截图。',false);}};
-  for(const name of ['display-added','display-removed','display-metrics-changed'])screen.on(name,changed);
-  async function start({onSelect=null,onCancel=null}={}){
-    if(disposed)return false;
-    if(session)return false;
-    const current={entries:[],hidden:[],saving:false,onSelect,onCancel};session=current;
-    try{
-      const displays=screen.getAllDisplays();
-      for(const window of getWindows())if(window && !window.isDestroyed() && window.isVisible()){current.hidden.push(window);window.hide();}
-      await new Promise(resolve=>setTimeout(resolve,160));
-      if(session!==current)return false;
-      const live=!!onSelect;
-      const sources=await getSources({types:['screen'],thumbnailSize:live?{width:0,height:0}:{width:Math.max(...displays.map(d=>Math.ceil(d.size.width*d.scaleFactor))),height:Math.max(...displays.map(d=>Math.ceil(d.size.height*d.scaleFactor)))}});
-      if(session!==current)return false;
-      for(const display of displays){
-        const source=sources.find(source=>source.display_id===String(display.id));
-        if(!source || (!live&&source.thumbnail.isEmpty()))throw Error('无法获取屏幕图像，请重试。');
+  const changed = (_event, _display, metrics) => {
+    if (Array.isArray(metrics) && !metrics.some(name => ['bounds', 'scaleFactor', 'rotation'].includes(name))) return;
+    if (session) {
+      close(session, 'display-' + JSON.stringify(metrics));
+      onMessage('屏幕配置已改变，请重新截图。', false);
+    }
+  };
+  for (const name of ['display-added', 'display-removed', 'display-metrics-changed']) screen.on(name, changed);
+  async function start({ onSelect = null, onCancel = null } = {}) {
+    if (disposed) return false;
+    if (session) return false;
+    const current = { entries: [], hidden: [], saving: false, onSelect, onCancel };
+    session = current;
+    try {
+      const displays = screen.getAllDisplays();
+      for (const window of getWindows())
+        if (window && !window.isDestroyed() && window.isVisible()) {
+          current.hidden.push(window);
+          window.hide();
+        }
+      await new Promise(resolve => setTimeout(resolve, 160));
+      if (session !== current) return false;
+      const live = !!onSelect;
+      const sources = await getSources({
+        types: ['screen'],
+        thumbnailSize: live
+          ? { width: 0, height: 0 }
+          : {
+              width: Math.max(...displays.map(d => Math.ceil(d.size.width * d.scaleFactor))),
+              height: Math.max(...displays.map(d => Math.ceil(d.size.height * d.scaleFactor)))
+            }
+      });
+      if (session !== current) return false;
+      for (const display of displays) {
+        const source = sources.find(source => source.display_id === String(display.id));
+        if (!source || (!live && source.thumbnail.isEmpty())) throw Error('无法获取屏幕图像，请重试。');
         // Transparent, manually sized overlays keep the real desktop visible at its native pixels.
-        const window=new BrowserWindow({...display.bounds,fullscreen:!live,transparent:live,hasShadow:false,roundedCorners:false,frame:false,resizable:false,show:false,skipTaskbar:true,backgroundColor:live?'#00000000':'#191521',webPreferences:{preload:path.join(__dirname,'screenshot-preload.js'),contextIsolation:true,sandbox:true,nodeIntegration:false}});
-        const item={window,image:live?null:source.thumbnail,bounds:display.bounds,sourceId:source.id,displayId:display.id};current.entries.push(item);
-        window.setAlwaysOnTop(true,'screen-saver');
-        window.webContents.setWindowOpenHandler(()=>({action:'deny'}));
-        window.webContents.on('will-navigate',event=>event.preventDefault());
-        window.on('closed',()=>{if(session===current)close(current,'native-window');});
+        const window = new BrowserWindow({
+          ...display.bounds,
+          fullscreen: !live,
+          transparent: live,
+          hasShadow: false,
+          roundedCorners: false,
+          frame: false,
+          resizable: false,
+          show: false,
+          skipTaskbar: true,
+          backgroundColor: live ? '#00000000' : '#191521',
+          webPreferences: {
+            preload: path.join(__dirname, 'screenshot-preload.js'),
+            contextIsolation: true,
+            sandbox: true,
+            nodeIntegration: false
+          }
+        });
+        const item = {
+          window,
+          image: live ? null : source.thumbnail,
+          bounds: display.bounds,
+          sourceId: source.id,
+          displayId: display.id
+        };
+        current.entries.push(item);
+        window.setAlwaysOnTop(true, 'screen-saver');
+        window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+        window.webContents.on('will-navigate', event => event.preventDefault());
+        window.on('closed', () => {
+          if (session === current) close(current, 'native-window');
+        });
       }
-      await Promise.all(current.entries.map(item=>item.window.loadFile(path.join(__dirname,'screenshot.html'))));
-      if(session!==current)return false;
-      for(const item of current.entries)if(!item.window.isDestroyed())item.window.showInactive();
-      const cursor=screen.getCursorScreenPoint(),display=screen.getDisplayNearestPoint(cursor);
-      const focused=current.entries.find(item=>item.bounds.x===display.bounds.x && item.bounds.y===display.bounds.y) || current.entries[0];
-      if(focused && !focused.window.isDestroyed())focused.window.focus();
-      onEvent('capture-start');return true;
-    }catch(error){if(session===current)close(current);if(!disposed){onMessage(error.message || '截图启动失败。',false);onEvent('error');}return false;}
+      await Promise.all(current.entries.map(item => item.window.loadFile(path.join(__dirname, 'screenshot.html'))));
+      if (session !== current) return false;
+      for (const item of current.entries) if (!item.window.isDestroyed()) item.window.showInactive();
+      const cursor = screen.getCursorScreenPoint(),
+        display = screen.getDisplayNearestPoint(cursor);
+      const focused =
+        current.entries.find(item => item.bounds.x === display.bounds.x && item.bounds.y === display.bounds.y) ||
+        current.entries[0];
+      if (focused && !focused.window.isDestroyed()) focused.window.focus();
+      onEvent('capture-start');
+      return true;
+    } catch (error) {
+      if (session === current) close(current);
+      if (!disposed) {
+        onMessage(error.message || '截图启动失败。', false);
+        onEvent('error');
+      }
+      return false;
+    }
   }
-  function stop(){disposed=true;if(session)close(session);for(const name of ['display-added','display-removed','display-metrics-changed'])screen.removeListener(name,changed);for(const name of ['screenshot-state','screenshot-select','screenshot-cancel'])ipcMain.removeHandler(name);}
-  return {start,stop,cancel:()=>{if(session)close(session);},isActive:()=>!!session,getWindows:()=>session?.entries.map(item=>item.window)||[]};
+  function stop() {
+    disposed = true;
+    if (session) close(session);
+    for (const name of ['display-added', 'display-removed', 'display-metrics-changed'])
+      screen.removeListener(name, changed);
+    for (const name of ['screenshot-state', 'screenshot-select', 'screenshot-cancel']) ipcMain.removeHandler(name);
+  }
+  return {
+    start,
+    stop,
+    cancel: () => {
+      if (session) close(session);
+    },
+    isActive: () => !!session,
+    getWindows: () => session?.entries.map(item => item.window) || []
+  };
 }
-module.exports={cropBounds,createScreenshot};
+module.exports = { cropBounds, createScreenshot };

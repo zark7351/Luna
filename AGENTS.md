@@ -4,7 +4,8 @@
 
 - 开始前阅读 README.md、HANDOFF.md、ROADMAP.md，并检查 Git 状态与当前分支。以实际代码和最新用户要求为准，文档可能滞后。
 - 与用户用简体中文沟通。用户希望在多台 Windows 电脑上持续开发；不要依赖某台电脑的绝对路径、Codex 本地聊天历史或当前用户名。
-- 每次完成有实质变化的工作后，更新 HANDOFF.md：做了什么、验证结果、未解决问题、明确的下一步。需求变化时更新 ROADMAP.md。
+- 每次完成有实质变化的工作后，更新 HANDOFF.md：做了什么、验证结果、未解决问题、明确的下一步。HANDOFF.md 只描述当前状态，改写对应小节而不是逐轮追加流水，保持精简；历史靠 git log 和 docs/HANDOFF-ARCHIVE.md 追溯。需求变化时更新 ROADMAP.md。
+- 提交前执行 npm run format（Prettier），保持代码可读，不要写超长单行。
 - HANDOFF.md 和 ROADMAP.md 是交接资料；其中的建议不等于用户已授权开发全部功能。先遵循本次用户明确任务。
 
 ## 产品约束

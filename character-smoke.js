@@ -1,6 +1,6 @@
-const fs=require('node:fs');
-const path=require('node:path');
-async function checkCharacter(win,output,label){
+const fs = require('node:fs');
+const path = require('node:path');
+async function checkCharacter(win, output, label) {
   await win.webContents.executeJavaScript(`(async()=>{
     const pet=document.querySelector('#pet'),source=new Image();source.src=getComputedStyle(pet).backgroundImage.slice(5,-2);await source.decode();
     clearTimeout(happyTimer);pet.classList.remove('happy','blink','sleeping');window.lunaCharacter.cancel();window.lunaCharacter.draw();
@@ -33,19 +33,24 @@ async function checkCharacter(win,output,label){
     window.lunaCharacter.cancel();pet.classList.remove('happy','blink','sleeping');window.lunaCharacter.draw();
     const bounds=pet.getBoundingClientRect();showMessage('较长的消息'.repeat(12),0);const bubble=document.querySelector('#bubble').getBoundingClientRect();if(bubble.bottom>bounds.top-8)throw Error('long bubble overlaps head');showMessage('');
   })()`);
-  for(const name of ['closed','wink','smile','shy','happy','angry','furious','pout']){
-    const face=await win.webContents.executeJavaScript(`(async()=>{
+  for (const name of ['closed', 'wink', 'smile', 'shy', 'happy', 'angry', 'furious', 'pout']) {
+    const face = await win.webContents.executeJavaScript(`(async()=>{
       const pet=document.querySelector('#pet');pet.classList.remove('happy','blink');window.lunaCharacter.cancel();
       if('${name}'==='closed')pet.classList.add('blink');else window.lunaCharacter.react('${name}');window.lunaCharacter.draw();
       const source=new Image();source.src=getComputedStyle(pet).backgroundImage.slice(5,-2);await source.decode();
       const c=document.createElement('canvas');c.width=512;c.height=1024;const ctx=c.getContext('2d');ctx.drawImage(source,0,0,512,1024,0,0,512,1024);ctx.drawImage(pet.querySelector('canvas'),0,0);
       const detail=document.createElement('canvas');detail.width=280;detail.height=240;detail.getContext('2d').drawImage(c,200,75,140,120,0,0,280,240);return detail.toDataURL();
     })()`);
-    fs.writeFileSync(path.join(output,'luna-face-'+label+'-'+name+'.png'),Buffer.from(face.split(',')[1],'base64'));
+    fs.writeFileSync(
+      path.join(output, 'luna-face-' + label + '-' + name + '.png'),
+      Buffer.from(face.split(',')[1], 'base64')
+    );
   }
-  await win.webContents.executeJavaScript(`{window.lunaCharacter.cancel();document.querySelector('#pet').classList.remove('happy','blink');}`);
+  await win.webContents.executeJavaScript(
+    `{window.lunaCharacter.cancel();document.querySelector('#pet').classList.remove('happy','blink');}`
+  );
 }
-async function checkReactions(win){
+async function checkReactions(win) {
   await win.webContents.executeJavaScript(`(async()=>{
     for(const name of ['collect','capture','recording','wardrobe','reminder-save','complete'])if(!window.smokeUiEffects.includes(name))throw Error('missing action reaction: '+name);
     document.querySelector('#settings').hidden=true;document.querySelector('#wardrobe').hidden=true;closeSheets();window.lunaEffects.clear();showMessage('');showControls();await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
@@ -53,16 +58,43 @@ async function checkReactions(win){
     if(!document.elementFromPoint((box.left+box.right)/2,(box.top+box.bottom)/2)?.closest('#library-button')||getComputedStyle(document.querySelector('.character-face')).pointerEvents!=='none'||document.querySelector('#luna-fx'))throw Error('reaction intercepted controls');
     for(let i=0;i<12;i++)window.lunaEffects.burst('collect');if(document.querySelectorAll('.character-face').length!==1||window.lunaEffects.burst('unknown')!==false)throw Error('reaction resource limit');
   })()`);
-  await new Promise(r=>setTimeout(r,2000));const finishUntil=Date.now()+1500;while(!await win.webContents.executeJavaScript(`window.lunaCharacter.expression==='neutral'`)){if(Date.now()>finishUntil)throw Error('reaction did not finish: '+await win.webContents.executeJavaScript(`window.lunaCharacter.expression`));await new Promise(r=>setTimeout(r,60));}
+  await new Promise(r => setTimeout(r, 2000));
+  const finishUntil = Date.now() + 1500;
+  while (!(await win.webContents.executeJavaScript(`window.lunaCharacter.expression==='neutral'`))) {
+    if (Date.now() > finishUntil)
+      throw Error(
+        'reaction did not finish: ' + (await win.webContents.executeJavaScript(`window.lunaCharacter.expression`))
+      );
+    await new Promise(r => setTimeout(r, 60));
+  }
   win.webContents.debugger.attach('1.3');
-  try{
-    await win.webContents.debugger.sendCommand('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});await new Promise(r=>setTimeout(r,80));
-    await win.webContents.executeJavaScript(`(()=>{window.lunaEffects.burst('capture');window.lunaEffects.pulse(document.querySelector('#library-button'));if(!matchMedia('(prefers-reduced-motion: reduce)').matches||document.querySelector('#library-button').getAnimations().length||window.lunaCharacter.expression!=='wink')throw Error('reduced motion ignored');})()`);
-    await new Promise(r=>setTimeout(r,400));if(!await win.webContents.executeJavaScript(`window.lunaCharacter.expression==='wink'`))throw Error('reduced motion wink animated');
-  }finally{await win.webContents.debugger.sendCommand('Emulation.setEmulatedMedia',{features:[]});win.webContents.debugger.detach();}
-  return {committedActions:true,mutedVisuals:true,paintedExpressions:true,noImageMovement:true,clickThrough:true,boundedTimers:true,cleanup:true,reducedMotion:true};
+  try {
+    await win.webContents.debugger.sendCommand('Emulation.setEmulatedMedia', {
+      features: [{ name: 'prefers-reduced-motion', value: 'reduce' }]
+    });
+    await new Promise(r => setTimeout(r, 80));
+    await win.webContents.executeJavaScript(
+      `(()=>{window.lunaEffects.burst('capture');window.lunaEffects.pulse(document.querySelector('#library-button'));if(!matchMedia('(prefers-reduced-motion: reduce)').matches||document.querySelector('#library-button').getAnimations().length||window.lunaCharacter.expression!=='wink')throw Error('reduced motion ignored');})()`
+    );
+    await new Promise(r => setTimeout(r, 400));
+    if (!(await win.webContents.executeJavaScript(`window.lunaCharacter.expression==='wink'`)))
+      throw Error('reduced motion wink animated');
+  } finally {
+    await win.webContents.debugger.sendCommand('Emulation.setEmulatedMedia', { features: [] });
+    win.webContents.debugger.detach();
+  }
+  return {
+    committedActions: true,
+    mutedVisuals: true,
+    paintedExpressions: true,
+    noImageMovement: true,
+    clickThrough: true,
+    boundedTimers: true,
+    cleanup: true,
+    reducedMotion: true
+  };
 }
-async function checkHybrid(win){
+async function checkHybrid(win) {
   return win.webContents.executeJavaScript(`(async()=>{
     const assets=window.lunaCharacterAssets,shared=assets.facePacks['black-jk'],node=document.createElement('div');node.id='hybrid-fixture';node.style.cssText='position:absolute;left:-1000px;width:200px;height:400px;background-size:0 0';
     document.body.append(node);
@@ -99,4 +131,4 @@ async function checkHybrid(win){
     }finally{controller.stop();node.remove();}
   })()`);
 }
-module.exports={checkCharacter,checkReactions,checkHybrid};
+module.exports = { checkCharacter, checkReactions, checkHybrid };

@@ -1,12 +1,16 @@
 // Isolated visual contact sheets of the actual character renderer; never reads pet data.
-const {app,BrowserWindow,nativeImage}=require('electron');
-const fs=require('node:fs'),path=require('node:path'),os=require('node:os');
-app.setPath('userData',fs.mkdtempSync(path.join(os.tmpdir(),'luna-face-alignment-')));
-app.whenReady().then(async()=>{
-  const win=new BrowserWindow({show:false,webPreferences:{sandbox:true,contextIsolation:true}});
-  try{
-    await win.loadFile(path.join(__dirname,'face-alignment-preview.html'));
-    const results=await win.webContents.executeJavaScript(`(async()=>{
+const { app, BrowserWindow, nativeImage } = require('electron');
+const fs = require('node:fs'),
+  path = require('node:path'),
+  os = require('node:os');
+app.setPath('userData', fs.mkdtempSync(path.join(os.tmpdir(), 'luna-face-alignment-')));
+app
+  .whenReady()
+  .then(async () => {
+    const win = new BrowserWindow({ show: false, webPreferences: { sandbox: true, contextIsolation: true } });
+    try {
+      await win.loadFile(path.join(__dirname, 'face-alignment-preview.html'));
+      const results = await win.webContents.executeJavaScript(`(async()=>{
       const sheets=[],names=['neutral','closed','happy','wink','smile','shy','angry','pout'];
       const pet=document.querySelector('#preview-pet'),controller=createLunaCharacter(pet);
       for(const hair of ['original','straight','bob','twintails']){
@@ -50,8 +54,28 @@ app.whenReady().then(async()=>{
       }
       controller.stop();return sheets;
     })()`);
-    const target=path.join(os.tmpdir(),'luna-face-alignment');fs.mkdirSync(target,{recursive:true});
-    for(const result of results){const bytes=Buffer.from(result.data.split(',')[1],'base64');fs.writeFileSync(path.join(target,result.name+'.png'),bytes);if(result.name.startsWith('anchors-'))for(const [column,outfit]of ['original','jk','secretary','nurse'].entries())fs.writeFileSync(path.join(target,result.name+'-'+outfit+'.png'),nativeImage.createFromBuffer(bytes).crop({x:column*560,y:0,width:560,height:480}).toPNG());}
-    console.log('FACE_ALIGNMENT_PREVIEW '+target);
-  }finally{win.destroy();app.quit();}
-}).catch(error=>{console.error(error);app.exit(1);});
+      const target = path.join(os.tmpdir(), 'luna-face-alignment');
+      fs.mkdirSync(target, { recursive: true });
+      for (const result of results) {
+        const bytes = Buffer.from(result.data.split(',')[1], 'base64');
+        fs.writeFileSync(path.join(target, result.name + '.png'), bytes);
+        if (result.name.startsWith('anchors-'))
+          for (const [column, outfit] of ['original', 'jk', 'secretary', 'nurse'].entries())
+            fs.writeFileSync(
+              path.join(target, result.name + '-' + outfit + '.png'),
+              nativeImage
+                .createFromBuffer(bytes)
+                .crop({ x: column * 560, y: 0, width: 560, height: 480 })
+                .toPNG()
+            );
+      }
+      console.log('FACE_ALIGNMENT_PREVIEW ' + target);
+    } finally {
+      win.destroy();
+      app.quit();
+    }
+  })
+  .catch(error => {
+    console.error(error);
+    app.exit(1);
+  });
