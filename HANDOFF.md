@@ -2,11 +2,11 @@
 
 本文件只记录**当前状态**，保持精简（建议不超过约 10 KB）。每次工作后更新「当前状态」「已知问题」「最近一次工作」「下一步」，不要逐轮追加流水；需要追溯时看 git log 或 [docs/HANDOFF-ARCHIVE.md](docs/HANDOFF-ARCHIVE.md)（2026-10-09 之前的逐轮记录，含已过期内容）。
 
-## 当前状态（2026-10-11）
+## 当前状态（2026-10-12）
 
 - 版本 1.0.0，分支 main。功能见 README.md；需求方向见 ROADMAP.md。
 - 已实现：16 套装扮（4 发型 × 4 服装）＋共用局部表情；五个身体部位＋禁区各可配置九种快捷功能；收藏夹（文本/链接卡片/文件引用/媒体）；截图（Ctrl+Alt+A）；FFmpeg 原像素区域录屏（NVENC，失败回退 x264）；提醒；日期/系统占用/天气气泡；生气两阶段互动；左右贴边收起；纯净模式；关闭到托盘；中英文；空闲自动休息；UI 音效。
-- 便携版 `LunaPet-Windows/` 和安装包 `LunaPet-Release/LunaPet-1.0.0-Setup.exe`（都在仓库同级，未签名）已于 2026-10-11 用当前源码重新构建，包含功能条最右侧的「隐藏到托盘」按钮。安装包 SHA256：86f2186e7f9a9b0ffba0dfa8b79a992bf82ad8b3f4f19c0ad5379332170f8dc0。本机真实安装目录尚未升级，需要用户自己运行新安装包。
+- 便携版 `LunaPet-Windows/` 和安装包 `LunaPet-Release/LunaPet-1.0.0-Setup.exe`（都在仓库同级，未签名）已于 2026-10-12 基于 main 提交 `faab101` 重新构建，包含整理后的代码、独立 `desktop-smoke.js` 及当前全部功能。安装包 SHA256：04882f82ba5c76a02183bd1f00a344eff1c5a422181beb5b91dd7b32a3b89a32，SHA256SUMS.txt 已更新。真实安装目录未升级；包内交接为构建快照，最终验证看仓库本文件。
 - 打字聊天、AI、旧 API Key 均已移除，不要恢复（见 AGENTS.md）。
 
 ## 代码结构速览
@@ -25,6 +25,7 @@
 - 桌面集成检查：`node_modules/electron/dist/electron.exe . --smoke-test`，约 2 分钟，退出码 0 为通过，结果写入被忽略的 smoke-result.json。可加专项参数：`--capture-debug`、`--pure-mode-test`、`--edge-dock-test`、`--anger-sequence-test`、`--recording-live-test`（真实桌面录制）、`--stats-live-test`（真实 CPU/内存/GPU）。`--anger-preview` 让本次启动第一次必定触发生气，便于人工预览。
 - 安装包检查：`node tests/installer-smoke.cjs`（隔离安装→安装版 smoke→重复安装→卸载），`--package-only` 只做文件一致性。
 - 代码格式：Prettier 3.9.9（`.prettierrc.json`）。提交前执行 `npm run format`，或用 `npm run format:check` 检查。Markdown、assets、installer、package-lock 不参与格式化。
+- 当前终端没有 npm 命令，node_modules 尚未安装 Prettier；本轮未运行 npm ci 或格式检查。Prettier 的锁文件条目此前手工写入（integrity 已对照 npm registry 校验），需要在有 npm 的环境中执行 npm ci 确认。
 
 ## 构建与发布
 
@@ -38,7 +39,7 @@
 - 未人工验收：多显示器/混合 DPI 下拖动、贴边和录屏选框；长时间录制和高负载 4K；与 Bandicam 同场景画质对比；资源管理器、浏览器、微信、飞书的真实拖放和粘贴来源。
 - 只给文字或网址、没有真实文件列表的剪贴板来源（如部分微信、飞书、网页）无法收藏视频。
 - 150% DPI 下 Chromium 按物理像素量化，窗口尺寸和边框断言要允许 1 DIP 或 1 个物理像素的误差。
-- 完整 smoke 末尾的贴边恢复偶尔出现 `native edge test move timed out`。可以单独用 `--edge-dock-test` 诊断。
+- 完整 smoke 末尾的贴边恢复偶尔出现 `native edge test move timed out`；本轮完整检查未复现。可以单独用 `--edge-dock-test` 诊断。
 - 退出时出现 Chromium `GPU state invalid` 日志不影响结果，以退出码为准。
 - 没有代码签名、自动更新和 LICENSE 文件。
 
@@ -49,17 +50,16 @@
 - 所有异步窗口回调和 IPC 都检查 `liveWindow()` 或 `isDestroyed()`；生气锁定期间 IPC 只放行白名单。
 - smoke 测试启动方式会影响输出管道。需要读取输出时，让子进程保持 stdout 并等待退出。
 
-## 最近一次工作（2026-10-11）
+## 最近一次工作（2026-10-12）
 
-工程整理，产品功能没有变化：
+- 按用户要求重新构建 Claude 整理后的项目。起始 main 提交 faab101，工作区干净；工程保留 Prettier 格式化、desktop-smoke.js 拆分与精简文档，产品代码没有新增修改。
+- Node 单元测试 100/100 通过；node build-installer.cjs 成功生成便携版及安装包。构建时 144 个随包源码、文档和素材逐字节一致。
+- tests/installer-smoke.cjs 完整通过：隔离安装、安装版完整桌面检查、重复安装和卸载；测试数据及自定义保存文件哈希保持。package-only 通过，222 个安装文件与便携输出一致并正常卸载。拆出的 desktop-smoke.js 在安装包内执行成功。
+- 所有验证使用临时目录，不修改个人数据或真实安装。本次没有 rcedit 锁定或贴边超时；未重复真实 NVENC、多屏人工录屏及 npm ci。SHA256SUMS.txt 已更新，本轮只修改交接记录，未提交或推送。
 
-- 引入 Prettier 3.9.9（`npm run format`），全仓库一次性格式化；`.gitattributes` 增加 `*.cjs text eol=lf`。Prettier 的 package-lock 条目是手工写入的（integrity 已对照 npm registry 校验），下次在有 npm 的电脑上执行一次 `npm ci` 确认无差异。
-- `main.js` 里约 1310 行 smoke 代码原样移到 `desktop-smoke.js`：去掉 `live.` 前缀和空白后，与原代码逐字符一致。
-- 旧 HANDOFF、ROADMAP 分别移到 `docs/HANDOFF-ARCHIVE.md`、`docs/ROADMAP-ARCHIVE.md`，根目录两份改写为当前状态。AGENTS.md 补充两条规则：文档只改写不追加、提交前格式化；并更正过时的“三帧精灵图”描述。
-- 验证（本机没装 Node.js，用 Electron 自带的 Node 24.21 运行）：单元测试 100/100；源码完整 `--smoke-test` 退出 0，结果与整理前完全相同；`--pure-mode-test`、`--edge-dock-test`、`--anger-sequence-test` 均退出 0。
-- 打包：便携版和安装包已重新构建，SHA256SUMS.txt 已更新。第一次构建时 rcedit 报 `Unable to commit changes`，原因是新复制的 exe 被临时锁住（推测是杀毒扫描），重试后成功。`tests/installer-smoke.cjs` 完整通过：隔离安装、安装版完整桌面 smoke、重复安装与卸载都保留数据，测试数据都在临时目录里。
+## 下一步
 
-## 下一步（需用户确认）
+用户可运行最新便携程序，或用新版安装包升级原有安装。以下开发候选仍需另行确认范围：
 
 1. `main.js` 按窗口/托盘/IPC/生气状态继续拆分。它依赖大量共享的可变状态，拆分时要逐块验证；收益一般，可以先不做。
 2. 根目录的 `*-smoke.js` 移到 `tests/`，需同步 require 路径和 `build-portable.cjs` 文件清单，优先级低。
