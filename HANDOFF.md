@@ -42,6 +42,7 @@
 - 150% DPI 下 Chromium 按物理像素量化，窗口尺寸和边框断言要允许 1 DIP 或 1 个物理像素的误差。
 - 完整 smoke 末尾的贴边恢复偶尔出现 `native edge test move timed out`；本轮完整检查未复现。可以单独用 `--edge-dock-test` 诊断。
 - 退出时出现 Chromium `GPU state invalid` 日志不影响结果，以退出码为准。
+- 检查脚本的稳定性（2026-10-18）：模拟输入拿不到 Windows 前台焦点，转盘会因窗口失焦按设计收起，所以 wheel-smoke 里的 openNatively/clickSector 会重试右键，没有系统焦点时也放宽了焦点断言；收藏夹检查结束时会等列表刷新完再继续，避免后面的视频全屏请求拿到已被替换的元素。最后一轮验证：源码完整 smoke 2 次加三个专项检查全部通过，打包版完整 smoke 2 次通过；第 3 次卡在原有的“收藏夹视频进入全屏”步骤（awaited requestFullscreen 没有超时，约 16 分钟无进展，已手动结束）。原因未查明，可能与当时用户在用电脑有关；下次可以给这一步加超时和日志后再复现。
 - 没有代码签名、自动更新和 LICENSE 文件。
 
 ## 开发注意事项

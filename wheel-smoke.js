@@ -2,6 +2,35 @@
 // and dismissal without clicking through to Luna. Saves screenshots of the animation and the settled wheel.
 const fs = require('node:fs'),
   path = require('node:path');
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+// Synthetic input cannot take the Windows foreground, so the window can blur right after opening and the wheel
+// closes on blur by design. A real click activates the window first; here the right-click is retried a few times.
+async function openNatively(win) {
+  const read = code => win.webContents.executeJavaScript(code);
+  const pet = await read(
+    `(()=>{const b=document.querySelector('#pet').getBoundingClientRect();return {x:Math.round(b.x+b.width/2),y:Math.round(b.y+b.height*0.45)};})()`
+  );
+  for (let attempt = 0; attempt < 3; attempt++) {
+    win.webContents.sendInputEvent({ type: 'mouseMove', ...pet });
+    await sleep(150);
+    win.webContents.sendInputEvent({ type: 'mouseDown', button: 'right', clickCount: 1, ...pet });
+    win.webContents.sendInputEvent({ type: 'mouseUp', button: 'right', clickCount: 1, ...pet });
+    await sleep(550);
+    if (await read('wheel.isOpen')) return pet;
+  }
+  return null;
+}
+async function clickSector(win, item) {
+  const point = await win.webContents.executeJavaScript(
+    `(()=>{if(!wheel.isOpen)return null;const b=document.querySelector('[data-wheel=${item}] .wheel-icon').getBoundingClientRect();return {x:Math.round(b.x+b.width/2),y:Math.round(b.y+b.height/2)};})()`
+  );
+  if (!point) return false;
+  win.webContents.sendInputEvent({ type: 'mouseMove', ...point });
+  await sleep(120);
+  win.webContents.sendInputEvent({ type: 'mouseDown', button: 'left', clickCount: 1, ...point });
+  win.webContents.sendInputEvent({ type: 'mouseUp', button: 'left', clickCount: 1, ...point });
+  return true;
+}
 async function check({ win, output }) {
   const run = code => win.webContents.executeJavaScript(code);
   const snap = async name => fs.writeFileSync(path.join(output, name), (await win.webContents.capturePage()).toPNG());
@@ -23,7 +52,7 @@ async function check({ win, output }) {
   const opened = await run(`(()=>{
     const node=document.querySelector('#wheel'),items=[...node.querySelectorAll('.wheel-item')];
     if(node.hidden||!wheel.isOpen||items.length!==10)throw Error('wheel not open');
-    if(!items[0].classList.contains('active')||document.activeElement!==items[0])throw Error('first item not focused');
+    if(!items[0].classList.contains('active')||(document.hasFocus()&&document.activeElement!==items[0]))throw Error('first item not focused');
     if(document.querySelector('.wheel-center-label').textContent!=='收藏夹')throw Error('center label');
     // Each icon position must hit its own clipped sector; the transparent corner must hit the wheel itself.
     const hits=items.every(item=>{const box=item.querySelector('.wheel-icon').getBoundingClientRect();return document.elementFromPoint(box.left+box.width/2,box.top+box.height/2)?.closest('.wheel-item')===item;});
@@ -83,4 +112,4 @@ async function check({ win, output }) {
     dismissWithoutClickThrough: true
   };
 }
-module.exports = { check };
+module.exports = { check, openNatively, clickSector };

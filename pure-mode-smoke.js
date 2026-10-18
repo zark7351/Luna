@@ -31,25 +31,18 @@ module.exports = async ({ win, restore, stateFile, output }) => {
     await sleep(120);
   };
   // Normal mode has no bottom toolbar: right-click Luna and pick a wheel sector with real input.
+  // Normal mode has no bottom toolbar: right-click Luna and pick a wheel sector with real input.
+  const { openNatively, clickSector } = require('./wheel-smoke');
   const wheelClick = async item => {
-    const pet = await read(
-      "(()=>{const b=document.querySelector('#pet').getBoundingClientRect();return {x:Math.round(b.x+b.width/2),y:Math.round(b.y+b.height*0.45)};})()"
-    );
-    win.webContents.sendInputEvent({ type: 'mouseMove', ...pet });
-    await sleep(150);
-    win.webContents.sendInputEvent({ type: 'mouseDown', button: 'right', clickCount: 1, ...pet });
-    win.webContents.sendInputEvent({ type: 'mouseUp', button: 'right', clickCount: 1, ...pet });
-    await sleep(550);
-    const p = await read(
-      "(()=>{if(!wheel.isOpen)return null;const b=document.querySelector('[data-wheel=" +
-        item +
-        "] .wheel-icon').getBoundingClientRect();return {x:Math.round(b.x+b.width/2),y:Math.round(b.y+b.height/2)};})()"
-    );
-    if (!p) throw Error('wheel did not open for ' + item);
-    win.webContents.sendInputEvent({ type: 'mouseMove', ...p });
-    await sleep(120);
-    win.webContents.sendInputEvent({ type: 'mouseDown', button: 'left', clickCount: 1, ...p });
-    win.webContents.sendInputEvent({ type: 'mouseUp', button: 'left', clickCount: 1, ...p });
+    if (!(await openNatively(win)) || !(await clickSector(win, item)))
+      throw Error(
+        'wheel did not open for ' +
+          item +
+          ' ' +
+          (await read(
+            'JSON.stringify({focus:document.hasFocus(),panels:panelsOpen(),inert:document.body.inert,pure:settings.pureMode,protected:angerInteraction.protected,ignore})'
+          ))
+      );
     await sleep(350);
   };
   await read(

@@ -131,22 +131,12 @@ module.exports = async function runDesktopSmoke(live) {
     win.show();
     await new Promise(r => setTimeout(r, 250));
     // Real input: right-click Luna for the wheel, then left-click the collection sector through its clip path.
-    const petPoint = await win.webContents.executeJavaScript(
-      `(()=>{const box=document.querySelector('#pet').getBoundingClientRect();return {x:Math.round(box.left+box.width/2),y:Math.round(box.top+box.height*0.45)};})()`
-    );
-    win.webContents.sendInputEvent({ type: 'mouseMove', ...petPoint });
-    await new Promise(r => setTimeout(r, 180));
-    win.webContents.sendInputEvent({ type: 'mouseDown', ...petPoint, button: 'right', clickCount: 1 });
-    win.webContents.sendInputEvent({ type: 'mouseUp', ...petPoint, button: 'right', clickCount: 1 });
-    await new Promise(r => setTimeout(r, 600));
+    const wheelInput = require('./wheel-smoke');
+    if (!(await wheelInput.openNatively(win))) throw Error('native right click did not open the wheel');
     const sectorPoint = await win.webContents.executeJavaScript(
-      `(()=>{if(!wheel.isOpen)return null;const box=document.querySelector('[data-wheel=library] .wheel-icon').getBoundingClientRect();return {x:Math.round(box.left+box.width/2),y:Math.round(box.top+box.height/2)};})()`
+      `(()=>{const box=document.querySelector('[data-wheel=library] .wheel-icon').getBoundingClientRect();return {x:Math.round(box.left+box.width/2),y:Math.round(box.top+box.height/2)};})()`
     );
-    if (!sectorPoint) throw Error('native right click did not open the wheel');
-    win.webContents.sendInputEvent({ type: 'mouseMove', ...sectorPoint });
-    await new Promise(r => setTimeout(r, 120));
-    win.webContents.sendInputEvent({ type: 'mouseDown', ...sectorPoint, button: 'left', clickCount: 1 });
-    win.webContents.sendInputEvent({ type: 'mouseUp', ...sectorPoint, button: 'left', clickCount: 1 });
+    if (!(await wheelInput.clickSector(win, 'library'))) throw Error('wheel closed before choosing a sector');
     await new Promise(r => setTimeout(r, 500));
     if (
       !(await win.webContents.executeJavaScript(
@@ -694,6 +684,7 @@ module.exports = async function runDesktopSmoke(live) {
       libraryWin: live.libraryWin,
       output: app.getPath('temp')
     });
+    smokeStage = 'library-video-fullscreen';
     await live.libraryWin.webContents.executeJavaScript(
       `{document.querySelector('#search').value='预览视频';document.querySelector('#search').dispatchEvent(new Event('input'));}`
     );
