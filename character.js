@@ -205,7 +205,8 @@
         happy: 'happy',
         angry: 'angry',
         furious: 'furious',
-        pout: 'pout'
+        pout: 'pout',
+        sleepy: 'closed'
       };
       if (!Object.hasOwn(types, name) || stopped) return false;
       if (['angry', 'furious'].includes(reaction) && !['angry', 'furious'].includes(name)) return true;

@@ -28,6 +28,7 @@ function applySettings(value) {
   syncDockHold();
   $('pet').removeAttribute('title');
   window.lunaI18n.setLanguage(value.language);
+  life?.setEnabled(value.companion !== false && !lifePaused);
 }
 function syncDockHold() {
   if (viewStopped) return;
@@ -155,6 +156,61 @@ const showMessage = (text, delay) => {
   infoBubbles.cancel();
   return feedback.show(text, delay);
 };
+let life = null,
+  lifeTimer = null,
+  lifeSaveTimer = null,
+  lifePaused = false;
+function panelsOpen() {
+  return (
+    $('help').open ||
+    ['settings', 'wardrobe', 'library-sheet', 'recording-sheet', 'reminder-sheet'].some(id => !$(id).hidden)
+  );
+}
+// Proactive lines wait for a quiet moment: no bubble, panel, reminder, drag or protected anger sequence.
+function lifeCanSpeak() {
+  return (
+    !viewStopped &&
+    !sleeping &&
+    document.visibilityState === 'visible' &&
+    !edgeState.collapsed &&
+    !settings?.pureMode &&
+    !dragStart &&
+    !dropDepth &&
+    !document.body.inert &&
+    !angerInteraction?.protected &&
+    !feedback.getReminder() &&
+    !feedback.getMessage() &&
+    !infoBubbles.active &&
+    !panelsOpen()
+  );
+}
+function lifeSay(text, expression) {
+  if (viewStopped || settings?.pureMode || !showMessage(text, 5200)) return false;
+  window.lunaCharacter.react(expression);
+  return true;
+}
+function startLife(memory) {
+  life = window.lunaLife.createLife({
+    say: lifeSay,
+    canSpeak: lifeCanSpeak,
+    translate: t,
+    name: () => settings?.name || '露娜',
+    nickname: () => settings?.nickname || '',
+    separator: () => (window.lunaI18n.language === 'en' ? ', ' : '，'),
+    load: () => memory,
+    save: value => {
+      clearTimeout(lifeSaveTimer);
+      lifeSaveTimer = setTimeout(() => {
+        lifeSaveTimer = null;
+        api('life-memory', value).catch(() => {});
+      }, 1000);
+    }
+  });
+  if (sleeping) life.sleep();
+  life.setEnabled(settings?.companion !== false && !lifePaused);
+  lifeTimer = setInterval(() => life.tick(), 30000);
+  setTimeout(() => !viewStopped && life.tick(), 3000);
+}
 $('bubble').onclick = () => {
   if (feedback.getReminder())
     api('reminder-show').catch(error => {
@@ -225,6 +281,11 @@ window.addEventListener('pagehide', () => {
   infoBubbles.stop();
   feedback.stop();
   clearTimeout(controlsTimer);
+  clearInterval(lifeTimer);
+  if (lifeSaveTimer !== null) {
+    clearTimeout(lifeSaveTimer);
+    api('life-memory', life.memory()).catch(() => {});
+  }
 });
 function happy(text) {
   if (sleeping) return;
@@ -319,6 +380,7 @@ window.pet.onSound(name => {
   sound.play().catch(error => console.warn(t('提示音播放失败'), error.message));
 });
 window.pet.onEffect(name => {
+  life?.note(name);
   window.lunaEffects.burst(name);
   const buttons = {
     collect: 'library-button',
@@ -366,7 +428,11 @@ function rest(value) {
   window.lunaCharacter.cancel();
   $('pet').classList.toggle('sleeping', sleeping);
   $('pet').classList.remove('happy', 'blink');
-  if (!dropDepth) showMessage(sleeping ? t('你先忙，我小憩一下。') : t('你回来啦。'));
+  // The companion engine varies these lines (greeting, time away); without it keep the original two.
+  const line = life ? (sleeping ? life.sleep() : life.wake()) : null;
+  if (dropDepth) return;
+  if (!line) showMessage(sleeping ? t('你先忙，我小憩一下。') : t('你回来啦。'));
+  else if (showMessage(line.text, 5200) && !sleeping) window.lunaCharacter.react(line.expression);
 }
 window.pet.onIdleChanged(rest);
 function openHelp() {
@@ -400,6 +466,7 @@ async function openSettings() {
     $('language').value = settings.language;
     $('top').checked = settings.top;
     $('pure-mode').checked = settings.pureMode;
+    $('companion').checked = settings.companion !== false;
     $('screenshot-shortcut').checked = settings.screenshotShortcut;
     $('sound-enabled').checked = settings.soundEnabled;
     bodyDraft = window.lunaBodyShortcuts.validate(settings.bodyShortcuts);
@@ -513,6 +580,7 @@ $('settings-form').onsubmit = async e => {
     nickname: $('nickname').value,
     top: $('top').checked,
     pureMode: $('pure-mode').checked,
+    companion: $('companion').checked,
     screenshotShortcut: $('screenshot-shortcut').checked,
     soundEnabled: $('sound-enabled').checked,
     bodyShortcuts: bodyDraft,
@@ -681,8 +749,26 @@ $('pet').onpointerdown = e => {
   dragStart = { x: e.screenX, y: e.screenY, clientX: e.clientX, clientY: e.clientY };
   syncDockHold();
   dragging = false;
+  shake = { x: e.screenX, direction: 0, turns: [] };
   $('pet').setPointerCapture(e.pointerId);
 };
+let shake = null;
+// Four quick left/right reversals within 1.2 s while carrying her counts as shaking.
+function trackShake(event) {
+  if (!shake) return;
+  const dx = event.screenX - shake.x;
+  if (Math.abs(dx) < 12) return;
+  const direction = Math.sign(dx),
+    time = performance.now();
+  if (shake.direction && direction !== shake.direction) shake.turns.push(time);
+  shake.direction = direction;
+  shake.x = event.screenX;
+  shake.turns = shake.turns.filter(turn => time - turn < 1200);
+  if (shake.turns.length >= 4) {
+    shake.turns = [];
+    life?.shaken();
+  }
+}
 function movedPointer(event) {
   return (
     dragStart &&
@@ -694,7 +780,9 @@ $('pet').onpointermove = e => {
   if (dragStart && !dragging && movedPointer(e)) {
     dragging = true;
     window.pet.drag(true);
+    life?.dragStarted();
   }
+  if (dragStart && dragging) trackShake(e);
   if (!dragStart) {
     const region = window.lunaCharacter.hitRegion(e.clientX, e.clientY);
     const action = region ? (settings?.bodyShortcuts?.[region] ?? window.lunaBodyShortcuts.defaults[region]) : '';
@@ -838,12 +926,17 @@ document.addEventListener('drop', async e => {
     showMessage(error.message);
   }
 });
+function closeEyes(duration) {
+  if (sleeping || $('pet').classList.contains('happy')) return;
+  $('pet').classList.add('blink');
+  setTimeout(() => $('pet').classList.remove('blink'), duration);
+}
+// With companion on, blinking follows her energy: slower and longer when sleepy, sometimes a double blink.
 function blink() {
-  if (!sleeping && !$('pet').classList.contains('happy')) {
-    $('pet').classList.add('blink');
-    setTimeout(() => $('pet').classList.remove('blink'), 140);
-  }
-  setTimeout(blink, 3200 + Math.random() * 2400);
+  const plan = life?.enabled ? life.blinkPlan() : { delay: 3200 + Math.random() * 2400, duration: 140, double: false };
+  closeEyes(plan.duration);
+  if (plan.double) setTimeout(() => closeEyes(120), plan.duration + 160);
+  setTimeout(blink, plan.delay);
 }
 setTimeout(blink, 3000);
 (async () => {
@@ -855,6 +948,12 @@ setTimeout(blink, 3000);
     appearance($('pet'), settings.hair, settings.outfit);
     rest(s.sleeping === true);
     document.title = settings.name + t(' · 桌面宠物');
+    lifePaused = s.lifePaused === true;
+    api('life-memory')
+      .then(memory => {
+        if (!viewStopped) startLife(memory);
+      })
+      .catch(() => {});
   } catch (e) {
     showMessage(t('初始化失败：') + e.message);
   }

@@ -13,6 +13,7 @@ const allowed = new Set([
   'screenshot-start',
   'screenshot-shortcut',
   'state',
+  'life-memory',
   'settings',
   'appearance',
   'system-stats',

@@ -2,12 +2,14 @@ const path = require('node:path');
 const { normalize } = require('./i18n');
 const bodyShortcuts = require('./body-shortcuts');
 const { location } = require('./weather');
+const { validateMemory } = require('./life');
 const defaults = {
   name: '露娜',
   language: 'zh-CN',
   nickname: '',
   top: true,
   pureMode: false,
+  companion: true,
   screenshotShortcut: true,
   soundEnabled: true,
   bodyShortcuts: bodyShortcuts.defaults,
@@ -36,6 +38,7 @@ function validate(input = {}) {
   s.language = normalize(input.language);
   s.top = input.top !== false;
   s.pureMode = input.pureMode === true;
+  s.companion = input.companion !== false;
   s.screenshotShortcut = input.screenshotShortcut !== false;
   s.soundEnabled = input.soundEnabled !== false;
   s.bodyShortcuts = bodyShortcuts.validate(input.bodyShortcuts);
@@ -55,7 +58,7 @@ function validate(input = {}) {
 
 function migrateState(saved = {}) {
   if (!saved || typeof saved !== 'object') saved = {};
-  const state = { settings: validate(saved.settings || {}), layoutVersion: 3 };
+  const state = { settings: validate(saved.settings || {}), layoutVersion: 3, life: validateMemory(saved.life) };
   if (Array.isArray(saved.position) && saved.position.length === 2 && saved.position.every(Number.isFinite)) {
     state.position = [
       saved.position[0] + ([2, 3].includes(saved.layoutVersion) ? 0 : OLD_PET_OFFSET - PET_OFFSET),

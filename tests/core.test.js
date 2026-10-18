@@ -1,6 +1,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { defaults, validate, migrateState, WINDOW_WIDTH, WINDOW_HEIGHT } = require('../core');
+const { validateMemory } = require('../life');
 
 test('old chat and AI data are discarded while local settings remain', () => {
   const state = migrateState({
@@ -12,6 +13,7 @@ test('old chat and AI data are discarded while local settings remain', () => {
   assert.deepEqual(state, {
     settings: { ...defaults, name: '星露娜', nickname: '小星', top: false },
     layoutVersion: 3,
+    life: validateMemory(),
     position: [447, 110]
   });
   assert.equal(Object.hasOwn(state, 'history'), false);

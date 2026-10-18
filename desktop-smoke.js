@@ -1302,6 +1302,8 @@ module.exports = async function runDesktopSmoke(live) {
       complete: true,
       persisted: true
     };
+    smokeStage = 'companion';
+    result.companion = await require('./life-smoke').check({ win, stateFile });
     smokeStage = 'language';
     result.language = await require('./language-smoke').check({
       win,

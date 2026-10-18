@@ -51,6 +51,7 @@ const { createReminderAlerts } = require('./reminder-alerts');
 const { createRecording } = require('./recording');
 const { operationSound, createSoundDispatch } = require('./sound-events');
 const { effectNames, operationEffect } = require('./effect-events');
+const { validateMemory } = require('./life');
 protocol.registerSchemesAsPrivileged([
   { scheme: 'luna-media', privileges: { standard: true, secure: true, stream: true } }
 ]);
@@ -213,6 +214,8 @@ function publicState() {
     toolbarWidth: TOOLBAR_WIDTH,
     edgeDock: edgeDock?.read() || { side: null, collapsed: false },
     sleeping: idle?.isSleeping() || false,
+    // Proactive companion lines would race the integration check's bubble assertions.
+    lifePaused: smoke,
     fileDirectory: state.settings.saveDirectory || path.join(app.getPath('userData'), 'collection-files')
   };
 }
@@ -740,6 +743,19 @@ else {
     handle('reminder-save', input => reminders.save(input), false);
     handle('reminder-action', input => reminders.action(input), false);
     handle('state', () => publicState(), true);
+    handle('life-memory', input => {
+      if (input !== undefined) {
+        const previous = state;
+        state = { ...state, life: validateMemory(input) };
+        try {
+          persist();
+        } catch (error) {
+          state = previous;
+          throw error;
+        }
+      }
+      return validateMemory(state.life);
+    });
     handle('system-stats', () => {
       if (!systemStats) systemStats = createSystemStats();
       if (!smoke) {
@@ -760,6 +776,7 @@ else {
         ...input,
         language: input?.language ?? state.settings.language,
         pureMode: input?.pureMode ?? state.settings.pureMode,
+        companion: input?.companion ?? state.settings.companion,
         bodyShortcuts: input?.bodyShortcuts ?? state.settings.bodyShortcuts,
         weatherLocation: Object.hasOwn(input || {}, 'weatherLocation')
           ? input.weatherLocation
