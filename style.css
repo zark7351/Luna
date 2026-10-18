@@ -1076,3 +1076,202 @@ body[data-edge-collapsed='right'] #edge-expand:hover {
   background: transparent;
   box-shadow: none;
 }
+
+/* Radial quick menu (wheel.js): frosted sectors with a lilac-pink active state and staggered spin-in. */
+#wheel {
+  position: absolute;
+  z-index: 40;
+  width: 264px;
+  height: 264px;
+  filter: drop-shadow(0 8px 18px rgba(92, 64, 140, 0.24)) drop-shadow(0 1px 2px rgba(92, 64, 140, 0.16));
+}
+#wheel::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0) 58%,
+    rgba(199, 174, 247, 0.32) 70%,
+    rgba(246, 177, 210, 0.18) 78%,
+    rgba(255, 255, 255, 0) 86%
+  );
+  pointer-events: none;
+}
+.wheel-item {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  background: radial-gradient(
+    circle at 132px 132px,
+    rgba(255, 255, 255, 0.98) 52%,
+    rgba(248, 244, 255, 0.97) 82%,
+    rgba(240, 233, 252, 0.97) 100%
+  );
+  transform-origin: 132px 132px;
+  transition:
+    transform 0.2s cubic-bezier(0.3, 1.5, 0.5, 1),
+    background 0.2s ease;
+}
+.wheel-item:focus-visible {
+  outline: none;
+}
+.wheel-item.active {
+  background: radial-gradient(circle at 132px 132px, #c9b2f8 48%, #e5aee0 76%, #f6aac9 100%);
+  transform: scale(1.05);
+}
+.wheel-icon {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  fill: none;
+  stroke: var(--color);
+  stroke-width: 2;
+  transition:
+    stroke 0.2s ease,
+    transform 0.2s cubic-bezier(0.3, 1.5, 0.5, 1),
+    opacity 0.2s ease;
+}
+.wheel-item.active .wheel-icon {
+  stroke: #fff;
+  transform: scale(1.14);
+}
+.wheel-item.off .wheel-icon {
+  opacity: 0.42;
+}
+.wheel-item.off.active .wheel-icon {
+  opacity: 0.75;
+}
+.wheel-center {
+  position: absolute;
+  left: 82px;
+  top: 82px;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 35%, rgba(255, 255, 255, 0.95), rgba(249, 245, 255, 0.86));
+  backdrop-filter: blur(8px);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.9),
+    inset 0 0 0 2px rgba(155, 122, 209, 0.12),
+    0 4px 14px rgba(92, 64, 140, 0.14);
+}
+.wheel-center-icon {
+  width: 30px;
+  height: 30px;
+  fill: none;
+  stroke: var(--color);
+  stroke-width: 1.9;
+}
+.wheel-center-label {
+  max-width: 88px;
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: #4b3d63;
+}
+.wheel-center-state {
+  font-size: 10.5px;
+  line-height: 1;
+  color: #9a8cb3;
+}
+.wheel-center-state:empty {
+  display: none;
+}
+.wheel-center.swap > * {
+  animation: wheel-center-swap 0.22s cubic-bezier(0.2, 1.2, 0.4, 1) both;
+}
+#wheel.opening::before {
+  animation: wheel-glow-in 0.5s ease-out both;
+}
+#wheel.opening .wheel-item {
+  animation: wheel-item-in 0.38s cubic-bezier(0.2, 1.25, 0.4, 1) backwards;
+  animation-delay: calc(var(--i) * 24ms);
+}
+#wheel.opening .wheel-center {
+  animation: wheel-center-in 0.32s cubic-bezier(0.2, 1.3, 0.4, 1) backwards;
+}
+#wheel.closing {
+  pointer-events: none;
+}
+#wheel.closing::before {
+  animation: wheel-glow-out 0.18s ease-in forwards;
+}
+#wheel.closing .wheel-item {
+  animation: wheel-item-out 0.18s ease-in forwards;
+  animation-delay: calc(var(--i) * 6ms);
+}
+#wheel.closing .wheel-center {
+  animation: wheel-center-out 0.16s ease-in forwards;
+}
+@keyframes wheel-item-in {
+  from {
+    opacity: 0;
+    transform: rotate(-32deg) scale(0.55);
+  }
+  60% {
+    opacity: 1;
+  }
+}
+@keyframes wheel-item-out {
+  to {
+    opacity: 0;
+    transform: rotate(14deg) scale(0.78);
+  }
+}
+@keyframes wheel-center-in {
+  from {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+}
+@keyframes wheel-center-out {
+  to {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+@keyframes wheel-center-swap {
+  from {
+    opacity: 0.15;
+    transform: translateY(5px) scale(0.92);
+  }
+}
+@keyframes wheel-glow-in {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+}
+@keyframes wheel-glow-out {
+  to {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #wheel *,
+  #wheel::before {
+    animation: none !important;
+    transition: none !important;
+  }
+  .wheel-item.active {
+    transform: none;
+  }
+}
+
+/* The normal pet no longer shows the bottom toolbar; the radial wheel replaces it. The bar element stays for
+   clean mode and for the edge-dock expand arrow. */
+body:not(.pure-mode):not([data-edge-collapsed='left']):not([data-edge-collapsed='right']) .petbar {
+  display: none;
+}

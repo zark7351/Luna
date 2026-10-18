@@ -65,7 +65,10 @@
     expand: ['M7 10l5 5 5-5'],
     hide: ['m7 8 5 5 5-5', 'M6 19h12'],
     refresh: ['M20 7V3l-4 4', 'M20 7a8 8 0 1 0 1 7'],
-    snooze: ['M12 3a9 9 0 1 0 9 9', 'M12 7v5l3 2', 'M17 3v6h6']
+    snooze: ['M12 3a9 9 0 1 0 9 9', 'M12 7v5l3 2', 'M17 3v6h6'],
+    heart: ['M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.2a4.3 4.3 0 0 1 7.5 2.6C19.5 15.4 12 20 12 20Z'],
+    sparkle: ['M12 3q1.2 6.6 8 9-6.8 2.4-8 9-1.2-6.6-8-9 6.8-2.4 8-9Z', 'M19 3v3m-1.5-1.5h3'],
+    exit: ['M10 4H6.5A2.5 2.5 0 0 0 4 6.5v11A2.5 2.5 0 0 0 6.5 20H10', 'M15 8l4 4-4 4m4-4H9']
   };
   const ns = 'http://www.w3.org/2000/svg';
   function draw(svg, name) {
@@ -91,7 +94,7 @@
   function hydrate() {
     for (const svg of document.querySelectorAll('svg[data-icon]')) draw(svg, svg.dataset.icon);
   }
-  window.lunaIcons = { create };
+  window.lunaIcons = { create, draw };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', hydrate, { once: true });
   else hydrate();
 })();

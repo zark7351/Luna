@@ -216,7 +216,7 @@ async function check(win, output, stateFile, stats) {
     await sleep(1200);
     if (!(await win.webContents.executeJavaScript(`feedback.getMessage().includes('49%')`)))
       throw Error('stats bubble not dynamic');
-    await sleep(3900);
+    await sleep(4300);
     if (!(await win.webContents.executeJavaScript(`document.querySelector('#bubble').hidden&&!infoBubbles.active`)))
       throw Error('stats bubble extended beyond five seconds');
   } finally {

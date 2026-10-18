@@ -82,9 +82,12 @@ async function check({ win, dock, screen, ipcMain, stateFile, fireReminder }) {
       win.getBounds().height !== WINDOW_HEIGHT
     )
       throw Error('edge expand native bounds');
-    const bar = await win.webContents.executeJavaScript(
-      `document.querySelector('.petbar').getBoundingClientRect().toJSON()`
-    );
+    // The normal pet hides the toolbar, but docking still aligns its centred 236 DIP footprint to the edge.
+    const bar = { left: TOOLBAR_INSET, right: TOOLBAR_INSET + TOOLBAR_WIDTH, width: TOOLBAR_WIDTH };
+    if (
+      !(await win.webContents.executeJavaScript(`getComputedStyle(document.querySelector('.petbar')).display==='none'`))
+    )
+      throw Error('expanded normal pet must not show the toolbar');
     const screenEdge = win.getBounds().x + (side === 'left' ? bar.left : bar.right);
     if (
       Math.abs(bar.width - TOOLBAR_WIDTH) > 1 ||

@@ -194,8 +194,8 @@
   关闭说明: 'Close help',
   '桌面上的小伙伴，帮你收好临时内容。': 'Your desktop companion, keeping things handy.',
   互动与移动: 'Interact & move',
-  '点击脑袋、胸部、手臂、禁区、腿或脚，使用设置里的对应快捷功能并触发表情；连续点击胸部或禁区会生气。普通气泡点击关闭，按住角色可拖动位置；移到露娜身上显示下方按钮。电脑连续 5 分钟没有键鼠操作，她会自动休息；恢复操作后自动唤醒。':
-    'Click a body part for its shortcut and expression. Repeated chest or off-limits clicks may make Luna annoyed. Click ordinary bubbles to dismiss; hold Luna to drag. Hover to reveal the toolbar. After five idle minutes, she rests and wakes when you return.',
+  '点击脑袋、胸部、手臂、禁区、腿或脚，使用设置里的对应快捷功能并触发表情；连续点击胸部或禁区会生气。普通气泡点击关闭，按住角色可拖动位置；右键打开功能转盘。电脑连续 5 分钟没有键鼠操作，她会自动休息；恢复操作后自动唤醒。':
+    'Click a body part for its shortcut and expression. Repeated chest or off-limits clicks may make Luna annoyed. Click ordinary bubbles to dismiss; hold Luna to drag; right-click for the quick wheel. After five idle minutes, she rests and wakes when you return.',
   拖来就能收藏: 'Drop to save',
   '将文件、文字或网页链接拖到露娜身上。收藏夹按类型显示，图片和视频可以预览。':
     'Drop files, text, or links onto Luna. Browse by category; preview images and videos.',
@@ -418,5 +418,14 @@
   '今天的天空是什么颜色的呢……': 'I wonder what color the sky is today...',
   '哇，要带我去哪儿？': 'Whoa, where are we going?',
   '慢点慢点～': 'Slow down~',
-  '别晃啦，头好晕……': "Stop shaking me, I'm dizzy..."
+  '别晃啦，头好晕……': "Stop shaking me, I'm dizzy...",
+  露娜功能: "Luna's menu",
+  已开启: 'On',
+  已关闭: 'Off',
+  '好呀，我会多陪你说说话。': "Yay, I'll chat with you more.",
+  '好，那我安静陪着你。': "Okay, I'll keep you company quietly.",
+  功能转盘: 'Quick wheel',
+  '右键点我，就能打开功能转盘哦。': 'Right-click me to open the quick wheel!',
+  '右键点击露娜弹出功能转盘：收藏、截图、录屏、提醒、换装、设置、纯净模式、陪伴互动、隐藏和退出。方向键可切换，按 Esc 或点空白处关闭。':
+    'Right-click Luna for the quick wheel: collection, screenshot, recording, reminders, wardrobe, settings, clean mode, companion chat, hide and quit. Use arrow keys to move; press Esc or click elsewhere to close.'
 }));

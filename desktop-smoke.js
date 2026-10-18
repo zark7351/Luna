@@ -118,18 +118,11 @@ module.exports = async function runDesktopSmoke(live) {
     const stats=await window.pet.call('system-stats');if(!stats.ok||JSON.stringify(stats.value)!==JSON.stringify({cpu:25,memory:50,gpu:75}))throw Error('system stats bridge');
     openSettings();await wait(()=>!document.querySelector('#settings').hidden);document.querySelector('#settings-form').requestSubmit();await wait(()=>document.querySelector('#settings').hidden);showMessage('');
     showMessage('短暂消息',60);if(document.querySelector('#bubble').hidden)throw Error('bubble missing');await new Promise(r=>setTimeout(r,100));if(!document.querySelector('#bubble').hidden)throw Error('temporary bubble timeout');
-    hideControls();if(getComputedStyle(document.querySelector('.petbar')).visibility!=='hidden')throw Error('toolbar not hidden');
-    document.querySelector('#pet').dispatchEvent(new MouseEvent('mousemove',{bubbles:true}));await new Promise(r=>setTimeout(r,200));if(getComputedStyle(document.querySelector('.petbar')).visibility!=='visible')throw Error('pet hover toolbar');
-    document.querySelector('.petbar').dispatchEvent(new MouseEvent('mousemove',{bubbles:true}));await new Promise(r=>setTimeout(r,100));if(!document.querySelector('#companion').classList.contains('controls-visible'))throw Error('toolbar hover retention');
-    document.body.dispatchEvent(new MouseEvent('mousemove',{bubbles:true}));await new Promise(r=>setTimeout(r,550));if(getComputedStyle(document.querySelector('.petbar')).visibility!=='hidden')throw Error('toolbar hover leave: '+JSON.stringify({class:document.querySelector('#companion').className,visible:getComputedStyle(document.querySelector('.petbar')).visibility,hidden:document.hidden}));
-    const bar=document.querySelector('.petbar'),point=()=>{const box=bar.getBoundingClientRect();return {clientX:box.left+3,clientY:(box.top+box.bottom)/2};};
-    document.body.dispatchEvent(new MouseEvent('mousemove',{bubbles:true,...point()}));await new Promise(r=>setTimeout(r,550));if(ignore||getComputedStyle(bar).visibility!=='visible')throw Error('hidden toolbar cannot be recovered by position');
-    const petBox=document.querySelector('#pet').getBoundingClientRect(),barBox=bar.getBoundingClientRect(),gap={clientX:(barBox.left+barBox.right)/2,clientY:(petBox.bottom+barBox.top)/2};
-    document.body.dispatchEvent(new MouseEvent('mousemove',{bubbles:true,...gap}));await new Promise(r=>setTimeout(r,550));if(ignore||!document.querySelector('#companion').classList.contains('controls-visible'))throw Error('toolbar gap enables click-through');
-    document.body.dispatchEvent(new MouseEvent('mousemove',{bubbles:true,clientX:0,clientY:0}));await new Promise(r=>setTimeout(r,100));document.body.dispatchEvent(new MouseEvent('mousemove',{bubbles:true,...point()}));document.dispatchEvent(new MouseEvent('mouseleave',point()));await new Promise(r=>setTimeout(r,550));if(ignore||getComputedStyle(bar).visibility!=='visible')throw Error('toolbar reentry or internal leave hides controls');
-    document.dispatchEvent(new MouseEvent('mouseleave',{clientX:-20,clientY:-20}));await new Promise(r=>setTimeout(r,550));if(!ignore||getComputedStyle(bar).visibility!=='hidden')throw Error('toolbar outside leave');
+    showControls();document.querySelector('#pet').dispatchEvent(new MouseEvent('mousemove',{bubbles:true}));await new Promise(r=>setTimeout(r,200));
+    if(getComputedStyle(document.querySelector('.petbar')).display!=='none')throw Error('normal mode must not show the bottom toolbar');
+    hideControls();
     if(!document.querySelector('#recording-button svg[data-icon=record] path')||document.querySelector('#recording-button circle')||document.querySelectorAll('#library-button path').length!==1)throw Error('toolbar camera/folder icons');
-    return {noInfoBar:true,bodyShortcutChoices:true,localStats:true,transientBubble:true,hoverToolbar:true,toolbarGap:true,hiddenToolbarRecovery:true,toolbarReentry:true,toolbarCameraFolder:true};
+    return {noInfoBar:true,bodyShortcutChoices:true,localStats:true,transientBubble:true,normalToolbarRemoved:true,toolbarCameraFolder:true};
   })()`);
     Object.assign(result, today);
     await win.webContents.executeJavaScript(
@@ -137,23 +130,37 @@ module.exports = async function runDesktopSmoke(live) {
     );
     win.show();
     await new Promise(r => setTimeout(r, 250));
-    const toolbarPoint = await win.webContents.executeJavaScript(
-      `(()=>{showControls();const box=document.querySelector('#library-button').getBoundingClientRect();return {x:Math.round((box.left+box.right)/2),y:Math.round((box.top+box.bottom)/2)};})()`
+    // Real input: right-click Luna for the wheel, then left-click the collection sector through its clip path.
+    const petPoint = await win.webContents.executeJavaScript(
+      `(()=>{const box=document.querySelector('#pet').getBoundingClientRect();return {x:Math.round(box.left+box.width/2),y:Math.round(box.top+box.height*0.45)};})()`
     );
-    win.webContents.sendInputEvent({ type: 'mouseMove', ...toolbarPoint });
+    win.webContents.sendInputEvent({ type: 'mouseMove', ...petPoint });
     await new Promise(r => setTimeout(r, 180));
-    win.webContents.sendInputEvent({ type: 'mouseDown', ...toolbarPoint, button: 'left', clickCount: 1 });
-    win.webContents.sendInputEvent({ type: 'mouseUp', ...toolbarPoint, button: 'left', clickCount: 1 });
-    await new Promise(r => setTimeout(r, 250));
-    if (!(await win.webContents.executeJavaScript(`!document.querySelector('#library-sheet').hidden && !ignore`)))
+    win.webContents.sendInputEvent({ type: 'mouseDown', ...petPoint, button: 'right', clickCount: 1 });
+    win.webContents.sendInputEvent({ type: 'mouseUp', ...petPoint, button: 'right', clickCount: 1 });
+    await new Promise(r => setTimeout(r, 600));
+    const sectorPoint = await win.webContents.executeJavaScript(
+      `(()=>{if(!wheel.isOpen)return null;const box=document.querySelector('[data-wheel=library] .wheel-icon').getBoundingClientRect();return {x:Math.round(box.left+box.width/2),y:Math.round(box.top+box.height/2)};})()`
+    );
+    if (!sectorPoint) throw Error('native right click did not open the wheel');
+    win.webContents.sendInputEvent({ type: 'mouseMove', ...sectorPoint });
+    await new Promise(r => setTimeout(r, 120));
+    win.webContents.sendInputEvent({ type: 'mouseDown', ...sectorPoint, button: 'left', clickCount: 1 });
+    win.webContents.sendInputEvent({ type: 'mouseUp', ...sectorPoint, button: 'left', clickCount: 1 });
+    await new Promise(r => setTimeout(r, 500));
+    if (
+      !(await win.webContents.executeJavaScript(
+        `!document.querySelector('#library-sheet').hidden && !ignore && !wheel.isOpen`
+      ))
+    )
       throw Error(
-        'toolbar input cannot open library: ' +
+        'wheel input cannot open library: ' +
           (await win.webContents.executeJavaScript(
-            `JSON.stringify({hidden:document.querySelector('#library-sheet').hidden,ignore,controls:document.querySelector('#companion').className,visibility:getComputedStyle(document.querySelector('.petbar')).visibility,hit:document.elementFromPoint(${toolbarPoint.x},${toolbarPoint.y})?.outerHTML})`
+            `JSON.stringify({hidden:document.querySelector('#library-sheet').hidden,ignore,open:wheel.isOpen,hit:document.elementFromPoint(${sectorPoint.x},${sectorPoint.y})?.outerHTML.slice(0,120)})`
           ))
       );
     await win.webContents.executeJavaScript(`window.lunaPanels.closeSheet('library')`);
-    result.toolbarInputClick = true;
+    result.wheelInputClick = true;
     await win.webContents.executeJavaScript(`showMessage('');hideControls();void 0;`);
     await new Promise(r => setTimeout(r, 200));
     fs.writeFileSync(
@@ -1088,7 +1095,7 @@ module.exports = async function runDesktopSmoke(live) {
       `(()=>{if(document.querySelector('#title').value!=='未保存草稿')throw Error('reminder close lost draft');const clock=document.querySelector('#mode-scheduled');clock.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));if(document.querySelector('#countdown-fields').hidden||document.activeElement.id!=='mode-countdown')throw Error('reminder keyboard mode');document.activeElement.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowLeft',bubbles:true}));})()`
     );
     await reminderFrame().executeJavaScript(
-      `(async()=>{document.querySelector('#title').value='喝水，放松一下';document.querySelector('#time').value=new Date(Date.now()+600000-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);document.querySelector('#form').requestSubmit();await new Promise(r=>setTimeout(r,150));if(!document.querySelector('.item')?.textContent.includes('喝水'))throw Error('reminder form');})()`
+      `(async()=>{document.querySelector('#title').value='喝水，放松一下';document.querySelector('#time').value=new Date(Date.now()+600000-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);document.querySelector('#form').requestSubmit();const until=Date.now()+2000;while(!document.querySelector('.item')?.textContent.includes('喝水')&&Date.now()<until)await new Promise(r=>setTimeout(r,30));if(!document.querySelector('.item')?.textContent.includes('喝水'))throw Error('reminder form');})()`
     );
     const reminderItem = reminders.list()[0];
     if (!reminderItem || reminderItem.status !== 'pending') throw Error('reminder saved');
@@ -1304,6 +1311,8 @@ module.exports = async function runDesktopSmoke(live) {
     };
     smokeStage = 'companion';
     result.companion = await require('./life-smoke').check({ win, stateFile });
+    smokeStage = 'wheel';
+    result.wheel = await require('./wheel-smoke').check({ win, output: app.getPath('temp') });
     smokeStage = 'language';
     result.language = await require('./language-smoke').check({
       win,

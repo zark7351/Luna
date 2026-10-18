@@ -54,8 +54,8 @@ async function checkReactions(win) {
   await win.webContents.executeJavaScript(`(async()=>{
     for(const name of ['collect','capture','recording','wardrobe','reminder-save','complete'])if(!window.smokeUiEffects.includes(name))throw Error('missing action reaction: '+name);
     document.querySelector('#settings').hidden=true;document.querySelector('#wardrobe').hidden=true;closeSheets();window.lunaEffects.clear();showMessage('');showControls();await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-    const button=document.querySelector('#library-button'),box=button.getBoundingClientRect();window.lunaEffects.burst('collect');
-    if(!document.elementFromPoint((box.left+box.right)/2,(box.top+box.bottom)/2)?.closest('#library-button')||getComputedStyle(document.querySelector('.character-face')).pointerEvents!=='none'||document.querySelector('#luna-fx'))throw Error('reaction intercepted controls');
+    const box=document.querySelector('#pet').getBoundingClientRect();window.lunaEffects.burst('collect');
+    if(!document.elementFromPoint((box.left+box.right)/2,box.top+box.height*0.45)?.closest('#pet')||getComputedStyle(document.querySelector('.character-face')).pointerEvents!=='none'||document.querySelector('#luna-fx'))throw Error('reaction intercepted controls');
     for(let i=0;i<12;i++)window.lunaEffects.burst('collect');if(document.querySelectorAll('.character-face').length!==1||window.lunaEffects.burst('unknown')!==false)throw Error('reaction resource limit');
   })()`);
   await new Promise(r => setTimeout(r, 2000));

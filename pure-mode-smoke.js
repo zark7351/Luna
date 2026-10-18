@@ -30,13 +30,35 @@ module.exports = async ({ win, restore, stateFile, output }) => {
     win.webContents.sendInputEvent({ type: 'mouseUp', button: 'left', clickCount: 1, ...p });
     await sleep(120);
   };
+  // Normal mode has no bottom toolbar: right-click Luna and pick a wheel sector with real input.
+  const wheelClick = async item => {
+    const pet = await read(
+      "(()=>{const b=document.querySelector('#pet').getBoundingClientRect();return {x:Math.round(b.x+b.width/2),y:Math.round(b.y+b.height*0.45)};})()"
+    );
+    win.webContents.sendInputEvent({ type: 'mouseMove', ...pet });
+    await sleep(150);
+    win.webContents.sendInputEvent({ type: 'mouseDown', button: 'right', clickCount: 1, ...pet });
+    win.webContents.sendInputEvent({ type: 'mouseUp', button: 'right', clickCount: 1, ...pet });
+    await sleep(550);
+    const p = await read(
+      "(()=>{if(!wheel.isOpen)return null;const b=document.querySelector('[data-wheel=" +
+        item +
+        "] .wheel-icon').getBoundingClientRect();return {x:Math.round(b.x+b.width/2),y:Math.round(b.y+b.height/2)};})()"
+    );
+    if (!p) throw Error('wheel did not open for ' + item);
+    win.webContents.sendInputEvent({ type: 'mouseMove', ...p });
+    await sleep(120);
+    win.webContents.sendInputEvent({ type: 'mouseDown', button: 'left', clickCount: 1, ...p });
+    win.webContents.sendInputEvent({ type: 'mouseUp', button: 'left', clickCount: 1, ...p });
+    await sleep(350);
+  };
   await read(
     "closeSheets();document.querySelector('#settings').hidden=true;document.querySelector('#wardrobe').hidden=true;if(document.querySelector('#help').open)document.querySelector('#help').close();void 0;"
   );
   const saved = await read('JSON.parse(JSON.stringify(settings))');
   try {
-    await click('hide');
-    await wait(() => !win.isVisible() && !win.isDestroyed(), 'normal toolbar hide');
+    await wheelClick('hide');
+    await wait(() => !win.isVisible() && !win.isDestroyed(), 'normal wheel hide');
     restore();
     await wait(() => win.isVisible(), 'normal toolbar tray restore');
     win.close();
@@ -44,8 +66,8 @@ module.exports = async ({ win, restore, stateFile, output }) => {
     if (win.isDestroyed() || win.isVisible()) throw Error('native close did not hide to tray');
     restore();
     await wait(() => win.isVisible(), 'tray restore');
-    await click('toolbar-settings');
-    await wait(() => read("!document.querySelector('#settings').hidden"), 'toolbar settings');
+    await wheelClick('settings');
+    await wait(() => read("!document.querySelector('#settings').hidden"), 'wheel settings');
     await read(
       "document.querySelector('#pure-mode').checked=true;document.querySelector('#settings-form').requestSubmit();void 0;"
     );

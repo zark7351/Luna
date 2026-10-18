@@ -1,7 +1,8 @@
 const t = window.lunaI18n.t;
 const $ = id => document.getElementById(id);
 window.lunaCharacter = createLunaCharacter($('pet'));
-let angerInteraction = null,
+let wheel = null,
+  angerInteraction = null,
   heldReminder = null,
   returnSpeechUntil = 0;
 let settings,
@@ -39,7 +40,7 @@ function syncDockHold() {
     lastPureLayout = expanded;
     api('pure-layout', expanded).catch(() => {});
   }
-  const held = !!dragStart || expanded || $('bubble').classList.contains('reminder-alert');
+  const held = !!dragStart || expanded || wheel?.isOpen || $('bubble').classList.contains('reminder-alert');
   if (held !== lastDockHold || expanded !== lastDockPanels) {
     lastDockHold = held;
     lastDockPanels = expanded;
@@ -171,6 +172,7 @@ function lifeCanSpeak() {
   return (
     !viewStopped &&
     !sleeping &&
+    !wheel?.isOpen &&
     document.visibilityState === 'visible' &&
     !edgeState.collapsed &&
     !settings?.pureMode &&
@@ -466,7 +468,7 @@ async function openSettings() {
     $('language').value = settings.language;
     $('top').checked = settings.top;
     $('pure-mode').checked = settings.pureMode;
-    $('companion').checked = settings.companion !== false;
+    $('companion-enabled').checked = settings.companion !== false;
     $('screenshot-shortcut').checked = settings.screenshotShortcut;
     $('sound-enabled').checked = settings.soundEnabled;
     bodyDraft = window.lunaBodyShortcuts.validate(settings.bodyShortcuts);
@@ -580,7 +582,7 @@ $('settings-form').onsubmit = async e => {
     nickname: $('nickname').value,
     top: $('top').checked,
     pureMode: $('pure-mode').checked,
-    companion: $('companion').checked,
+    companion: $('companion-enabled').checked,
     screenshotShortcut: $('screenshot-shortcut').checked,
     soundEnabled: $('sound-enabled').checked,
     bodyShortcuts: bodyDraft,
@@ -939,6 +941,55 @@ function blink() {
   setTimeout(blink, plan.delay);
 }
 setTimeout(blink, 3000);
+async function saveQuickSetting(change) {
+  const state = await api('settings', { ...settings, ...change });
+  applySettings(state.settings);
+  return state.settings;
+}
+wheel = window.lunaWheel.createWheel({
+  host: document.body,
+  translate: t,
+  sound: name => window.uiSound(name),
+  onToggle: syncDockHold,
+  items: [
+    { id: 'library', label: '收藏夹', icon: 'folder', color: '#8b6cf0', run: () => openSheet('library') },
+    { id: 'screenshot', label: '截图', icon: 'capture', color: '#3b9cf0', run: () => api('screenshot-start') },
+    { id: 'recording', label: '录屏', icon: 'record', color: '#f0648a', run: () => api('recording-show') },
+    { id: 'reminder', label: '提醒', icon: 'bell', color: '#f2a223', run: () => api('reminder-show') },
+    { id: 'wardrobe', label: '换装', icon: 'hanger', color: '#d96fd0', run: () => openWardrobe() },
+    { id: 'settings', label: '设置', icon: 'settings', color: '#6a78f5', run: () => openSettings() },
+    {
+      id: 'pure',
+      label: '纯净模式',
+      icon: 'sparkle',
+      color: '#2fb991',
+      run: () => saveQuickSetting({ pureMode: true })
+    },
+    {
+      id: 'companion',
+      label: '陪伴互动',
+      icon: 'heart',
+      color: '#ff5f87',
+      off: () => settings?.companion === false,
+      run: async () => {
+        const next = await saveQuickSetting({ companion: settings?.companion === false });
+        showMessage(t(next.companion ? '好呀，我会多陪你说说话。' : '好，那我安静陪着你。'));
+      }
+    },
+    { id: 'hide', label: '隐藏到托盘', icon: 'hide', color: '#7a88a6', run: () => api('hide') },
+    { id: 'quit', label: '退出', icon: 'exit', color: '#ef4b4b', run: () => api('quit') }
+  ].map(item => ({
+    ...item,
+    run: () => Promise.resolve(item.run()).catch(error => showMessage(error.message))
+  }))
+});
+$('pet').addEventListener('contextmenu', event => {
+  event.preventDefault();
+  if (viewStopped || angerInteraction.protected || document.body.inert || settings?.pureMode || panelsOpen()) return;
+  endDrag();
+  cancelInfo();
+  wheel.show(event.clientX, event.clientY);
+});
 (async () => {
   try {
     const s = await api('state');
@@ -954,12 +1005,25 @@ setTimeout(blink, 3000);
         if (!viewStopped) startLife(memory);
       })
       .catch(() => {});
+    // The bottom toolbar is gone, so tell existing users once where its buttons went.
+    let wheelHinted = lifePaused;
+    try {
+      wheelHinted ||= localStorage.getItem('luna-wheel-hint') === '1';
+    } catch {}
+    if (!wheelHinted)
+      setTimeout(() => {
+        if (viewStopped || settings?.pureMode || !showMessage(t('右键点我，就能打开功能转盘哦。'), 6000)) return;
+        try {
+          localStorage.setItem('luna-wheel-hint', '1');
+        } catch {}
+      }, 1500);
   } catch (e) {
     showMessage(t('初始化失败：') + e.message);
   }
 })();
 
 window.addEventListener('luna-language-changed', () => {
+  wheel.refresh();
   renderBodySettings();
   cancelInfo();
   feedback.show('');

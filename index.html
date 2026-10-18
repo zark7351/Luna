@@ -136,9 +136,17 @@
           <dt><span data-i18n="互动与移动">互动与移动</span></dt>
           <dd>
             <span
-              data-i18n="点击脑袋、胸部、手臂、禁区、腿或脚，使用设置里的对应快捷功能并触发表情；连续点击胸部或禁区会生气。普通气泡点击关闭，按住角色可拖动位置；移到露娜身上显示下方按钮。电脑连续 5 分钟没有键鼠操作，她会自动休息；恢复操作后自动唤醒。"
-              >点击脑袋、胸部、手臂、禁区、腿或脚，使用设置里的对应快捷功能并触发表情；连续点击胸部或禁区会生气。普通气泡点击关闭，按住角色可拖动位置；移到露娜身上显示下方按钮。电脑连续
+              data-i18n="点击脑袋、胸部、手臂、禁区、腿或脚，使用设置里的对应快捷功能并触发表情；连续点击胸部或禁区会生气。普通气泡点击关闭，按住角色可拖动位置；右键打开功能转盘。电脑连续 5 分钟没有键鼠操作，她会自动休息；恢复操作后自动唤醒。"
+              >点击脑袋、胸部、手臂、禁区、腿或脚，使用设置里的对应快捷功能并触发表情；连续点击胸部或禁区会生气。普通气泡点击关闭，按住角色可拖动位置；右键打开功能转盘。电脑连续
               5 分钟没有键鼠操作，她会自动休息；恢复操作后自动唤醒。</span
+            >
+          </dd>
+          <dt><span data-i18n="功能转盘">功能转盘</span></dt>
+          <dd>
+            <span
+              data-i18n="右键点击露娜弹出功能转盘：收藏、截图、录屏、提醒、换装、设置、纯净模式、陪伴互动、隐藏和退出。方向键可切换，按 Esc 或点空白处关闭。"
+              >右键点击露娜弹出功能转盘：收藏、截图、录屏、提醒、换装、设置、纯净模式、陪伴互动、隐藏和退出。方向键可切换，按
+              Esc 或点空白处关闭。</span
             >
           </dd>
           <dt><span data-i18n="拖来就能收藏">拖来就能收藏</span></dt>
@@ -301,7 +309,7 @@
         /></label>
         <label class="check" title="露娜会主动打招呼、关心你" data-i18n-title="露娜会主动打招呼、关心你"
           ><span><span data-i18n="陪伴互动">陪伴互动</span></span
-          ><input type="checkbox" id="companion" role="switch"
+          ><input type="checkbox" id="companion-enabled" role="switch"
         /></label>
         <label class="check"
           ><span><span data-i18n="置顶">置顶</span></span
@@ -553,6 +561,7 @@
     <script src="pet-feedback.js"></script>
     <script src="anger-interaction.js"></script>
     <script src="life.js"></script>
+    <script src="wheel.js"></script>
     <script src="renderer.js"></script>
   </body>
 </html>
