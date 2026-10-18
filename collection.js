@@ -1,9 +1,13 @@
 const fs = require('node:fs/promises');
+const { existsSync } = require('node:fs');
 const path = require('node:path');
 const { randomUUID } = require('node:crypto');
 const { mediaType } = require('./media');
 
 const MAX_TEXT = 20000;
+const DAY = 86400000;
+// Windows paths are case-insensitive, so duplicate references compare in lower case there.
+const samePath = (a, b) => (process.platform === 'win32' ? a.toLowerCase() === b.toLowerCase() : a === b);
 
 function classifyText(value) {
   const content = String(value || '').trim();
@@ -54,6 +58,7 @@ async function createCollection(root, { getDirectory = () => null } = {}) {
           throw Error('收藏索引包含无效文件名。');
       }
       if (item.kind !== 'file' && typeof item.content !== 'string') throw Error('收藏索引格式错误。');
+      if (item.pinned !== undefined && item.pinned !== true) delete item.pinned;
     }
     items = loaded;
   } catch (error) {
@@ -72,14 +77,23 @@ async function createCollection(root, { getDirectory = () => null } = {}) {
       .reverse()
       .map(({ storedName, storedDirectory, referencePath, ...item }) => {
         if (item.kind === 'file') item.storage = item.storage === 'reference' ? 'reference' : 'copy';
+        if (item.kind === 'file' && referencePath && !existsSync(referencePath)) item.missing = true;
         const type = item.kind === 'file' ? mediaType(referencePath || storedName) : '';
         return type
           ? { ...item, mediaType: type, previewUrl: 'luna-media://collection/' + encodeURIComponent(item.id) }
           : item;
       });
   }
+  // Saving the same text, link or local file again moves the existing entry to the top instead of duplicating it.
+  async function bump(existing) {
+    const item = { ...existing, createdAt: new Date().toISOString() };
+    await persist([...items.filter(entry => entry.id !== existing.id), item]);
+    return { ...item, duplicate: true };
+  }
   async function addText(value) {
     const parsed = classifyText(value);
+    const existing = items.find(entry => entry.kind === parsed.kind && entry.content === parsed.content);
+    if (existing) return bump(existing);
     const item = { id: randomUUID(), ...parsed, createdAt: new Date().toISOString() };
     await persist([...items, item]);
     return item;
@@ -88,6 +102,10 @@ async function createCollection(root, { getDirectory = () => null } = {}) {
     if (typeof source !== 'string' || !path.isAbsolute(source)) throw Error('只能收藏本机文件。');
     const stat = await fs.stat(source);
     if (!stat.isFile()) throw Error('暂不支持收藏文件夹。');
+    const existing = items.find(
+      entry => entry.storage === 'reference' && samePath(entry.referencePath, path.resolve(source))
+    );
+    if (existing) return bump({ ...existing, size: stat.size });
     const item = {
       id: randomUUID(),
       kind: 'file',
@@ -194,6 +212,62 @@ async function createCollection(root, { getDirectory = () => null } = {}) {
     await persist(items.map(entry => (entry.id === id ? { ...entry, linkPreview: preview } : entry)));
     return true;
   }
+  async function setPinned(id, pinned) {
+    const item = find(id);
+    if (!item) throw Error('收藏项不存在。');
+    await persist(
+      items.map(entry => {
+        if (entry.id !== id) return entry;
+        const { pinned: _old, ...rest } = entry;
+        return pinned === true ? { ...rest, pinned: true } : rest;
+      })
+    );
+    return pinned === true;
+  }
+  // Turn a path reference into a copy owned by Luna, so moving or deleting the original no longer breaks it.
+  async function keepCopy(id) {
+    const item = find(id);
+    if (!item || item.kind !== 'file') throw Error('收藏项不存在。');
+    if (item.storage !== 'reference') return false;
+    const stat = await fs.stat(item.referencePath).catch(() => null);
+    if (!stat?.isFile()) throw Error('原文件已移动或删除，无法保存副本。');
+    const ext = path.extname(item.referencePath);
+    const storedName = randomUUID() + (/^\.[a-zA-Z0-9]{1,10}$/.test(ext) ? ext.toLowerCase() : '');
+    const dir = directory();
+    await fs.mkdir(dir, { recursive: true });
+    const destination = path.join(dir, storedName);
+    await fs.copyFile(item.referencePath, destination);
+    const { referencePath: _path, ...rest } = item;
+    const copy = {
+      ...rest,
+      storage: 'copy',
+      storedName,
+      ...(dir !== filesDir ? { storedDirectory: dir } : {}),
+      size: stat.size
+    };
+    try {
+      await persist(items.map(entry => (entry.id === id ? copy : entry)));
+    } catch (error) {
+      await fs.rm(destination, { force: true });
+      throw error;
+    }
+    return true;
+  }
+  function stale(days, now) {
+    const cutoff = now - days * DAY;
+    return items.filter(item => !item.pinned && Date.parse(item.createdAt) < cutoff);
+  }
+  // Removes unpinned entries older than `days`; Luna's own copies are deleted, referenced originals are kept.
+  async function cleanup({ days = 30, dryRun = false, now = Date.now() } = {}) {
+    if (!Number.isInteger(days) || days < 1 || days > 3650) throw Error('清理天数无效。');
+    const old = stale(days, now);
+    if (dryRun || !old.length) return old.length;
+    const ids = new Set(old.map(item => item.id));
+    await persist(items.filter(item => !ids.has(item.id)));
+    for (const item of old)
+      if (item.kind === 'file' && item.storage !== 'reference') await fs.rm(itemPath(item), { force: true });
+    return old.length;
+  }
   async function remove(id) {
     const item = find(id);
     if (!item) throw Error('收藏项不存在。');
@@ -221,7 +295,20 @@ async function createCollection(root, { getDirectory = () => null } = {}) {
         : '';
     return type ? { path: item.storage === 'reference' ? item.referencePath : itemPath(item), type } : null;
   }
-  return { list, addText, addFile, addBytes, remove, openTarget, previewFile, setLinkPreview, beginRecording };
+  return {
+    list,
+    addText,
+    addFile,
+    addBytes,
+    remove,
+    openTarget,
+    previewFile,
+    setLinkPreview,
+    beginRecording,
+    setPinned,
+    keepCopy,
+    cleanup
+  };
 }
 
 module.exports = { createCollection, classifyText };

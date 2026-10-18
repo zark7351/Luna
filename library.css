@@ -83,8 +83,8 @@ header {
 }
 .toolbar {
   position: absolute;
-  left: 236px;
-  right: 228px;
+  left: 296px;
+  right: 262px;
   top: 10px;
   height: 32px;
   display: flex;
@@ -593,4 +593,143 @@ header {
 .video-menu-action:hover,
 .video-speeds button[aria-pressed='true'] {
   background: #eee3f5;
+}
+
+/* "All" view: day headings, pinned items, reference badges, cleanup footer and the quick note editor. */
+.group-title {
+  grid-column: 1 / -1;
+  margin: 2px 2px -4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #a58fb3;
+}
+.group-title:first-child {
+  margin-top: 0;
+}
+.item.pinned {
+  border-color: #dccbeb;
+  background: #f5effa;
+}
+.pin-badge {
+  position: absolute;
+  left: 7px;
+  top: 7px;
+  z-index: 2;
+  width: 22px;
+  height: 22px;
+  padding: 4px;
+  border-radius: 50%;
+  background: #fffafdee;
+  box-shadow: 0 2px 7px #5e46681f;
+  fill: #efe3fb;
+  stroke: #9b72c8;
+}
+.actions button.is-pinned svg {
+  fill: #efe3fb;
+  stroke: #9b72c8;
+}
+.storage-badge {
+  position: absolute;
+  left: 7px;
+  bottom: 7px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid #e6dcef;
+  background: #fffaffe6;
+  font-size: 10px;
+  line-height: 1.4;
+  color: #8b72a0;
+}
+.storage-badge.lost {
+  border-color: #f2cfdc;
+  background: #fdeff4;
+  color: #c0587a;
+}
+.item.missing .preview-stage {
+  background: #f8f2f6;
+}
+.cleanup {
+  grid-column: 1 / -1;
+  justify-self: center;
+  margin: 4px 0 2px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: #f2edf7;
+  color: #8a6fa0;
+  font-size: 11px;
+}
+.cleanup:hover {
+  background: #ece2f4;
+}
+#note-editor {
+  flex: none;
+  display: flex;
+  gap: 6px;
+  margin: 10px 12px 0;
+  padding: 8px;
+  border: 1px solid #e3d6ec;
+  border-radius: 12px;
+  background: #fbf8fd;
+  box-shadow: 0 2px 10px #69517510;
+}
+#note-text {
+  flex: 1;
+  min-height: 70px;
+  resize: vertical;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #5d4a6d;
+}
+#note-text::placeholder {
+  color: #b5a5c0;
+}
+.note-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.note-actions button {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+}
+.note-actions button:hover {
+  background: #ede4f5;
+}
+#note-save {
+  background: #e7dbf3;
+  color: #7c5a96;
+}
+.embedded #note-editor {
+  margin: 6px 8px 0;
+  padding: 6px;
+}
+.embedded #note-text {
+  min-height: 54px;
+  font-size: 11px;
+}
+.embedded .pin-badge {
+  left: 5px;
+  top: 5px;
+  width: 19px;
+  height: 19px;
+  padding: 3px;
+}
+.embedded .storage-badge {
+  left: 5px;
+  bottom: 5px;
+  padding: 1px 6px;
+  font-size: 9px;
+}
+.item.pinned .item-preview {
+  padding-top: 34px;
+}
+.embedded .item.pinned .item-preview {
+  padding-top: 28px;
 }

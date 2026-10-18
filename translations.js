@@ -426,6 +426,36 @@
   '好，那我安静陪着你。': "Okay, I'll keep you company quietly.",
   功能转盘: 'Quick wheel',
   '右键点我，就能打开功能转盘哦。': 'Right-click me to open the quick wheel!',
+  全部: 'All',
+  新建便签: 'New note',
+  '写点什么… Ctrl+Enter 保存': 'Write something… Ctrl+Enter to save',
+  便签内容: 'Note text',
+  取消: 'Cancel',
+  保存便签: 'Save note',
+  已置顶: 'Pinned',
+  今天: 'Today',
+  昨天: 'Yesterday',
+  更早: 'Earlier',
+  置顶收藏: 'Pin',
+  取消置顶: 'Unpin',
+  保存副本: 'Keep a copy',
+  '已保存副本，原文件移动也不影响了。': 'Copy saved. Moving the original no longer matters.',
+  引用: 'Linked',
+  已失效: 'Missing',
+  原文件已移动或删除: 'Original file moved or deleted',
+  '原文件已移动或删除，这条收藏无法再打开。':
+    'The original file was moved or deleted, so this item can no longer open.',
+  '只记录了原文件的位置；移动或删除原文件后将无法打开，可点“保存副本”。':
+    'Only the original location is saved. Moving or deleting the file breaks it; use “Keep a copy”.',
+  '原文件已移动或删除，无法保存副本。': 'The original file was moved or deleted, so no copy can be saved.',
+  '清理 30 天前的 {count} 条收藏': 'Clean up {count} item(s) older than 30 days',
+  '清理 30 天前、未置顶的 {count} 条收藏？\n露娜保存的截图、录屏等副本会一起删除；拖进来的原文件不受影响。':
+    'Clean up {count} unpinned item(s) older than 30 days?\nCopies Luna saved (screenshots, recordings…) are deleted too; original files you dropped in are not touched.',
+  '已清理 {count} 条收藏。': 'Cleaned up {count} item(s).',
+  清理天数无效: 'Invalid cleanup period.',
+  '清理天数无效。': 'Invalid cleanup period.',
+  '已经收藏过了，移到最前面啦。': 'Already saved. Moved it to the top.',
+  '便签已保存。': 'Note saved.',
   '右键点击露娜弹出功能转盘：收藏、截图、录屏、提醒、换装、设置、纯净模式、陪伴互动、隐藏和退出。方向键可切换，按 Esc 或点空白处关闭。':
     'Right-click Luna for the quick wheel: collection, screenshot, recording, reminders, wardrobe, settings, clean mode, companion chat, hide and quit. Use arrow keys to move; press Esc or click elsewhere to close.'
 }));

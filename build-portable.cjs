@@ -15,6 +15,7 @@ try {
     'desktop-smoke.js',
     'life-smoke.js',
     'wheel-smoke.js',
+    'library-smoke.js',
     'package.json',
     'app-branding.js',
     'effect-events.js',

@@ -33,6 +33,15 @@
           </svg>
         </button>
         <button
+          id="new-note"
+          title="新建便签"
+          data-i18n-title="新建便签"
+          aria-label="新建便签"
+          data-i18n-aria-label="新建便签"
+        >
+          <svg data-icon="edit" viewBox="0 0 24 24" aria-hidden="true"></svg>
+        </button>
+        <button
           id="add-file"
           title="添加文件"
           data-i18n-title="添加文件"
@@ -107,11 +116,25 @@
     </div>
     <nav id="tabs" role="tablist" aria-label="收藏分类" data-i18n-aria-label="收藏分类">
       <button
+        id="tab-all"
+        role="tab"
+        data-tab="all"
+        aria-selected="true"
+        aria-controls="items"
+        title="全部"
+        data-i18n-title="全部"
+        aria-label="全部"
+        data-i18n-aria-label="全部"
+      >
+        <svg data-icon="grid" viewBox="0 0 24 24" aria-hidden="true"></svg><span></span>
+      </button>
+      <button
         id="tab-media"
         role="tab"
         data-tab="media"
-        aria-selected="true"
+        aria-selected="false"
         aria-controls="items"
+        tabindex="-1"
         title="图片与视频"
         data-i18n-title="图片与视频"
         aria-label="图片与视频"
@@ -168,8 +191,40 @@
         ><span></span>
       </button>
     </nav>
+    <form id="note-editor" hidden>
+      <textarea
+        id="note-text"
+        maxlength="20000"
+        placeholder="写点什么… Ctrl+Enter 保存"
+        data-i18n-placeholder="写点什么… Ctrl+Enter 保存"
+        aria-label="便签内容"
+        data-i18n-aria-label="便签内容"
+      ></textarea>
+      <div class="note-actions">
+        <button
+          id="note-cancel"
+          type="button"
+          title="取消"
+          data-i18n-title="取消"
+          aria-label="取消"
+          data-i18n-aria-label="取消"
+        >
+          <svg data-icon="close" viewBox="0 0 24 24" aria-hidden="true"></svg>
+        </button>
+        <button
+          id="note-save"
+          type="submit"
+          title="保存便签"
+          data-i18n-title="保存便签"
+          aria-label="保存便签"
+          data-i18n-aria-label="保存便签"
+        >
+          <svg data-icon="check" viewBox="0 0 24 24" aria-hidden="true"></svg>
+        </button>
+      </div>
+    </form>
     <div id="status" role="status"></div>
-    <main id="items" role="tabpanel" aria-labelledby="tab-media" aria-live="polite"></main>
+    <main id="items" role="tabpanel" aria-labelledby="tab-all" aria-live="polite"></main>
     <script src="ui-effects.js"></script>
     <script src="ui-sounds.js"></script>
     <script src="compact-video.js"></script>

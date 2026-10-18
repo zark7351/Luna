@@ -264,7 +264,7 @@ function restore() {
 async function showLibrary(view) {
   if (angerLocked()) return;
   const initial =
-    view && ['media', 'files', 'text', 'links'].includes(view.tab)
+    view && ['all', 'media', 'files', 'text', 'links'].includes(view.tab)
       ? { tab: view.tab, query: typeof view.query === 'string' ? view.query.slice(0, 300) : '' }
       : null;
   if (libraryWin && !libraryWin.isDestroyed()) {
@@ -1020,6 +1020,38 @@ else {
         mutateCollection(async () => {
           const removed = await collection.remove(id);
           notifyCollection();
+          return removed;
+        }),
+      true
+    );
+    handle(
+      'collection-pin',
+      input =>
+        mutateCollection(async () => {
+          if (!input || typeof input.id !== 'string') throw Error('收藏项不存在。');
+          const pinned = await collection.setPinned(input.id, input.pinned === true);
+          notifyCollection();
+          return pinned;
+        }),
+      true
+    );
+    handle(
+      'collection-keep-copy',
+      id =>
+        mutateCollection(async () => {
+          const copied = await collection.keepCopy(id);
+          notifyCollection();
+          return copied;
+        }),
+      true
+    );
+    handle(
+      'collection-cleanup',
+      input =>
+        mutateCollection(async () => {
+          const dryRun = input?.dryRun === true;
+          const removed = await collection.cleanup({ days: 30, dryRun });
+          if (!dryRun && removed) notifyCollection();
           return removed;
         }),
       true

@@ -543,7 +543,7 @@ module.exports = async function runDesktopSmoke(live) {
       throw Error('expanded library did not close sheet');
     if (
       !(await live.libraryWin.webContents.executeJavaScript(
-        `document.querySelector('#tab-files').getAttribute('aria-selected')==='true'&&document.querySelector('#search').value==='笔记'`
+        `document.querySelector('#tab-all').getAttribute('aria-selected')==='true'&&document.querySelector('#search').value==='笔记'`
       ))
     )
       throw Error('expanded library lost view');
@@ -583,19 +583,25 @@ module.exports = async function runDesktopSmoke(live) {
       collection.openTarget(filePaste.value.items[0].id).target !== videoPath
     )
       throw Error('clipboard video paste');
-    const beforePaste = collection.list().length;
+    // Pasting the same file again through Ctrl+V refreshes the existing entry instead of duplicating it.
+    const beforePaste = collection.list().length,
+      pastedId = filePaste.value.items[0].id,
+      pastedAt = collection.list().find(item => item.id === pastedId).createdAt;
+    await new Promise(r => setTimeout(r, 20));
     await live.libraryWin.webContents.executeJavaScript(
       "document.body.dispatchEvent(new Event('paste',{bubbles:true,cancelable:true}));void 0;"
     );
     const pasteUntil = Date.now() + 18000;
-    while (collection.list().length === beforePaste) {
+    while (collection.list().find(item => item.id === pastedId).createdAt === pastedAt) {
       if (Date.now() > pasteUntil) throw Error('clipboard shortcut timeout');
       await new Promise(r => setTimeout(r, 50));
     }
+    if (collection.list().length !== beforePaste || collection.list()[0].id !== pastedId)
+      throw Error('clipboard duplicate was not merged');
     const renderUntil = Date.now() + 3000;
     while (
       !(await live.libraryWin.webContents.executeJavaScript(
-        "document.querySelector('#tab-media').getAttribute('aria-selected')==='true' && !document.querySelector('#paste').disabled"
+        "document.querySelector('#tab-all').getAttribute('aria-selected')==='true' && !document.querySelector('#paste').disabled"
       ))
     ) {
       if (Date.now() > renderUntil) throw Error('clipboard shortcut render timeout');
@@ -682,6 +688,12 @@ module.exports = async function runDesktopSmoke(live) {
     return {imagePreview:true,videoPreview:true,referencePreview:true,libraryTabs:true,libraryGrid:true,fileIcon:true,fileName:true,linkCard:true,libraryIconTabs:true};
   })()`);
     Object.assign(result, previews);
+    smokeStage = 'library-organise';
+    result.libraryOrganise = await require('./library-smoke').check({
+      win,
+      libraryWin: live.libraryWin,
+      output: app.getPath('temp')
+    });
     await live.libraryWin.webContents.executeJavaScript(
       `{document.querySelector('#search').value='预览视频';document.querySelector('#search').dispatchEvent(new Event('input'));}`
     );
@@ -779,7 +791,7 @@ module.exports = async function runDesktopSmoke(live) {
     live.libraryWin.show();
     live.libraryWin.focus();
     await live.libraryWin.webContents.executeJavaScript(
-      `(async()=>{const end=Date.now()+4000;while(true){const image=document.querySelector('[data-id="${captureItem.id}"] img');if(image){image.loading='eager';image.scrollIntoView();}if(document.querySelector('#tab-media').getAttribute('aria-selected')==='true'&&image?.naturalWidth>0)return true;if(Date.now()>end)throw Error('screenshot library preview: '+JSON.stringify({status:document.querySelector('#status').textContent,tab:document.querySelector('#tab-media').getAttribute('aria-selected'),search:document.querySelector('#search').value,images:[...document.querySelectorAll('#items img')].map(i=>({src:i.src,width:i.naturalWidth,hidden:i.hidden})),ids:[...document.querySelectorAll('#items article')].map(i=>i.dataset.id)}));await new Promise(r=>setTimeout(r,50));}})()`
+      `(async()=>{const end=Date.now()+4000;while(true){const image=document.querySelector('[data-id="${captureItem.id}"] img');if(image){image.loading='eager';image.scrollIntoView();}if(document.querySelector('#tab-all').getAttribute('aria-selected')==='true'&&image?.naturalWidth>0)return true;if(Date.now()>end)throw Error('screenshot library preview: '+JSON.stringify({status:document.querySelector('#status').textContent,tab:document.querySelector('#tab-all').getAttribute('aria-selected'),search:document.querySelector('#search').value,images:[...document.querySelectorAll('#items img')].map(i=>({src:i.src,width:i.naturalWidth,hidden:i.hidden})),ids:[...document.querySelectorAll('#items article')].map(i=>i.dataset.id)}));await new Promise(r=>setTimeout(r,50));}})()`
     );
     result.screenshot = {
       cancel: true,

@@ -35,7 +35,10 @@ const allowed = new Set([
   'collection-copy',
   'collection-reveal',
   'collection-file-icon',
-  'collection-link-preview'
+  'collection-link-preview',
+  'collection-pin',
+  'collection-keep-copy',
+  'collection-cleanup'
 ]);
 contextBridge.exposeInMainWorld('pet', {
   call: (channel, payload) => {

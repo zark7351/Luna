@@ -30,6 +30,9 @@ function operationSound(channel, value, input, failed = false) {
     'collection-open': 'open',
     'collection-delete': 'delete',
     'collection-link-preview': 'refresh',
+    'collection-pin': 'toggle',
+    'collection-keep-copy': 'save',
+    'collection-cleanup': input?.dryRun ? null : 'delete',
     'reminder-complete': 'complete',
     'reminder-save': 'save',
     'reminder-action': { complete: 'complete', snooze: 'snooze', delete: 'delete' }[input?.action]
