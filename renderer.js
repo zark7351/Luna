@@ -676,8 +676,10 @@ async function openFlowerWheel() {
   for (let tries = 0; innerHeight === compact && tries < 30; tries++)
     await new Promise(resolve => setTimeout(resolve, 16));
   await new Promise(resolve => requestAnimationFrame(resolve));
-  const box = flower.getBoundingClientRect();
-  wheel.show(box.left + box.width / 2, box.top - 150);
+  // Near the top of the screen the window grows downward, so the wheel opens below the flower instead.
+  const box = flower.getBoundingClientRect(),
+    above = box.top >= 280;
+  wheel.show(box.left + box.width / 2, above ? box.top - 150 : box.bottom + 150);
 }
 let flowerPress = null;
 flower.onpointerdown = e => {

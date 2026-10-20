@@ -78,12 +78,14 @@ module.exports = async ({ win, restore, stateFile, output }) => {
       await sleep(40);
     }
     await sleep(550);
-    if (
-      !(await read(
-        "(()=>{const w=document.querySelector('#wheel').getBoundingClientRect(),f=document.querySelector('#pure-flower').getBoundingClientRect();return w.top>=0&&w.bottom<=innerHeight&&w.bottom<=f.top+8&&f.top-w.bottom<40;})()"
-      ))
-    )
-      throw Error('flower wheel placement');
+    const placement = await read(
+      "(()=>{const w=document.querySelector('#wheel').getBoundingClientRect(),f=document.querySelector('#pure-flower').getBoundingClientRect();return {w:w.toJSON(),f:f.toJSON(),h:innerHeight};})()"
+    );
+    const { w, f, h } = placement;
+    const above = w.bottom <= f.top + 8 && f.top - w.bottom < 40,
+      below = w.top >= f.bottom - 8 && w.top - f.bottom < 40;
+    if (w.top < 0 || w.bottom > h || !(above || below))
+      throw Error('flower wheel placement ' + JSON.stringify({ ...placement, bounds: win.getBounds() }));
     if (item === 'settings')
       fs.writeFileSync(path.join(output, 'luna-pure-wheel.png'), (await win.webContents.capturePage()).toPNG());
     if (!(await clickSector(win, item))) throw Error('flower wheel sector ' + item);
@@ -183,6 +185,13 @@ module.exports = async ({ win, restore, stateFile, output }) => {
     }
     restore();
     await wait(() => win.getBounds().height === 128, 'pure final expansion');
+    // At the top of the screen the window grows downward and the wheel opens below the flower.
+    win.setBounds({ ...beforeEdges, y: area.y });
+    await wait(() => win.getBounds().y === area.y, 'pure top position');
+    await flowerWheel('library');
+    await wait(() => read("!document.querySelector('#library-sheet').hidden"), 'top library');
+    await read("closeSheet('library');void 0");
+    await wait(() => win.getBounds().height === 128, 'top panel close');
     win.setBounds(beforeEdges);
     await wait(() => Math.abs(win.getBounds().x - beforeEdges.x) <= 1, 'pure original position');
     require('electron').ipcMain.emit('drag', { sender: win.webContents }, true);
