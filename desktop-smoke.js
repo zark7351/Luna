@@ -112,7 +112,7 @@ module.exports = async function runDesktopSmoke(live) {
     document.querySelector('.petbar').style.transition='none';
     const wait=async check=>{const end=Date.now()+4000;while(!check()){if(Date.now()>end)throw Error('information UI timeout');await new Promise(r=>setTimeout(r,30));}};
     if(document.querySelector('#today-panel,#info-bar-enabled,#time-clock'))throw Error('permanent information UI remains');
-    if(document.querySelectorAll('#body-region-tabs button').length!==Object.keys(window.lunaBodyShortcuts.regions).length||document.querySelectorAll('#body-action-grid button').length!==8)throw Error('body shortcut choices');
+    if(document.querySelector('#body-region-tabs,#body-action-grid')||window.lunaBodyShortcuts.actions)throw Error('body shortcut settings remain');
     const stats=await window.pet.call('system-stats');if(!stats.ok||JSON.stringify(stats.value)!==JSON.stringify({cpu:25,memory:50,gpu:75}))throw Error('system stats bridge');
     openSettings();await wait(()=>!document.querySelector('#settings').hidden);document.querySelector('#settings-form').requestSubmit();await wait(()=>document.querySelector('#settings').hidden);showMessage('');
     showMessage('短暂消息',60);if(document.querySelector('#bubble').hidden)throw Error('bubble missing');await new Promise(r=>setTimeout(r,100));if(!document.querySelector('#bubble').hidden)throw Error('temporary bubble timeout');
@@ -163,7 +163,7 @@ module.exports = async function runDesktopSmoke(live) {
       path.join(app.getPath('temp'), 'luna-hover-preview.png'),
       (await win.webContents.capturePage()).toPNG()
     );
-    await win.webContents.executeJavaScript(`(async()=>{await performBodyShortcut('head');void 0;})()`);
+    await win.webContents.executeJavaScript(`infoBubbles.start('datetime');void 0;`);
     fs.writeFileSync(
       path.join(app.getPath('temp'), 'luna-info-system-preview.png'),
       (await win.webContents.capturePage()).toPNG()

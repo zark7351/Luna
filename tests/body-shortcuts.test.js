@@ -1,22 +1,15 @@
 const test = require('node:test'),
   assert = require('node:assert/strict');
-const { validate, defaults, regionAt, createReactions, actions } = require('../body-shortcuts');
-test('六个部位可独立映射八种功能，非法值回退且不共享可变配置', () => {
-  assert.equal(Object.keys(actions).length, 8);
-  for (const action of Object.keys(actions)) {
-    const mapped = validate(Object.fromEntries(Object.keys(defaults).map(region => [region, action])));
-    assert.ok(Object.values(mapped).every(value => value === action));
-  }
-  assert.deepEqual(validate({ head: '../../command', extra: 'quit' }), defaults);
-  assert.deepEqual(validate(null), defaults);
-});
-test('explicitly cleared shortcuts survive state migration while missing or invalid entries retain defaults', () => {
-  const { validate: settings, migrateState } = require('../core');
-  const cleared = Object.fromEntries(Object.keys(defaults).map(region => [region, '']));
-  assert.deepEqual(validate(cleared), cleared);
-  assert.deepEqual(migrateState({ settings: settings({ bodyShortcuts: cleared }) }).settings.bodyShortcuts, cleared);
-  assert.deepEqual(validate({ head: '', chest: null }), { ...defaults, head: '' });
-  assert.equal(Object.keys(actions).length, 8);
+const shortcuts = require('../body-shortcuts');
+const { regionAt, createReactions } = shortcuts;
+test('点击部位只触发动画，不再有快捷功能配置', () => {
+  assert.deepEqual(Object.keys(shortcuts).sort(), ['createReactions', 'regionAt', 'regions']);
+  const r = createReactions();
+  assert.deepEqual(
+    ['head', 'chest', 'arms', 'forbidden', 'legs', 'feet'].map(region => r.click(region).expression),
+    ['happy', 'shy', 'wink', 'shy', 'smile', 'pout']
+  );
+  assert.equal(r.click('tail'), null);
 });
 test('十秒内三次敏感点击必定生气，恰好十秒排除旧点击', () => {
   let time = 0;
@@ -62,8 +55,7 @@ test('频繁点击胸部或禁区必定触发，其他部位不增加计数且�
   assert.equal(r.click('chest').annoyed, false);
 });
 
-test('禁区在衣物覆盖中央小范围内，默认空配置；与胸部共用敏感点击计数', () => {
-  assert.equal(defaults.forbidden, '');
+test('禁区在衣物覆盖中央小范围内，与胸部共用敏感点击计数', () => {
   assert.equal(regionAt(165, 262), 'forbidden');
   assert.notEqual(regionAt(177, 262), 'forbidden');
   assert.notEqual(regionAt(165, 271), 'forbidden');

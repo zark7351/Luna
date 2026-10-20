@@ -9,7 +9,7 @@ async function click(win, id) {
   await sleep(100);
 }
 async function checkOrdinary(win) {
-  await win.webContents.executeJavaScript(`(async()=>{await performBodyShortcut('head');void 0;})()`);
+  await win.webContents.executeJavaScript(`infoBubbles.start('datetime');void 0;`);
   await click(win, 'bubble-body');
   if (!(await win.webContents.executeJavaScript(`document.querySelector('#bubble').hidden&&!infoBubbles.active`)))
     throw Error('date bubble click must cancel');

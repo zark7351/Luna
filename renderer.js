@@ -33,8 +33,11 @@ function applySettings(value) {
 }
 function syncDockHold() {
   if (viewStopped) return;
+  // In clean mode the window also grows while the wheel is open so it fits above the flower.
   const expanded =
-    $('help').open || ['settings', 'library-sheet', 'recording-sheet', 'reminder-sheet'].some(id => !$(id).hidden);
+    $('help').open ||
+    ['settings', 'library-sheet', 'recording-sheet', 'reminder-sheet'].some(id => !$(id).hidden) ||
+    (settings?.pureMode && !!wheel?.isOpen);
   if (settings?.pureMode && expanded !== lastPureLayout) {
     lastPureLayout = expanded;
     api('pure-layout', expanded).catch(() => {});
@@ -193,7 +196,7 @@ function overControls(x, y) {
     bar = document.querySelector('.petbar').getBoundingClientRect();
   const inside = box => x >= box.left && x <= box.right && y >= box.top && y <= box.bottom;
   // Hidden controls still have a layout box. Include the gap so crossing it never enables click-through.
-  if (settings?.pureMode) return inside(bar);
+  if (settings?.pureMode) return inside(edgeState.collapsed ? bar : $('pure-flower').getBoundingClientRect());
   return (
     inside(pet) ||
     inside({
@@ -415,8 +418,6 @@ async function openSettings() {
     $('companion-enabled').checked = settings.companion !== false;
     $('screenshot-shortcut').checked = settings.screenshotShortcut;
     $('sound-enabled').checked = settings.soundEnabled;
-    bodyDraft = window.lunaBodyShortcuts.validate(settings.bodyShortcuts);
-    renderBodySettings();
     window.lunaWeather.fill(settings.weatherLocation);
     $('record-frame-rate').value = String(settings.recordFrameRate);
     $('save-directory').value = settings.saveDirectory;
@@ -481,7 +482,6 @@ $('settings-form').onsubmit = async e => {
     companion: $('companion-enabled').checked,
     screenshotShortcut: $('screenshot-shortcut').checked,
     soundEnabled: $('sound-enabled').checked,
-    bodyShortcuts: bodyDraft,
     weatherLocation: window.lunaWeather.getLocation(),
     saveDirectory: $('save-directory').value,
     recordFrameRate: Number($('record-frame-rate').value)
@@ -496,53 +496,7 @@ $('settings-form').onsubmit = async e => {
     $('settings-status').textContent = err.message;
   }
 };
-let bodyDraft = window.lunaBodyShortcuts.validate(),
-  selectedRegion = 'head';
 const bodyReactions = window.lunaBodyShortcuts.createReactions();
-function renderBodySettings() {
-  for (const button of $('body-region-tabs').children) {
-    button.setAttribute('aria-pressed', String(button.dataset.region === selectedRegion));
-    button.textContent = t(window.lunaBodyShortcuts.regions[button.dataset.region]);
-    button.title = t(window.lunaBodyShortcuts.actions[bodyDraft[button.dataset.region]]?.label || '仅表情');
-  }
-  for (const button of $('body-action-grid').children) {
-    const text = t(window.lunaBodyShortcuts.actions[button.dataset.action].label);
-    button.title = text + (bodyDraft[selectedRegion] === button.dataset.action ? t('（再次点击取消）') : '');
-    button.querySelector('span').textContent = text;
-    button.setAttribute('aria-pressed', String(bodyDraft[selectedRegion] === button.dataset.action));
-  }
-}
-for (const [region, label] of Object.entries(window.lunaBodyShortcuts.regions)) {
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.dataset.region = region;
-  button.dataset.uiSound = 'none';
-  button.textContent = t(label);
-  button.onclick = () => {
-    selectedRegion = region;
-    renderBodySettings();
-    window.uiSound('tab');
-  };
-  $('body-region-tabs').append(button);
-}
-for (const [action, value] of Object.entries(window.lunaBodyShortcuts.actions)) {
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.dataset.action = action;
-  button.dataset.uiSound = 'none';
-  button.title = t(value.label);
-  button.append(window.lunaIcons.create(value.icon));
-  const label = document.createElement('span');
-  label.textContent = t(value.label);
-  button.append(label);
-  button.onclick = () => {
-    bodyDraft[selectedRegion] = bodyDraft[selectedRegion] === action ? '' : action;
-    renderBodySettings();
-    window.uiSound('select');
-  };
-  $('body-action-grid').append(button);
-}
-renderBodySettings();
 angerInteraction = window.createAngerInteraction({
   onStage: stage => {
     if (viewStopped) return;
@@ -603,7 +557,8 @@ function cancelInfo() {
     feedback.show('');
   }
 }
-async function performBodyShortcut(region) {
+// Clicking a body part only plays its reaction animation.
+function reactToBody(region) {
   // Let the short angry reaction finish instead of replacing it on the next click.
   if (angerInteraction.click(region)) return;
   if (viewStopped || !region) return;
@@ -614,23 +569,7 @@ async function performBodyShortcut(region) {
   clearTimeout(happyTimer);
   $('pet').classList.add('happy');
   happyTimer = setTimeout(() => $('pet').classList.remove('happy'), 1900);
-  if (reaction.annoyed) {
-    angerInteraction.trigger();
-    return;
-  }
-  const action = settings?.bodyShortcuts?.[region] ?? window.lunaBodyShortcuts.defaults[region];
-  if (action === '') return;
-  try {
-    if (['datetime', 'stats', 'weather'].includes(action)) {
-      if (!feedback.getReminder()) infoBubbles.start(action);
-    } else if (action === 'library') openSheet('library');
-    else if (action === 'screenshot') await api('screenshot-start');
-    else if (action === 'recording') await api('recording-show');
-    else if (action === 'reminder') await api('reminder-show');
-    else if (action === 'settings') await openSettings();
-  } catch (error) {
-    showMessage(error.message);
-  }
+  if (reaction.annoyed) angerInteraction.trigger();
 }
 $('pet').onclick = event => {
   if (dragging) {
@@ -638,7 +577,7 @@ $('pet').onclick = event => {
     return;
   }
   const region = event.detail === 0 ? 'head' : window.lunaCharacter.hitRegion(event.clientX, event.clientY);
-  performBodyShortcut(region);
+  reactToBody(region);
 };
 $('pet').onpointerdown = e => {
   if (e.button !== 0 || angerInteraction.protected) return;
@@ -679,13 +618,6 @@ $('pet').onpointermove = e => {
     life?.dragStarted();
   }
   if (dragStart && dragging) trackShake(e);
-  if (!dragStart) {
-    const region = window.lunaCharacter.hitRegion(e.clientX, e.clientY);
-    const action = region ? (settings?.bodyShortcuts?.[region] ?? window.lunaBodyShortcuts.defaults[region]) : '';
-    const hint = window.lunaBodyShortcuts.actions[action]?.hint;
-    if (hint) $('pet').title = t(hint);
-    else $('pet').removeAttribute('title');
-  }
 };
 function endDrag() {
   const moved = dragStart && dragging,
@@ -732,6 +664,54 @@ document.addEventListener(
   },
   true
 );
+// The clean-mode flower drags like the toolbar grip; a click without moving opens the wheel above it.
+const flower = $('pure-flower');
+async function openFlowerWheel() {
+  if (viewStopped || angerInteraction.protected || document.body.inert || panelsOpen() || wheel.isOpen) return;
+  cancelInfo();
+  lastPureLayout = true;
+  const compact = innerHeight;
+  await api('pure-layout', true).catch(() => {});
+  // Wait for the taller window so the wheel is placed above the flower, not in the old compact frame.
+  for (let tries = 0; innerHeight === compact && tries < 30; tries++)
+    await new Promise(resolve => setTimeout(resolve, 16));
+  await new Promise(resolve => requestAnimationFrame(resolve));
+  const box = flower.getBoundingClientRect();
+  wheel.show(box.left + box.width / 2, box.top - 150);
+}
+let flowerPress = null;
+flower.onpointerdown = e => {
+  if (e.button !== 0 || angerInteraction.protected) return;
+  dragStart = { x: e.screenX, y: e.screenY, clientX: e.clientX, clientY: e.clientY, toolbar: true };
+  dragging = false;
+  flowerPress = { moved: false };
+  syncDockHold();
+  flower.setPointerCapture(e.pointerId);
+};
+flower.onpointermove = e => {
+  if (dragStart && !dragging && movedPointer(e)) {
+    dragging = true;
+    if (flowerPress) flowerPress.moved = true;
+    window.pet.drag(true);
+  }
+};
+flower.onpointerup = () => {
+  const press = flowerPress;
+  flowerPress = null;
+  endDrag();
+  dragging = false;
+  if (press && !press.moved) openFlowerWheel();
+};
+flower.onpointercancel = endDrag;
+flower.addEventListener('lostpointercapture', endDrag);
+flower.onclick = event => {
+  // Pointer clicks are handled on pointerup; this covers Enter and Space.
+  if (event.detail === 0) openFlowerWheel();
+};
+flower.addEventListener('contextmenu', event => {
+  event.preventDefault();
+  openFlowerWheel();
+});
 let dropDepth = 0;
 let beforeDropText = '';
 document.addEventListener('mousemove', e => {
@@ -850,7 +830,8 @@ wheel = window.lunaWheel.createWheel({
       label: '纯净模式',
       icon: 'sparkle',
       color: '#2fb991',
-      run: () => saveQuickSetting({ pureMode: true })
+      off: () => !settings?.pureMode,
+      run: () => saveQuickSetting({ pureMode: !settings?.pureMode })
     },
     {
       id: 'companion',
@@ -911,7 +892,6 @@ $('pet').addEventListener('contextmenu', event => {
 
 window.addEventListener('luna-language-changed', () => {
   wheel.refresh();
-  renderBodySettings();
   cancelInfo();
   feedback.show('');
   const due = feedback.getReminder();

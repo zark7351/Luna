@@ -5,7 +5,7 @@
 ## 当前状态（2026-10-20）
 
 - 版本 1.0.0。main 是已发布的 1.0.0（feature/liveliness 已于 2026-10-20 合并进 main）。**分支 `feature-claude`** 在把角色换成 Q 版虎纹猫耳露娜（见「最近一次工作」），尚未打包。功能见 README.md；需求方向见 ROADMAP.md。
-- 已实现：Q 版待机动画（feature-claude）＋按姿势切换的播放器；五个身体部位＋禁区各可配置八种快捷功能；收藏夹（文本/链接卡片/文件引用/媒体）；截图（Ctrl+Alt+A）；FFmpeg 原像素区域录屏（NVENC，失败回退 x264）；提醒；日期/系统占用/天气气泡；生气两阶段互动；左右贴边收起；纯净模式；关闭到托盘；中英文；空闲自动休息；UI 音效；右键功能转盘；陪伴互动。换装已移除。
+- 已实现：Q 版待机动画（feature-claude）＋按姿势切换的播放器；点身体部位只播反应动画；收藏夹（文本/链接卡片/文件引用/媒体）；截图（Ctrl+Alt+A）；FFmpeg 原像素区域录屏（NVENC，失败回退 x264）；提醒；日期/系统占用/天气读取（暂无显示入口）；生气两阶段互动；左右贴边收起；纯净模式（只显示头上小花，点花开转盘）；关闭到托盘；中英文；空闲自动休息；UI 音效；右键功能转盘；陪伴互动。换装已移除。
 - 便携版 `LunaPet-Windows/` 和安装包 `LunaPet-Release/LunaPet-1.0.0-Setup.exe`（都在仓库同级，未签名）已于 2026-10-12 基于 main 提交 `faab101` 重新构建，包含整理后的代码、独立 `desktop-smoke.js` 及当前全部功能。安装包 SHA256：04882f82ba5c76a02183bd1f00a344eff1c5a422181beb5b91dd7b32a3b89a32，SHA256SUMS.txt 已更新。真实安装目录未升级；包内交接为构建快照，最终验证看仓库本文件。
 - 打字聊天、AI、旧 API Key 均已移除，不要恢复（见 AGENTS.md）。
 
@@ -57,8 +57,8 @@
 ### Q 版露娜原型
 
 - 用户想用新形象（橙色长卷发、虎纹猫耳和尾巴、黑白几何连衣裙的 Q 版）重做桌宠：保留实用功能，砍掉换装；界面配色跟着改；默认站着，按情况切换坐下工作、睡觉、开心卖萌等姿势；不监听键盘，工作姿势只播动画。素材由用户用 Muse 生成透明序列帧。
-- 素材：用户给的待机帧 120 张 912×960 RGBA。前 3 帧底部有杂点，丢掉；首尾帧相差大，淡入淡出有重影，改为往返循环。`design/chibi/build-atlas.py` 裁到 768×944、缩到 270×332，每行 12 帧打包为 `assets/chibi/idle.webp`（117 帧，约 3.5 MB）。
-- 代码：`character-assets.js` 改为姿势表（`poses`、`poseFor` 回退待机、`frameAt` 往返/循环/单次）；`character.js` 用 requestAnimationFrame 按 24fps 在画布上播放，反应切姿势、没有姿势时小跳一下，休息时减速一半，减少动态效果时停在第一帧；点击命中读当前画面的透明度，部位按 Q 版帧坐标判定（`body-shortcuts.js` 的 `regionAt`，尾巴不触发）。人物框 180×221 DIP，窗口仍为 280×640，气泡下移到头顶上方。
+- 素材：待机帧用 v3（`pet-idle-frames-v3.zip`，120 张 912×960 RGBA，去掉了呼出的白雾）。前 2 帧鞋子偏低会跳，丢掉；首尾帧相差大，改为往返循环。`design/chibi/build-atlas.py --skip 2 --crop 0,16,768,960` 缩到 270×332，每行 12 帧打包为 `assets/chibi/idle.webp`（118 帧）。
+- 代码：`character-assets.js` 改为姿势表（`poses`、`poseFor` 回退待机、`frameAt` 往返/循环/单次）；`character.js` 用 requestAnimationFrame 按 16fps 在画布上播放，反应切姿势、没有姿势时小跳一下，休息时减速一半，减少动态效果时停在第一帧；点击命中读当前画面的透明度，部位按 Q 版帧坐标判定（`body-shortcuts.js` 的 `regionAt`，尾巴不触发），点击只播反应动画。人物框 180×221 DIP，窗口仍为 280×640，气泡下移到头顶上方。
 - 换装：删除换装面板、按钮、转盘项、`appearance` IPC、`hair/outfit` 设置（旧状态里的值迁移时丢弃）、快捷功能「换装」（脚默认改为提醒）、旧角色素材和 `design/` 里的旧角色脚本与原图。
 - 配色：把界面里紫色系颜色按色相映射到橘色（主色约 #e7733a）、奶白和深棕；托盘圆圈改橘色；用新形象头部重新导出 `luna-avatar.png` 和 `luna.ico`。
 - 检查：单元测试 116/116（重写角色素材测试、部位坐标测试）；`character-smoke.js` 改为检查待机在动、透明、躯干居中、反应姿势和气泡位置；body-shortcut/desktop/pure-mode/edge/anger 检查去掉换装并更新颜色和数量断言。在 Linux Xvfb 下 `--anger-sequence-test`、`--pure-mode-test`、`--edge-dock-test` 通过；完整 `--smoke-test` 在 Linux 上卡在“本地文件拖入”和“视频全屏”这两步，原代码在 Linux 上同样卡住，属于环境差异。**完整 smoke 需要在 Windows 上跑一遍。**

@@ -1,6 +1,5 @@
 const path = require('node:path');
 const { normalize } = require('./i18n');
-const bodyShortcuts = require('./body-shortcuts');
 const { location } = require('./weather');
 const { validateMemory } = require('./life');
 const defaults = {
@@ -12,7 +11,6 @@ const defaults = {
   companion: true,
   screenshotShortcut: true,
   soundEnabled: true,
-  bodyShortcuts: bodyShortcuts.defaults,
   weatherLocation: null,
   saveDirectory: '',
   recordFrameRate: 60,
@@ -39,7 +37,6 @@ function validate(input = {}) {
   s.companion = input.companion !== false;
   s.screenshotShortcut = input.screenshotShortcut !== false;
   s.soundEnabled = input.soundEnabled !== false;
-  s.bodyShortcuts = bodyShortcuts.validate(input.bodyShortcuts);
   s.weatherLocation = location(input.weatherLocation);
   s.saveDirectory =
     typeof input.saveDirectory === 'string' &&

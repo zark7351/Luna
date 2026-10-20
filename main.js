@@ -777,7 +777,6 @@ else {
         language: input?.language ?? state.settings.language,
         pureMode: input?.pureMode ?? state.settings.pureMode,
         companion: input?.companion ?? state.settings.companion,
-        bodyShortcuts: input?.bodyShortcuts ?? state.settings.bodyShortcuts,
         weatherLocation: Object.hasOwn(input || {}, 'weatherLocation')
           ? input.weatherLocation
           : state.settings.weatherLocation,

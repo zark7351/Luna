@@ -182,7 +182,9 @@
   ' 条）': ' more)',
   '露娜 · 桌面宠物': 'Luna · Desktop pet',
   露娜消息: "Luna's message",
-  '点击身体使用快捷功能，按住拖动露娜': 'Click a body part for its shortcut; hold to drag Luna',
+  '点击身体和露娜互动，按住拖动露娜': 'Click her to play, hold to drag Luna',
+  打开功能转盘: 'Open the quick wheel',
+  '打开功能转盘，按住拖动': 'Open the quick wheel; hold to drag',
   '点击身体使用快捷功能 · 按住拖动': 'Click for shortcuts · Hold to drag',
   露娜操作: 'Luna controls',
   收藏夹: 'Collection',
@@ -192,8 +194,8 @@
   关闭说明: 'Close help',
   '桌面上的小伙伴，帮你收好临时内容。': 'Your desktop companion, keeping things handy.',
   互动与移动: 'Interact & move',
-  '点击脑袋、胸部、手臂、禁区、腿或脚，使用设置里的对应快捷功能并触发表情；连续点击胸部或禁区会生气。普通气泡点击关闭，按住角色可拖动位置；右键打开功能转盘。电脑连续 5 分钟没有键鼠操作，她会自动休息；恢复操作后自动唤醒。':
-    'Click a body part for its shortcut and expression. Repeated chest or off-limits clicks may make Luna annoyed. Click ordinary bubbles to dismiss; hold Luna to drag; right-click for the quick wheel. After five idle minutes, she rests and wakes when you return.',
+  '点击脑袋、胸部、手臂、禁区、腿或脚，她会播放对应的动画；连续点击胸部或禁区会生气。普通气泡点击关闭，按住角色可拖动位置；右键打开功能转盘。电脑连续 5 分钟没有键鼠操作，她会自动休息；恢复操作后自动唤醒。':
+    'Click her head, chest, arms, legs or feet and she plays a matching animation. Repeated chest or off-limits clicks make Luna annoyed. Click ordinary bubbles to dismiss; hold Luna to drag; right-click for the quick wheel. After five idle minutes, she rests and wakes when you return.',
   拖来就能收藏: 'Drop to save',
   '将文件、文字或网页链接拖到露娜身上。收藏夹按类型显示，图片和视频可以预览。':
     'Drop files, text, or links onto Luna. Browse by category; preview images and videos.',
@@ -206,15 +208,10 @@
     'Open recording with the dot, select and resize the frame or drag its size label to move it. Start with the frame dot and stop with its square to save MP4. Video only, without audio. Set frame rate (60 FPS by default) and save folder in Settings; existing files stay where they are.',
   '铃铛里填写内容，选择定时或时长倒计时，到点气泡持续显示，点击右侧勾号完成，点击消息打开提醒面板；未完成时每 15 秒响一次，也可在提醒窗口完成或延后 5 分钟；设置中的声音开关控制所有声音。关闭露娜时不会提醒，重启或休眠恢复后会补提示。':
     'Add a scheduled reminder or countdown with the bell. Due reminders stay in a bubble: the check completes one; the message opens the panel. A sound repeats every 15 seconds until handled. Snooze for five minutes, or mute sounds in Settings. Luna must be running; missed reminders appear on restart or resume.',
-  身体快捷功能: 'Body shortcuts',
-  '设置里先选部位，再选收藏、截图、录屏、提醒、日期时间、系统占用、天气或设置。再次点击已选功能可取消，只触发表情。日期气泡包含年月日、时间和星期；系统占用气泡动态显示 5 秒。天气在设置选择城市后按点击查询，可手动搜索或点击 IP 定位；提醒优先显示。':
-    'Select a body part in Settings, then assign collection, capture, recording, reminders, date/time, system usage, weather, or settings. Click the selected action again to clear it and only show expressions. System usage shows for five seconds. Select a weather city by search or IP lookup; reminders take priority.',
   设置与隐藏: 'Settings & hiding',
   '右键托盘图标进入设置，可修改名字、称呼和置顶。向下箭头隐藏露娜，双击系统托盘图标可再次显示。':
     'Right-click the tray icon for Settings: name, nickname, language, and always on top. Hide using the down arrow; double-click the tray icon to show Luna.',
   关闭设置: 'Close settings',
-  选择身体部位: 'Select body part',
-  选择快捷功能: 'Select shortcut',
   天气城市: 'Weather city',
   搜索城市: 'Search cities',
   'IP 城市定位': 'Locate city by IP',
@@ -341,19 +338,9 @@
   静音: 'Mute',
   取消静音: 'Unmute',
   框选录屏范围: 'Select recording region',
-  '（再次点击取消）': ' (click again to clear)',
-  点击打开收藏: 'Click to open collection',
-  点击截图: 'Click to take a screenshot',
-  点击打开录屏: 'Click to open recording',
-  点击打开提醒: 'Click to open reminders',
-  点击查看日期时间: 'Click to view date and time',
-  点击查看系统占用: 'Click to view system usage',
-  点击查看天气: 'Click to view weather',
-  点击打开设置: 'Click to open settings',
   '你个变态！不理你了！': 'You pervert! I am ignoring you!',
   '嘿嘿，我回来啦～': 'Hehe, I am back~',
   '露娜暂时不理你，请稍后再试。': 'Luna is taking a short break. Try again shortly.',
-  仅表情: 'Expression only',
   '再次点击已选功能可取消，只触发表情。': 'Click the selected action again to clear it and only show expressions.',
   开始录制: 'Start recording',
   取消录屏: 'Cancel recording',
@@ -447,6 +434,6 @@
   '清理天数无效。': 'Invalid cleanup period.',
   '已经收藏过了，移到最前面啦。': 'Already saved. Moved it to the top.',
   '便签已保存。': 'Note saved.',
-  '右键点击露娜弹出功能转盘：收藏、截图、录屏、提醒、设置、纯净模式、陪伴互动、隐藏和退出。方向键可切换，按 Esc 或点空白处关闭。':
-    'Right-click Luna for the quick wheel: collection, screenshot, recording, reminders, settings, clean mode, companion chat, hide and quit. Use arrow keys to move; press Esc or click elsewhere to close.'
+  '右键点击露娜弹出功能转盘：收藏、截图、录屏、提醒、设置、纯净模式、陪伴互动、隐藏和退出。纯净模式下点击小花打开。方向键可切换，按 Esc 或点空白处关闭。':
+    'Right-click Luna for the quick wheel: collection, screenshot, recording, reminders, settings, clean mode, companion chat, hide and quit. In clean mode, click the flower. Use arrow keys to move; press Esc or click elsewhere to close.'
 }));

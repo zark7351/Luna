@@ -43,31 +43,16 @@ test('总声音开关默认开启，关闭后重启保持', () => {
   assert.equal(migrateState(JSON.parse(JSON.stringify(state))).settings.soundEnabled, false);
 });
 
-test('旧信息条开关清除，五部位配置独立校验并在重启保持', () => {
+test('旧信息条开关和身体快捷功能配置在迁移时清除', () => {
   const state = migrateState({
-    settings: { infoBarEnabled: true, bodyShortcuts: { head: 'stats', chest: 'bogus', feet: 'reminder' } },
+    settings: { infoBarEnabled: true, bodyShortcuts: { head: 'stats', feet: 'reminder' } },
     layoutVersion: 3,
     position: [100, 200]
   });
   assert.equal(Object.hasOwn(state.settings, 'infoBarEnabled'), false);
-  assert.equal(state.settings.bodyShortcuts.head, 'stats');
-  assert.equal(state.settings.bodyShortcuts.feet, 'reminder');
-  assert.equal(state.settings.bodyShortcuts.chest, defaults.bodyShortcuts.chest);
+  assert.equal(Object.hasOwn(state.settings, 'bodyShortcuts'), false);
+  assert.equal(Object.hasOwn(defaults, 'bodyShortcuts'), false);
   assert.deepEqual(migrateState(JSON.parse(JSON.stringify(state))), state);
-  const next = validate();
-  next.bodyShortcuts.head = 'weather';
-  assert.equal(defaults.bodyShortcuts.head, 'datetime');
-});
-
-test('设置快捷功能保存并经重启迁移保持，原有部位配置不变', () => {
-  const state = migrateState({
-    settings: {
-      bodyShortcuts: { head: 'settings', chest: 'weather', arms: 'library', legs: 'stats', feet: 'wardrobe' }
-    }
-  });
-  assert.equal(state.settings.bodyShortcuts.head, 'settings');
-  assert.deepEqual(migrateState(JSON.parse(JSON.stringify(state))), state);
-  assert.deepEqual({ ...state.settings.bodyShortcuts, head: defaults.bodyShortcuts.head }, defaults.bodyShortcuts);
 });
 
 test('换装已移除，旧状态里的发型和服装不再保存', () => {

@@ -45,6 +45,50 @@ module.exports = async ({ win, restore, stateFile, output }) => {
       );
     await sleep(350);
   };
+  const flowerPoint = async () => {
+    // The page must have caught up with the window size, or the point lands in the old layout.
+    await wait(
+      async () =>
+        (await read('innerHeight')) === win.getBounds().height &&
+        (await read("document.querySelector('#pure-flower').getBoundingClientRect().top>0")),
+      'flower layout settled'
+    );
+    return read(
+      "(()=>{const b=document.querySelector('#pure-flower').getBoundingClientRect();return {x:Math.round(b.x+b.width/2),y:Math.round(b.y+b.height/2)};})()"
+    );
+  };
+  // Clean mode has only the hair flower: a left click grows the window and opens the wheel above it.
+  const flowerWheel = async item => {
+    const p = await flowerPoint();
+    win.webContents.sendInputEvent({ type: 'mouseMove', ...p });
+    await sleep(150);
+    win.webContents.sendInputEvent({ type: 'mouseDown', button: 'left', clickCount: 1, ...p });
+    win.webContents.sendInputEvent({ type: 'mouseUp', button: 'left', clickCount: 1, ...p });
+    const opened = Date.now() + 4500;
+    while (!((await read('wheel.isOpen')) && win.getBounds().height === 640)) {
+      if (Date.now() > opened)
+        throw Error(
+          'flower wheel open ' +
+            JSON.stringify(win.getBounds()) +
+            JSON.stringify(p) +
+            (await read(
+              "JSON.stringify({open:wheel.isOpen,panels:panelsOpen(),inert:document.body.inert,protected:angerInteraction.protected,press:flowerPress,dragStart,dragging,flower:document.querySelector('#pure-flower').getBoundingClientRect().toJSON(),h:innerHeight})"
+            ))
+        );
+      await sleep(40);
+    }
+    await sleep(550);
+    if (
+      !(await read(
+        "(()=>{const w=document.querySelector('#wheel').getBoundingClientRect(),f=document.querySelector('#pure-flower').getBoundingClientRect();return w.top>=0&&w.bottom<=innerHeight&&w.bottom<=f.top+8&&f.top-w.bottom<40;})()"
+      ))
+    )
+      throw Error('flower wheel placement');
+    if (item === 'settings')
+      fs.writeFileSync(path.join(output, 'luna-pure-wheel.png'), (await win.webContents.capturePage()).toPNG());
+    if (!(await clickSector(win, item))) throw Error('flower wheel sector ' + item);
+    await sleep(350);
+  };
   await read(
     "closeSheets();document.querySelector('#settings').hidden=true;if(document.querySelector('#help').open)document.querySelector('#help').close();void 0;"
   );
@@ -71,16 +115,16 @@ module.exports = async ({ win, restore, stateFile, output }) => {
     if (!JSON.parse(fs.readFileSync(stateFile)).settings.pureMode) throw Error('pure mode not persisted');
     if (
       !(await read(
-        "(()=>{const bar=document.querySelector('.petbar');hideControls();return !!document.querySelector('#hide svg[data-icon=hide]')&&getComputedStyle(document.querySelector('#edge-expand')).display==='none'&&[...bar.querySelectorAll('button')].filter(b=>getComputedStyle(b).display!=='none').length===6&&getComputedStyle(document.querySelector('#pet')).display==='none'&&getComputedStyle(bar).visibility==='visible'&&bar.getAttribute('aria-hidden')==='false'&&!overControls(1,1)&&[...bar.querySelectorAll('button')].every(b=>getComputedStyle(b).borderTopWidth==='0px');})()"
+        "(()=>{hideControls();const f=document.querySelector('#pure-flower').getBoundingClientRect();return getComputedStyle(document.querySelector('.petbar')).display==='none'&&getComputedStyle(document.querySelector('#pet')).display==='none'&&f.width===56&&f.bottom<=innerHeight&&!overControls(1,1)&&overControls(f.left+f.width/2,f.top+f.height/2);})()"
       ))
     )
-      throw Error('clean toolbar layout/input');
+      throw Error('clean flower layout/input');
     fs.writeFileSync(path.join(output, 'luna-pure-mode-preview.png'), (await win.webContents.capturePage()).toPNG());
-    await click('hide');
-    await wait(() => !win.isVisible() && !win.isDestroyed(), 'pure toolbar hide');
+    await flowerWheel('hide');
+    await wait(() => !win.isVisible() && !win.isDestroyed(), 'pure flower hide');
     restore();
     await wait(() => win.isVisible() && win.getBounds().height === 128, 'pure toolbar tray restore');
-    await click('library-button');
+    await flowerWheel('library');
     await wait(
       () => read("!document.querySelector('#library-sheet').hidden") && win.getBounds().height === 640,
       'pure library expansion'
@@ -116,17 +160,10 @@ module.exports = async ({ win, restore, stateFile, output }) => {
       await click('edge-expand');
       await wait(() => read('!edgeState.collapsed') && win.getBounds().height === 128, 'pure arrow expansion');
       await read("api('pure-layout',false)");
-      const bar = await read("document.querySelector('.petbar').getBoundingClientRect().toJSON()");
-      if (
-        Math.abs(bar.width - TOOLBAR_WIDTH) > 1 ||
-        Math.abs(
-          win.getBounds().x +
-            (side === 'left' ? bar.left : bar.right) -
-            (side === 'left' ? area.x : area.x + area.width)
-        ) > 1
-      )
-        throw Error('pure toolbar edge alignment');
-      await click('library-button');
+      const flowerBox = await read("document.querySelector('#pure-flower').getBoundingClientRect().toJSON()");
+      if (win.getBounds().x + flowerBox.left < area.x || win.getBounds().x + flowerBox.right > area.x + area.width)
+        throw Error('pure flower off screen at edge');
+      await flowerWheel('library');
       await wait(
         () => read("!document.querySelector('#library-sheet').hidden") && win.getBounds().height === 640,
         'pure edge library expansion'
@@ -151,9 +188,7 @@ module.exports = async ({ win, restore, stateFile, output }) => {
     require('electron').ipcMain.emit('drag', { sender: win.webContents }, true);
     require('electron').ipcMain.emit('drag', { sender: win.webContents }, false);
     await read("api('pure-layout',false)");
-    const grip = await read(
-      "(()=>{const b=document.querySelector('#toolbar-drag').getBoundingClientRect();return {x:Math.round(b.x+b.width/2),y:Math.round(b.y+b.height/2)};})()"
-    );
+    const grip = await flowerPoint();
     win.webContents.sendInputEvent({ type: 'mouseMove', ...grip });
     await sleep(180);
     win.webContents.sendInputEvent({ type: 'mouseDown', button: 'left', clickCount: 1, ...grip });
@@ -161,16 +196,25 @@ module.exports = async ({ win, restore, stateFile, output }) => {
     win.webContents.sendInputEvent({ type: 'mouseMove', modifiers: ['leftButtonDown'], x: grip.x + 15, y: grip.y });
     await sleep(100);
     if (!(await read('!!dragStart&&dragging')))
-      throw Error('toolbar grip did not drag ' + (await read('JSON.stringify({dragStart,dragging,ignore})')));
+      throw Error(
+        'flower did not drag ' +
+          JSON.stringify(win.getBounds()) +
+          JSON.stringify(grip) +
+          (await read(
+            `JSON.stringify({dragStart,dragging,ignore,h:innerHeight,flower:document.querySelector('#pure-flower').getBoundingClientRect().toJSON(),hit:document.elementFromPoint(${grip.x},${grip.y})?.id,wheel:wheel.isOpen})`
+          ))
+      );
     win.webContents.sendInputEvent({ type: 'mouseUp', button: 'left', clickCount: 1, x: grip.x + 15, y: grip.y });
     await sleep(100);
-    if (!(await read('!dragStart&&!dragging')))
-      throw Error('toolbar drag not released ' + (await read('JSON.stringify({dragStart,dragging,ignore})')));
-    await click('toolbar-settings');
+    if (!(await read('!dragStart&&!dragging&&!wheel.isOpen')))
+      throw Error(
+        'flower drag not released or opened the wheel ' + (await read('JSON.stringify({dragStart,dragging,ignore})'))
+      );
+    await flowerWheel('settings');
     await wait(() => read("!document.querySelector('#settings').hidden"), 'clean settings reopen');
-    await read(
-      "document.querySelector('#pure-mode').checked=false;document.querySelector('#settings-form').requestSubmit();void 0"
-    );
+    await read("document.querySelector('#settings-close').click();void 0");
+    await wait(() => win.getBounds().height === 128, 'settings close compact');
+    await flowerWheel('pure');
     await wait(
       () =>
         read("!settings.pureMode&&getComputedStyle(document.querySelector('#pet')).display!=='none'") &&
@@ -182,18 +226,20 @@ module.exports = async ({ win, restore, stateFile, output }) => {
       toolbarHidePure: true,
       closeToTray: true,
       restore: true,
-      unifiedToolbar: true,
+      flowerOnly: true,
+      flowerWheel: true,
       settingsEntry: true,
       characterHidden: true,
       compactWindow: true,
       persisted: true,
       panelsExpand: true,
-      toolbarEdges: true,
+      flowerEdges: true,
       edgePanelsFit: true,
       sideHide: true,
       arrowExpandsCompact: true,
       autoRecollapse: true,
-      gripDrag: true,
+      flowerDrag: true,
+      wheelLeavesCleanMode: true,
       normalModeRestore: true
     };
   } finally {

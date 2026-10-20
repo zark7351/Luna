@@ -11,7 +11,7 @@ module.exports = async ({ win, trayMenu, phase, restore, output }) => {
     }
   };
   await read(
-    "(async()=>{closeSheets();document.querySelector('#settings').hidden=true;rest(false);angerInteraction.returned();window.savedAngerMethods={click:bodyReactions.click,reset:bodyReactions.reset};window.savedAngerSettings={...settings};await api('settings',{...settings,bodyShortcuts:{...settings.bodyShortcuts,chest:''}});Object.assign(bodyReactions,window.lunaBodyShortcuts.createReactions({}));feedback.updateReminder({id:'anger-priority',title:'提醒测试',remaining:1});})()"
+    "(async()=>{closeSheets();document.querySelector('#settings').hidden=true;rest(false);angerInteraction.returned();window.savedAngerMethods={click:bodyReactions.click,reset:bodyReactions.reset};Object.assign(bodyReactions,window.lunaBodyShortcuts.createReactions({}));feedback.updateReminder({id:'anger-priority',title:'提醒测试',remaining:1});})()"
   );
   let sensitiveClick = 0;
   const click = () => require('./body-shortcut-smoke').click(win, ++sensitiveClick % 2 ? 'forbidden' : 'chest');
@@ -77,7 +77,7 @@ module.exports = async ({ win, trayMenu, phase, restore, output }) => {
   } finally {
     if (phase() === 'absent') await until(() => phase() === 'normal', 'cleanup return', 11500);
     await read(
-      "(async()=>{heldReminder=null;feedback.updateReminder(null);angerInteraction.returned();await api('anger-mode','normal');Object.assign(bodyReactions,window.savedAngerMethods);bodyReactions.reset();await api('settings',window.savedAngerSettings);delete window.savedAngerSettings;delete window.savedAngerMethods;showMessage('');window.lunaCharacter.cancel();})()"
+      "(async()=>{heldReminder=null;feedback.updateReminder(null);angerInteraction.returned();await api('anger-mode','normal');Object.assign(bodyReactions,window.savedAngerMethods);bodyReactions.reset();delete window.savedAngerMethods;showMessage('');window.lunaCharacter.cancel();})()"
     );
   }
 };

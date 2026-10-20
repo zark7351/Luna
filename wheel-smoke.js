@@ -40,7 +40,7 @@ async function check({ win, output }) {
   const animated = await run(
     `[...document.querySelectorAll('#wheel .wheel-item')].filter(item=>item.getAnimations().some(a=>a.animationName==='wheel-item-in')).length`
   );
-  if (animated !== 10 && !(await run(`matchMedia('(prefers-reduced-motion: reduce)').matches`)))
+  if (animated !== 9 && !(await run(`matchMedia('(prefers-reduced-motion: reduce)').matches`)))
     throw Error('wheel opening animation missing: ' + animated);
   // Freeze the spin-in 180 ms in for a deterministic mid-animation screenshot, then let it finish.
   await run(`document.getAnimations().forEach(a=>{a.pause();a.currentTime=180;})`);
@@ -51,7 +51,7 @@ async function check({ win, output }) {
   await snap('luna-wheel-open.png');
   const opened = await run(`(()=>{
     const node=document.querySelector('#wheel'),items=[...node.querySelectorAll('.wheel-item')];
-    if(node.hidden||!wheel.isOpen||items.length!==10)throw Error('wheel not open');
+    if(node.hidden||!wheel.isOpen||items.length!==9)throw Error('wheel not open');
     if(!items[0].classList.contains('active')||(document.hasFocus()&&document.activeElement!==items[0]))throw Error('first item not focused');
     if(document.querySelector('.wheel-center-label').textContent!=='收藏夹')throw Error('center label');
     // Each icon position must hit its own clipped sector; the transparent corner must hit the wheel itself.
@@ -62,13 +62,13 @@ async function check({ win, output }) {
   })()`);
   if (!opened.hits || !opened.corner || !opened.inside || !opened.held)
     throw Error('wheel geometry ' + JSON.stringify(opened));
-  await run(`document.querySelectorAll('.wheel-item')[7].dispatchEvent(new PointerEvent('pointerenter'))`);
+  await run(`document.querySelectorAll('.wheel-item')[6].dispatchEvent(new PointerEvent('pointerenter'))`);
   await new Promise(resolve => setTimeout(resolve, 260));
   await snap('luna-wheel-hover.png');
   const hovered = await run(`(()=>{const items=document.querySelectorAll('.wheel-item');
-    const ok=items[7].classList.contains('active')&&!items[0].classList.contains('active')&&document.querySelector('.wheel-center-label').textContent==='陪伴互动'&&document.querySelector('.wheel-center-state').textContent==='已开启';
-    items[7].focus();document.querySelector('#wheel').dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));
-    const keyboard=document.activeElement===items[8]&&document.querySelector('.wheel-center-label').textContent==='隐藏到托盘';
+    const ok=items[6].classList.contains('active')&&!items[0].classList.contains('active')&&document.querySelector('.wheel-center-label').textContent==='陪伴互动'&&document.querySelector('.wheel-center-state').textContent==='已开启';
+    items[6].focus();document.querySelector('#wheel').dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));
+    const keyboard=document.activeElement===items[7]&&document.querySelector('.wheel-center-label').textContent==='隐藏到托盘';
     document.querySelector('#wheel').dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
     return {ok,keyboard,closing:!wheel.isOpen};})()`);
   await new Promise(resolve => setTimeout(resolve, 260));

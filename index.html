@@ -34,9 +34,40 @@
       <button
         id="pet"
         class="interactive"
-        aria-label="点击身体使用快捷功能，按住拖动露娜"
-        data-i18n-aria-label="点击身体使用快捷功能，按住拖动露娜"
+        aria-label="点击身体和露娜互动，按住拖动露娜"
+        data-i18n-aria-label="点击身体和露娜互动，按住拖动露娜"
       ></button>
+      <button
+        id="pure-flower"
+        class="interactive"
+        title="打开功能转盘"
+        data-i18n-title="打开功能转盘"
+        aria-label="打开功能转盘，按住拖动"
+        data-i18n-aria-label="打开功能转盘，按住拖动"
+        aria-haspopup="menu"
+      >
+        <svg viewBox="0 0 64 64" aria-hidden="true">
+          <g class="flower-petals">
+            <ellipse cx="32" cy="15.5" rx="5.6" ry="12" transform="rotate(0.0 32 32)" />
+            <ellipse cx="32" cy="15.5" rx="5.6" ry="12" transform="rotate(25.71 32 32)" />
+            <ellipse cx="32" cy="15.5" rx="5.6" ry="12" transform="rotate(51.43 32 32)" />
+            <ellipse cx="32" cy="15.5" rx="5.6" ry="12" transform="rotate(77.14 32 32)" />
+            <ellipse cx="32" cy="15.5" rx="5.6" ry="12" transform="rotate(102.86 32 32)" />
+            <ellipse cx="32" cy="15.5" rx="5.6" ry="12" transform="rotate(128.57 32 32)" />
+            <ellipse cx="32" cy="15.5" rx="5.6" ry="12" transform="rotate(154.29 32 32)" />
+            <ellipse cx="32" cy="15.5" rx="5.6" ry="12" transform="rotate(180.0 32 32)" />
+            <ellipse cx="32" cy="15.5" rx="5.6" ry="12" transform="rotate(205.71 32 32)" />
+            <ellipse cx="32" cy="15.5" rx="5.6" ry="12" transform="rotate(231.43 32 32)" />
+            <ellipse cx="32" cy="15.5" rx="5.6" ry="12" transform="rotate(257.14 32 32)" />
+            <ellipse cx="32" cy="15.5" rx="5.6" ry="12" transform="rotate(282.86 32 32)" />
+            <ellipse cx="32" cy="15.5" rx="5.6" ry="12" transform="rotate(308.57 32 32)" />
+            <ellipse cx="32" cy="15.5" rx="5.6" ry="12" transform="rotate(334.29 32 32)" />
+          </g>
+          <circle class="flower-ring" cx="32" cy="32" r="10.5" />
+          <circle class="flower-center" cx="32" cy="32" r="8" />
+          <circle class="flower-shine" cx="29.2" cy="29" r="2.2" />
+        </svg>
+      </button>
       <div
         class="petbar interactive"
         aria-hidden="true"
@@ -131,16 +162,16 @@
           <dt><span data-i18n="互动与移动">互动与移动</span></dt>
           <dd>
             <span
-              data-i18n="点击脑袋、胸部、手臂、禁区、腿或脚，使用设置里的对应快捷功能并触发表情；连续点击胸部或禁区会生气。普通气泡点击关闭，按住角色可拖动位置；右键打开功能转盘。电脑连续 5 分钟没有键鼠操作，她会自动休息；恢复操作后自动唤醒。"
-              >点击脑袋、胸部、手臂、禁区、腿或脚，使用设置里的对应快捷功能并触发表情；连续点击胸部或禁区会生气。普通气泡点击关闭，按住角色可拖动位置；右键打开功能转盘。电脑连续
+              data-i18n="点击脑袋、胸部、手臂、禁区、腿或脚，她会播放对应的动画；连续点击胸部或禁区会生气。普通气泡点击关闭，按住角色可拖动位置；右键打开功能转盘。电脑连续 5 分钟没有键鼠操作，她会自动休息；恢复操作后自动唤醒。"
+              >点击脑袋、胸部、手臂、禁区、腿或脚，她会播放对应的动画；连续点击胸部或禁区会生气。普通气泡点击关闭，按住角色可拖动位置；右键打开功能转盘。电脑连续
               5 分钟没有键鼠操作，她会自动休息；恢复操作后自动唤醒。</span
             >
           </dd>
           <dt><span data-i18n="功能转盘">功能转盘</span></dt>
           <dd>
             <span
-              data-i18n="右键点击露娜弹出功能转盘：收藏、截图、录屏、提醒、设置、纯净模式、陪伴互动、隐藏和退出。方向键可切换，按 Esc 或点空白处关闭。"
-              >右键点击露娜弹出功能转盘：收藏、截图、录屏、提醒、设置、纯净模式、陪伴互动、隐藏和退出。方向键可切换，按
+              data-i18n="右键点击露娜弹出功能转盘：收藏、截图、录屏、提醒、设置、纯净模式、陪伴互动、隐藏和退出。纯净模式下点击小花打开。方向键可切换，按 Esc 或点空白处关闭。"
+              >右键点击露娜弹出功能转盘：收藏、截图、录屏、提醒、设置、纯净模式、陪伴互动、隐藏和退出。纯净模式下点击小花打开。方向键可切换，按
               Esc 或点空白处关闭。</span
             >
           </dd>
@@ -182,14 +213,6 @@
               分钟；设置中的声音开关控制所有声音。关闭露娜时不会提醒，重启或休眠恢复后会补提示。</span
             >
           </dd>
-          <dt><span data-i18n="身体快捷功能">身体快捷功能</span></dt>
-          <dd>
-            <span
-              data-i18n="设置里先选部位，再选收藏、截图、录屏、提醒、日期时间、系统占用、天气或设置。再次点击已选功能可取消，只触发表情。日期气泡包含年月日、时间和星期；系统占用气泡动态显示 5 秒。天气在设置选择城市后按点击查询，可手动搜索或点击 IP 定位；提醒优先显示。"
-              >设置里先选部位，再选收藏、截图、录屏、提醒、日期时间、系统占用、天气或设置。再次点击已选功能可取消，只触发表情。日期气泡包含年月日、时间和星期；系统占用气泡动态显示
-              5 秒。天气在设置选择城市后按点击查询，可手动搜索或点击 IP 定位；提醒优先显示。</span
-            >
-          </dd>
           <dt><span data-i18n="设置与隐藏">设置与隐藏</span></dt>
           <dd>
             <span
@@ -221,11 +244,6 @@
             <option value="en">English</option>
           </select></label
         >
-        <fieldset class="body-settings">
-          <legend><span data-i18n="身体快捷功能">身体快捷功能</span></legend>
-          <div id="body-region-tabs" role="group" aria-label="选择身体部位" data-i18n-aria-label="选择身体部位"></div>
-          <div id="body-action-grid" aria-label="选择快捷功能" data-i18n-aria-label="选择快捷功能"></div>
-        </fieldset>
         <div class="weather-settings">
           <label for="weather-query"><span data-i18n="天气城市">天气城市</span></label>
           <div class="weather-search-row">

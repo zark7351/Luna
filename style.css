@@ -369,60 +369,12 @@ input::placeholder {
   line-height: 1.5;
   padding-bottom: 8px;
 }
-.body-settings,
 .weather-settings {
   margin: 0 0 12px;
   padding: 10px;
   border: 1px solid #f2e5de;
   border-radius: 15px;
   background: #ffffffb0;
-}
-.body-settings legend {
-  padding: 0 5px;
-  font-size: 11px;
-  color: #a47f6c;
-}
-#body-region-tabs {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 3px;
-  margin-bottom: 9px;
-}
-#body-region-tabs button {
-  padding: 7px 0;
-  font-size: 11px;
-  border-radius: 8px;
-  color: #b09080;
-}
-#body-region-tabs button[aria-pressed='true'] {
-  background: #fce3d7;
-  color: #946752;
-}
-#body-action-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 6px;
-}
-#body-action-grid button {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-  padding: 9px 1px;
-  border: 1px solid #f5eae5;
-  background: #fffbf9;
-  border-radius: 10px;
-  font-size: 9px;
-  color: #b39180;
-}
-#body-action-grid button[aria-pressed='true'] {
-  border-color: #efa782;
-  background: #fdebe2;
-  color: #cb5519;
-}
-#body-action-grid svg {
-  width: 20px;
-  height: 20px;
 }
 .weather-search-row {
   display: flex;
@@ -784,15 +736,69 @@ body.pure-mode #companion {
 body.pure-mode #pet {
   display: none;
 }
+/* Clean mode shows only the flower from her hair; it opens the wheel and drags the window. */
+#pure-flower {
+  display: none;
+}
+body.pure-mode #pure-flower {
+  position: absolute;
+  bottom: 4px;
+  left: calc(50% - 28px);
+  display: block;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  pointer-events: auto;
+  touch-action: none;
+  filter: drop-shadow(0 2px 5px rgba(120, 52, 20, 0.28));
+  transition: transform 0.18s ease-out;
+}
+body.pure-mode #pure-flower:hover,
+body.pure-mode #pure-flower:focus-visible {
+  transform: rotate(18deg) scale(1.06);
+}
+body.pure-mode #pure-flower:active {
+  transform: rotate(18deg) scale(0.96);
+}
+#pure-flower svg {
+  width: 100%;
+  height: 100%;
+}
+#pure-flower .flower-petals {
+  fill: #fffdfa;
+  stroke: #d9c9c0;
+  stroke-width: 0.9;
+}
+#pure-flower .flower-ring {
+  fill: #d49a3a;
+}
+#pure-flower .flower-center {
+  fill: #2a1a14;
+}
+#pure-flower .flower-shine {
+  fill: #ffffff55;
+}
 body.pure-mode .petbar {
+  display: none;
+}
+body.pure-mode[data-edge-collapsed='left'] #pure-flower,
+body.pure-mode[data-edge-collapsed='right'] #pure-flower {
+  display: none;
+}
+body.pure-mode[data-edge-collapsed='left'] .petbar,
+body.pure-mode[data-edge-collapsed='right'] .petbar {
+  display: flex;
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
   transition: none;
 }
 body.pure-mode #bubble {
-  bottom: 54px;
-  max-height: 54px;
+  bottom: 62px;
+  max-height: 46px;
 }
 body.pure-mode #bubble:not(.reminder-alert) {
   display: none;
