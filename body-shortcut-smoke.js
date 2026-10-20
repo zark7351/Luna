@@ -1,13 +1,19 @@
 const fs = require('node:fs'),
   path = require('node:path');
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+// Pick a solid pixel of the frame being drawn now, near the middle of the region, away from moving edges.
 async function point(win, region) {
   return win.webContents.executeJavaScript(`(async()=>{
-  const pet=document.querySelector('#pet'),look=window.lunaCharacterAssets.getLook(pet.dataset.hair,pet.dataset.outfit),source=new Image();source.src=getComputedStyle(pet).backgroundImage.slice(5,-2);await source.decode();
-  const c=document.createElement('canvas');c.width=512;c.height=1024;const ctx=c.getContext('2d',{willReadFrequently:true});ctx.drawImage(source,0,0,512,1024,0,0,512,1024);const data=ctx.getImageData(0,0,512,1024).data;
-  const area={head:[90,165,80],chest:[245,310,30],arms:[375,480,105],forbidden:[look.body.forbidden.y-5,look.body.forbidden.y+5,12],legs:[665,820,65],feet:[920,995,90]}['${region}'],box=pet.getBoundingClientRect();let nearest=null,best=Infinity;
-  for(let y=area[0];y<area[1];y+=2)for(let x=Math.floor(look.body.center-area[2]);x<look.body.center+area[2];x+=2){if(data[(y*512+x)*4+3]<200)continue;const score=Math.hypot(x-look.body.center,y-(area[0]+area[1])/2);if(score<best){best=score;nearest={x:box.left+(x+256-look.body.center)/512*box.width,y:box.top+y/1024*box.height};}}
-  if(!nearest||window.lunaCharacter.hitRegion(nearest.x,nearest.y)!=='${region}')throw Error('visible body region mismatch: ${region} '+pet.dataset.bodyFile);
+  const canvas=document.querySelector('#pet canvas.character-face'),stage=window.lunaCharacterAssets.stage,c=stage.center;
+  const data=canvas.getContext('2d').getImageData(0,0,stage.width,stage.height).data,box=canvas.getBoundingClientRect();
+  const target={head:[c,95],chest:[c,185],arms:[112,240],forbidden:[c,262],legs:[c,295],feet:[c-14,322]}['${region}'],edge=['forbidden','feet'].includes('${region}')?1:3;
+  const solid=(x,y)=>{for(let dy=-edge;dy<=edge;dy++)for(let dx=-edge;dx<=edge;dx++){const px=x+dx,py=y+dy;if(px<0||py<0||px>=stage.width||py>=stage.height||data[(py*stage.width+px)*4+3]<200)return false;}return true;};
+  let nearest=null,best=Infinity;
+  for(let y=Math.max(0,target[1]-45);y<Math.min(stage.height,target[1]+45);y++)for(let x=Math.max(0,target[0]-60);x<Math.min(stage.width,target[0]+60);x++){
+    const score=Math.hypot(x-target[0],y-target[1]);if(score>=best||window.lunaBodyShortcuts.regionAt(x,y,c)!=='${region}'||!solid(x,y))continue;
+    best=score;nearest={x:box.left+(x+0.5)/stage.width*box.width,y:box.top+(y+0.5)/stage.height*box.height};
+  }
+  if(!nearest||window.lunaCharacter.hitRegion(nearest.x,nearest.y)!=='${region}')throw Error('visible body region mismatch: ${region}');
   return {x:Math.round(nearest.x),y:Math.round(nearest.y)};
 })()`);
 }
@@ -20,29 +26,23 @@ async function click(win, region) {
 }
 async function check(win, output, stateFile, stats) {
   await win.webContents.executeJavaScript(
-    `(async()=>{closeSheets();document.querySelector('#settings').hidden=true;await appearance(document.querySelector('#pet'),'original','original');showMessage('');})()`
+    `(()=>{closeSheets();document.querySelector('#settings').hidden=true;showMessage('');})()`
   );
-  for (const hair of ['original', 'straight', 'bob', 'twintails'])
-    for (const outfit of ['original', 'jk', 'secretary', 'nurse']) {
-      await win.webContents.executeJavaScript(
-        `(async()=>{await appearance(document.querySelector('#pet'),'${hair}','${outfit}');void 0;})()`
-      );
-      for (const region of ['head', 'chest', 'arms', 'forbidden', 'legs', 'feet']) await point(win, region);
-      if (
-        !(await win.webContents.executeJavaScript(
-          `(()=>{const pet=document.querySelector('#pet'),look=window.lunaCharacterAssets.getLook(pet.dataset.hair,pet.dataset.outfit),box=pet.getBoundingClientRect(),x=box.left+box.width/2;return window.lunaCharacter.hitRegion(x,box.top+665/1024*box.height)!=='forbidden';})()`
-        ))
-      )
-        throw Error('knee still triggers forbidden region');
-      if (
-        !(await win.webContents.executeJavaScript(
-          `(()=>{const r=document.querySelector('#pet').getBoundingClientRect();return window.lunaCharacter.hitRegion(r.left+1,r.top+1)===null;})()`
-        ))
-      )
-        throw Error('transparent corners trigger shortcut');
-    }
+  for (const region of ['head', 'chest', 'arms', 'forbidden', 'legs', 'feet']) await point(win, region);
+  if (
+    !(await win.webContents.executeJavaScript(
+      `(()=>{const box=document.querySelector('#pet canvas').getBoundingClientRect(),stage=window.lunaCharacterAssets.stage;return window.lunaCharacter.hitRegion(box.left+stage.center/stage.width*box.width,box.top+292/stage.height*box.height)!=='forbidden';})()`
+    ))
+  )
+    throw Error('lower skirt still triggers forbidden region');
+  if (
+    !(await win.webContents.executeJavaScript(
+      `(()=>{const r=document.querySelector('#pet').getBoundingClientRect();return window.lunaCharacter.hitRegion(r.left+1,r.top+1)===null;})()`
+    ))
+  )
+    throw Error('transparent corners trigger shortcut');
   await win.webContents.executeJavaScript(
-    `(async()=>{await appearance(document.querySelector('#pet'),'original','original');await openSettings();document.querySelector('#body-region-tabs [data-region=head]').click();document.querySelector('#body-action-grid [data-action=settings]').click();document.querySelector('#settings-form').requestSubmit();})()`
+    `(async()=>{await openSettings();document.querySelector('#body-region-tabs [data-region=head]').click();document.querySelector('#body-action-grid [data-action=settings]').click();document.querySelector('#settings-form').requestSubmit();})()`
   );
   await sleep(150);
   if (JSON.parse(fs.readFileSync(stateFile)).settings.bodyShortcuts.head !== 'settings')
@@ -66,7 +66,7 @@ async function check(win, output, stateFile, stats) {
   if (JSON.parse(fs.readFileSync(stateFile)).settings.bodyShortcuts.head !== '')
     throw Error('empty shortcut not persisted');
   await win.webContents.executeJavaScript(
-    `(async()=>{await openSettings();if(document.querySelector('#body-action-grid [aria-pressed=true]'))throw Error('empty shortcut restored default');document.querySelector('#settings-close').click();closeSheets();document.querySelector('#wardrobe').hidden=true;showMessage('');await api('settings',{...settings,bodyShortcuts:Object.fromEntries(Object.keys(window.lunaBodyShortcuts.regions).map(region=>[region,'']))});bodyReactions.reset();})()`
+    `(async()=>{await openSettings();if(document.querySelector('#body-action-grid [aria-pressed=true]'))throw Error('empty shortcut restored default');document.querySelector('#settings-close').click();closeSheets();showMessage('');await api('settings',{...settings,bodyShortcuts:Object.fromEntries(Object.keys(window.lunaBodyShortcuts.regions).map(region=>[region,'']))});bodyReactions.reset();})()`
   );
   for (const [region, expression] of [
     ['head', 'happy'],
@@ -79,7 +79,7 @@ async function check(win, output, stateFile, stats) {
     await click(win, region);
     if (
       !(await win.webContents.executeJavaScript(
-        `window.lunaCharacter.expression==='${expression}'&&!document.querySelector('#pet').hasAttribute('title')&&!infoBubbles.active&&document.querySelector('#settings').hidden&&document.querySelector('#wardrobe').hidden&&Array.from(document.querySelectorAll('.bottom-sheet')).every(node=>node.hidden)`
+        `window.lunaCharacter.expression==='${expression}'&&!document.querySelector('#pet').hasAttribute('title')&&!infoBubbles.active&&document.querySelector('#settings').hidden&&Array.from(document.querySelectorAll('.bottom-sheet')).every(node=>node.hidden)`
       ))
     )
       throw Error('empty shortcut did more than expression: ' + region);
@@ -90,7 +90,6 @@ async function check(win, output, stateFile, stats) {
     ['screenshot', '点击截图'],
     ['recording', '点击打开录屏'],
     ['reminder', '点击打开提醒'],
-    ['wardrobe', '点击打开换装'],
     ['datetime', '点击查看日期时间'],
     ['stats', '点击查看系统占用'],
     ['weather', '点击查看天气'],
@@ -133,11 +132,10 @@ async function check(win, output, stateFile, stats) {
     ['library', 'library-sheet'],
     ['reminder', 'reminder-sheet'],
     ['recording', 'recording-sheet'],
-    ['wardrobe', 'wardrobe'],
     ['screenshot', null]
   ]) {
     await win.webContents.executeJavaScript(
-      `(async()=>{closeSheets();document.querySelector('#wardrobe').hidden=true;await api('settings',{...settings,bodyShortcuts:{...settings.bodyShortcuts,head:'${action}'}});showMessage('');})()`
+      `(async()=>{closeSheets();await api('settings',{...settings,bodyShortcuts:{...settings.bodyShortcuts,head:'${action}'}});showMessage('');})()`
     );
     await sleep(80);
     await click(win, 'head');
@@ -174,7 +172,7 @@ async function check(win, output, stateFile, stats) {
     }
   }
   await win.webContents.executeJavaScript(
-    `(async()=>{closeSheets();document.querySelector('#wardrobe').hidden=true;await api('settings',{...settings,bodyShortcuts:{...settings.bodyShortcuts,head:'stats'}});showMessage('');})()`
+    `(async()=>{closeSheets();await api('settings',{...settings,bodyShortcuts:{...settings.bodyShortcuts,head:'stats'}});showMessage('');})()`
   );
   await sleep(80);
   const dragPoint = await point(win, 'head');
@@ -336,10 +334,13 @@ async function check(win, output, stateFile, stats) {
   if (!(await win.webContents.executeJavaScript(`infoBubbles.active==='stats'`))) throw Error('native legs shortcut');
   await require('./bubble-smoke').click(win, 'bubble-body');
   await click(win, 'feet');
-  if (!(await win.webContents.executeJavaScript(`!document.querySelector('#wardrobe').hidden`)))
-    throw Error('feet wardrobe shortcut');
+  const reminderUntil = Date.now() + 2500;
+  while (!(await win.webContents.executeJavaScript(`!document.querySelector('#reminder-sheet').hidden`))) {
+    if (Date.now() > reminderUntil) throw Error('feet reminder shortcut');
+    await sleep(50);
+  }
   await win.webContents.executeJavaScript(
-    `(async()=>{document.querySelector('#wardrobe').hidden=true;await openSettings();await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));void 0;})()`
+    `(async()=>{closeSheets();await openSettings();await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));void 0;})()`
   );
   await sleep(150);
   fs.writeFileSync(path.join(output, 'luna-body-settings-preview.png'), (await win.webContents.capturePage()).toPNG());
@@ -347,7 +348,7 @@ async function check(win, output, stateFile, stats) {
     `(async()=>{document.querySelector('#settings-close').click();showMessage('');feedback.updateReminder({id:'body-priority',title:'优先提醒',remaining:1});await performBodyShortcut('head');if(feedback.getReminder()?.id!=='body-priority'||infoBubbles.active)throw Error('body information replaced reminder');feedback.updateReminder(null);bodyReactions.reset();await api('settings',{...settings,bodyShortcuts:window.lunaBodyShortcuts.defaults});showMessage('');void 0;})()`
   );
   return {
-    sixteenLooks: true,
+    chibiFrame: true,
     alphaHitRegions: true,
     nativeSixRegions: true,
     dragDoesNotActivate: true,

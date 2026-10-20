@@ -8,12 +8,7 @@ document.addEventListener(
   event => {
     const button = event.target.closest('button');
     if (!button || button.disabled) return;
-    if (
-      button.dataset.uiSound === 'none' ||
-      (button.closest('#wardrobe-form') && button.type === 'submit') ||
-      (button.closest('#settings-form') && button.type === 'submit')
-    )
-      return;
+    if (button.dataset.uiSound === 'none' || (button.closest('#settings-form') && button.type === 'submit')) return;
     const id = button.id;
     if (
       [
@@ -21,17 +16,14 @@ document.addEventListener(
         'recording-button',
         'library-button',
         'reminder-button',
-        'wardrobe-button',
         'help-close',
         'settings-close',
-        'wardrobe-close',
         'settings-help',
         'hide',
         'add-file',
         'paste',
         'save'
-      ].includes(id) ||
-      id.startsWith('wardrobe-tab-')
+      ].includes(id)
     )
       return;
     if (button.getAttribute('role') === 'tab' || ['active', 'done'].includes(id)) {

@@ -1,8 +1,8 @@
 const test = require('node:test'),
   assert = require('node:assert/strict');
 const { validate, defaults, regionAt, createReactions, actions } = require('../body-shortcuts');
-test('六个部位可独立映射九种功能，非法值回退且不共享可变配置', () => {
-  assert.equal(Object.keys(actions).length, 9);
+test('六个部位可独立映射八种功能，非法值回退且不共享可变配置', () => {
+  assert.equal(Object.keys(actions).length, 8);
   for (const action of Object.keys(actions)) {
     const mapped = validate(Object.fromEntries(Object.keys(defaults).map(region => [region, action])));
     assert.ok(Object.values(mapped).every(value => value === action));
@@ -16,7 +16,7 @@ test('explicitly cleared shortcuts survive state migration while missing or inva
   assert.deepEqual(validate(cleared), cleared);
   assert.deepEqual(migrateState({ settings: settings({ bodyShortcuts: cleared }) }).settings.bodyShortcuts, cleared);
   assert.deepEqual(validate({ head: '', chest: null }), { ...defaults, head: '' });
-  assert.equal(Object.keys(actions).length, 9);
+  assert.equal(Object.keys(actions).length, 8);
 });
 test('十秒内三次敏感点击必定生气，恰好十秒排除旧点击', () => {
   let time = 0;
@@ -34,15 +34,18 @@ test('十秒内三次敏感点击必定生气，恰好十秒排除旧点击', ()
   time = 10000;
   assert.equal(r.click('chest').annoyed, false);
 });
-test('源图坐标区分头胸、两侧手臂、交叉手、腿与脚；非法点无作用', () => {
-  assert.equal(regionAt(260, 130), 'head');
-  assert.equal(regionAt(270, 290, 270), 'chest');
-  assert.equal(regionAt(170, 290, 270), 'arms');
-  assert.equal(regionAt(270, 460, 270), 'arms');
-  assert.equal(regionAt(260, 740), 'legs');
-  assert.equal(regionAt(260, 945), 'feet');
+test('Q 版帧坐标区分头胸、两侧手臂、裙子与腿、脚；尾巴和非法点无作用', () => {
+  assert.equal(regionAt(165, 100), 'head');
+  assert.equal(regionAt(165, 185), 'chest');
+  assert.equal(regionAt(110, 240), 'arms');
+  assert.equal(regionAt(225, 250), 'arms');
+  assert.equal(regionAt(165, 240), 'legs');
+  assert.equal(regionAt(150, 300), 'legs');
+  assert.equal(regionAt(165, 320), 'feet');
+  assert.equal(regionAt(40, 200), null);
   assert.equal(regionAt(-1, 200), null);
-  assert.equal(regionAt(260, NaN), null);
+  assert.equal(regionAt(165, NaN), null);
+  assert.equal(regionAt(270, 100), null);
 });
 test('频繁点击胸部或禁区必定触发，其他部位不增加计数且重置有效', () => {
   let time = 1000;
@@ -61,25 +64,14 @@ test('频繁点击胸部或禁区必定触发，其他部位不增加计数且�
 
 test('禁区在衣物覆盖中央小范围内，默认空配置；与胸部共用敏感点击计数', () => {
   assert.equal(defaults.forbidden, '');
-  assert.equal(regionAt(260, 538), 'forbidden');
-  assert.equal(regionAt(305, 580), 'legs');
-  assert.equal(regionAt(256, 660), 'legs');
+  assert.equal(regionAt(165, 262), 'forbidden');
+  assert.notEqual(regionAt(177, 262), 'forbidden');
+  assert.notEqual(regionAt(165, 271), 'forbidden');
+  assert.equal(regionAt(165, 290), 'legs');
   const r = createReactions({ random: () => 0 });
   assert.equal(r.click('forbidden').expression, 'shy');
   assert.equal(r.click('chest').annoyed, false);
   assert.equal(r.click('forbidden').annoyed, true);
   r.reset();
   assert.equal(r.click('forbidden').annoyed, false);
-});
-
-test('全部16套装扮禁区在胯部小范围，护士膝盖及侧边不命中', () => {
-  const { looks } = require('../character-assets');
-  for (const look of Object.values(looks)) {
-    const { center, forbidden } = look.body;
-    assert.equal(regionAt(center, forbidden.y, center, forbidden), 'forbidden');
-    assert.notEqual(regionAt(center + forbidden.radiusX, forbidden.y, center, forbidden), 'forbidden');
-    assert.notEqual(regionAt(center, forbidden.y + forbidden.radiusY, center, forbidden), 'forbidden');
-    assert.equal(regionAt(center, 665, center, forbidden), 'legs');
-    assert.ok(forbidden.y >= 500 && forbidden.y <= 552);
-  }
 });

@@ -3,8 +3,8 @@
     13px 'Microsoft YaHei UI',
     'Segoe UI',
     sans-serif;
-  color: #79628c;
-  background: #fcf9ff;
+  color: #906f5e;
+  background: #fffbf9;
   color-scheme: light;
 }
 * {
@@ -43,7 +43,7 @@ svg {
 button:focus-visible,
 input:focus-visible,
 [tabindex]:focus-visible {
-  outline: 2px solid #aa88c1;
+  outline: 2px solid #eb8e5e;
   outline-offset: 2px;
 }
 header {
@@ -53,7 +53,7 @@ header {
   align-items: center;
   justify-content: flex-end;
   padding: 8px 12px;
-  border-bottom: 1px solid #eee7f3;
+  border-bottom: 1px solid #f4ebe6;
   -webkit-app-region: drag;
 }
 .library-brand {
@@ -72,14 +72,14 @@ header {
   border-radius: 9px;
 }
 .header-actions button:hover {
-  background: #ede4f5;
+  background: #fce7dd;
 }
 #expand-library {
   display: none;
 }
 #close-library:hover {
-  background: #f3dfeb;
-  color: #ad6389;
+  background: #fce7d6;
+  color: #e57e2b;
 }
 .toolbar {
   position: absolute;
@@ -92,13 +92,13 @@ header {
   gap: 6px;
   padding: 0 9px;
   border-radius: 10px;
-  background: #f2edf7;
+  background: #f8f0ec;
   -webkit-app-region: no-drag;
 }
 .toolbar svg {
   width: 15px;
   flex: none;
-  color: #ac97ba;
+  color: #bda294;
 }
 #search {
   width: 100%;
@@ -106,11 +106,11 @@ header {
   border: 0;
   outline: 0;
   background: transparent;
-  color: #79628c;
+  color: #906f5e;
   font-size: 12px;
 }
 #search::placeholder {
-  color: #b1a0bb;
+  color: #bea89d;
 }
 #tabs {
   position: absolute;
@@ -129,14 +129,14 @@ header {
   min-width: 48px;
   padding: 0 7px;
   border-radius: 9px;
-  color: #a28bae;
+  color: #b29688;
 }
 #tabs button:hover {
-  background: #f2edf7;
+  background: #f8f0ec;
 }
 #tabs button[aria-selected='true'] {
-  background: #ece2f4;
-  color: #806097;
+  background: #fce5da;
+  color: #9c715a;
 }
 #tabs span {
   font-size: 10px;
@@ -150,9 +150,9 @@ header {
   max-width: 90%;
   z-index: 5;
   padding: 7px 13px;
-  background: #fffafd;
-  border: 1px solid #e9deef;
-  box-shadow: 0 3px 12px #69517513;
+  background: #fffcfa;
+  border: 1px solid #f1e3dc;
+  box-shadow: 0 3px 12px #795c4d13;
   border-radius: 10px;
   font-size: 11px;
   pointer-events: none;
@@ -171,27 +171,27 @@ header {
   align-content: start;
   align-items: start;
   scrollbar-width: thin;
-  scrollbar-color: #d8c8e2 transparent;
+  scrollbar-color: #e5d0c5 transparent;
 }
 .item {
   position: relative;
   border-radius: 14px;
   overflow: hidden;
-  background: #f3eef7;
-  border: 1px solid #eee6f2;
+  background: #f8f1ed;
+  border: 1px solid #f3eae5;
   min-width: 0;
   transition: border-color 0.15s;
 }
 .item:hover,
 .item:focus-within {
-  border-color: #cdb8dd;
+  border-color: #f3bda2;
 }
 .preview-stage {
   height: 210px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f4f1f7;
+  background: #f8f3f0;
   position: relative;
 }
 .media-preview {
@@ -219,7 +219,7 @@ header {
   height: 120px;
 }
 .media-fallback {
-  color: #b29bbe;
+  color: #c2a698;
   font-size: 11px;
 }
 .item-preview {
@@ -240,7 +240,7 @@ header {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #eee7f4;
+  background: #f5ebe6;
 }
 .web-cover img {
   width: 100%;
@@ -250,7 +250,7 @@ header {
 .web-cover svg {
   width: 40px;
   height: 40px;
-  color: #b29bc2;
+  color: #c6a797;
 }
 .web-details {
   padding: 11px 12px;
@@ -263,7 +263,7 @@ header {
 }
 .web-description {
   font-size: 11px;
-  color: #a18aad;
+  color: #b19586;
   margin-top: 5px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -276,7 +276,7 @@ header {
 }
 .web-address {
   font-size: 10px;
-  color: #b6a5bf;
+  color: #c2ada2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -290,8 +290,8 @@ header {
   gap: 3px;
   padding: 3px;
   border-radius: 10px;
-  background: #fffafdee;
-  box-shadow: 0 2px 9px #5e46681a;
+  background: #fffcfaee;
+  box-shadow: 0 2px 9px #6b51431a;
   opacity: 0;
   transition: opacity 0.15s;
 }
@@ -312,11 +312,11 @@ header {
   height: 16px;
 }
 .actions button:hover {
-  background: #ece2f4;
+  background: #fce5da;
 }
 .actions .danger:hover {
-  background: #f5dfeb;
-  color: #ad6389;
+  background: #fce8d8;
+  color: #e57e2b;
 }
 .expand {
   display: block;
@@ -332,7 +332,7 @@ header {
 }
 .empty {
   grid-column: 1/-1;
-  color: #b3a1bd;
+  color: #c0aa9e;
   text-align: center;
   padding: 70px 15px;
   font-size: 12px;
@@ -358,7 +358,7 @@ header {
     600 13px/1.4 'Microsoft YaHei UI',
     'Segoe UI',
     sans-serif;
-  color: #7e6096;
+  color: #9b705b;
   letter-spacing: 0;
 }
 .embedded .header-actions {
@@ -488,7 +488,7 @@ header {
   max-height: 100%;
 }
 .compact-video {
-  background: #17131c;
+  background: #1d1612;
 }
 .compact-video .media-preview {
   height: calc(100% - 27px);
@@ -505,7 +505,7 @@ header {
   gap: 3px;
   padding: 2px 3px;
   color: #fff;
-  background: #26202c;
+  background: #2d241f;
 }
 .video-controls button {
   flex: none;
@@ -528,7 +528,7 @@ header {
   min-width: 0;
   width: 100%;
   height: 18px;
-  accent-color: #c1a2d7;
+  accent-color: #f0ac89;
   cursor: pointer;
 }
 .compact-video:fullscreen {
@@ -558,11 +558,11 @@ header {
   max-width: calc(100vw - 16px);
   max-height: calc(100vh - 16px);
   overflow: auto;
-  border: 1px solid #e4d7ee;
+  border: 1px solid #fbdaca;
   border-radius: 12px;
-  background: #fffafd;
-  color: #79628c;
-  box-shadow: 0 5px 20px #39204c30;
+  background: #fffcfa;
+  color: #906f5e;
+  box-shadow: 0 5px 20px #502d1c30;
   font-size: 12px;
 }
 .video-menu::backdrop {
@@ -592,7 +592,7 @@ header {
 .video-speeds button:hover,
 .video-menu-action:hover,
 .video-speeds button[aria-pressed='true'] {
-  background: #eee3f5;
+  background: #fce7dc;
 }
 
 /* "All" view: day headings, pinned items, reference badges, cleanup footer and the quick note editor. */
@@ -601,14 +601,14 @@ header {
   margin: 2px 2px -4px;
   font-size: 11px;
   font-weight: 600;
-  color: #a58fb3;
+  color: #b79a8b;
 }
 .group-title:first-child {
   margin-top: 0;
 }
 .item.pinned {
-  border-color: #dccbeb;
-  background: #f5effa;
+  border-color: #fad1bc;
+  background: #fbf2ee;
 }
 .pin-badge {
   position: absolute;
@@ -619,14 +619,14 @@ header {
   height: 22px;
   padding: 4px;
   border-radius: 50%;
-  background: #fffafdee;
-  box-shadow: 0 2px 7px #5e46681f;
-  fill: #efe3fb;
-  stroke: #9b72c8;
+  background: #fffcfaee;
+  box-shadow: 0 2px 7px #6b51431f;
+  fill: #fdeae1;
+  stroke: #e98251;
 }
 .actions button.is-pinned svg {
-  fill: #efe3fb;
-  stroke: #9b72c8;
+  fill: #fdeae1;
+  stroke: #e98251;
 }
 .storage-badge {
   position: absolute;
@@ -634,19 +634,19 @@ header {
   bottom: 7px;
   padding: 2px 7px;
   border-radius: 999px;
-  border: 1px solid #e6dcef;
-  background: #fffaffe6;
+  border: 1px solid #f1e2da;
+  background: #fffcfae6;
   font-size: 10px;
   line-height: 1.4;
-  color: #8b72a0;
+  color: #a5806d;
 }
 .storage-badge.lost {
-  border-color: #f2cfdc;
-  background: #fdeff4;
-  color: #c0587a;
+  border-color: #fadfc7;
+  background: #fef5ee;
+  color: #e68632;
 }
 .item.missing .preview-stage {
-  background: #f8f2f6;
+  background: #f9f4f1;
 }
 .cleanup {
   grid-column: 1 / -1;
@@ -654,12 +654,12 @@ header {
   margin: 4px 0 2px;
   padding: 7px 14px;
   border-radius: 999px;
-  background: #f2edf7;
-  color: #8a6fa0;
+  background: #f8f0ec;
+  color: #a57e6a;
   font-size: 11px;
 }
 .cleanup:hover {
-  background: #ece2f4;
+  background: #fce5da;
 }
 #note-editor {
   flex: none;
@@ -667,10 +667,10 @@ header {
   gap: 6px;
   margin: 10px 12px 0;
   padding: 8px;
-  border: 1px solid #e3d6ec;
+  border: 1px solid #eeddd4;
   border-radius: 12px;
-  background: #fbf8fd;
-  box-shadow: 0 2px 10px #69517510;
+  background: #fefaf8;
+  box-shadow: 0 2px 10px #795c4d10;
 }
 #note-text {
   flex: 1;
@@ -682,10 +682,10 @@ header {
   font: inherit;
   font-size: 12px;
   line-height: 1.5;
-  color: #5d4a6d;
+  color: #705447;
 }
 #note-text::placeholder {
-  color: #b5a5c0;
+  color: #c3ada2;
 }
 .note-actions {
   display: flex;
@@ -700,11 +700,11 @@ header {
   border-radius: 8px;
 }
 .note-actions button:hover {
-  background: #ede4f5;
+  background: #fce7dd;
 }
 #note-save {
-  background: #e7dbf3;
-  color: #7c5a96;
+  background: #fbe0d3;
+  color: #d6591a;
 }
 .embedded #note-editor {
   margin: 6px 8px 0;

@@ -88,7 +88,7 @@ window.recorder.onStart(async config => {
       fixture.width = 320;
       fixture.height = 180;
       const ctx = fixture.getContext('2d');
-      ctx.fillStyle = '#9374af';
+      ctx.fillStyle = '#e7743c';
       ctx.fillRect(0, 0, 320, 180);
       input = fixture.captureStream(config.fps);
     } else input = await navigator.mediaDevices.getUserMedia(recordingOptions.captureOptions(config));

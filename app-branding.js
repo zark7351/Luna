@@ -17,9 +17,9 @@ function trayBitmap(size = 32) {
         }
       const alpha = Math.round((covered / 16) * 255),
         offset = (y * size + x) * 4;
-      bytes[offset] = Math.round((170 * alpha) / 255);
-      bytes[offset + 1] = Math.round((104 * alpha) / 255);
-      bytes[offset + 2] = Math.round((144 * alpha) / 255);
+      bytes[offset] = Math.round((40 * alpha) / 255);
+      bytes[offset + 1] = Math.round((120 * alpha) / 255);
+      bytes[offset + 2] = Math.round((232 * alpha) / 255);
       bytes[offset + 3] = alpha;
     }
   return bytes;

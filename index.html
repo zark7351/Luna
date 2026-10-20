@@ -87,11 +87,6 @@
             <path d="M5 17h14l-2-3V9a5 5 0 0 0-10 0v5ZM10 21h4M12 2v2" />
           </svg>
         </button>
-        <button id="wardrobe-button" title="换装" data-i18n-title="换装" aria-label="换装" data-i18n-aria-label="换装">
-          <svg data-icon="hanger" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M9 5a3 3 0 0 1 6 0c0 2-3 2-3 4v2M12 11 3 17v3h18v-3Z" />
-          </svg>
-        </button>
         <button id="toolbar-settings" title="设置" data-i18n-title="设置" aria-label="设置" data-i18n-aria-label="设置">
           <svg data-icon="settings" viewBox="0 0 24 24" aria-hidden="true"></svg>
         </button>
@@ -144,8 +139,8 @@
           <dt><span data-i18n="功能转盘">功能转盘</span></dt>
           <dd>
             <span
-              data-i18n="右键点击露娜弹出功能转盘：收藏、截图、录屏、提醒、换装、设置、纯净模式、陪伴互动、隐藏和退出。方向键可切换，按 Esc 或点空白处关闭。"
-              >右键点击露娜弹出功能转盘：收藏、截图、录屏、提醒、换装、设置、纯净模式、陪伴互动、隐藏和退出。方向键可切换，按
+              data-i18n="右键点击露娜弹出功能转盘：收藏、截图、录屏、提醒、设置、纯净模式、陪伴互动、隐藏和退出。方向键可切换，按 Esc 或点空白处关闭。"
+              >右键点击露娜弹出功能转盘：收藏、截图、录屏、提醒、设置、纯净模式、陪伴互动、隐藏和退出。方向键可切换，按
               Esc 或点空白处关闭。</span
             >
           </dd>
@@ -190,16 +185,16 @@
           <dt><span data-i18n="身体快捷功能">身体快捷功能</span></dt>
           <dd>
             <span
-              data-i18n="设置里先选部位，再选收藏、截图、录屏、提醒、换装、日期时间、系统占用、天气或设置。再次点击已选功能可取消，只触发表情。日期气泡包含年月日、时间和星期；系统占用气泡动态显示 5 秒。天气在设置选择城市后按点击查询，可手动搜索或点击 IP 定位；提醒优先显示。"
-              >设置里先选部位，再选收藏、截图、录屏、提醒、换装、日期时间、系统占用、天气或设置。再次点击已选功能可取消，只触发表情。日期气泡包含年月日、时间和星期；系统占用气泡动态显示
+              data-i18n="设置里先选部位，再选收藏、截图、录屏、提醒、日期时间、系统占用、天气或设置。再次点击已选功能可取消，只触发表情。日期气泡包含年月日、时间和星期；系统占用气泡动态显示 5 秒。天气在设置选择城市后按点击查询，可手动搜索或点击 IP 定位；提醒优先显示。"
+              >设置里先选部位，再选收藏、截图、录屏、提醒、日期时间、系统占用、天气或设置。再次点击已选功能可取消，只触发表情。日期气泡包含年月日、时间和星期；系统占用气泡动态显示
               5 秒。天气在设置选择城市后按点击查询，可手动搜索或点击 IP 定位；提醒优先显示。</span
             >
           </dd>
           <dt><span data-i18n="设置与隐藏">设置与隐藏</span></dt>
           <dd>
             <span
-              data-i18n="右键托盘图标进入设置，可修改名字、称呼和置顶，下方衣架按钮可分别选择发型与服装。向下箭头隐藏露娜，双击系统托盘图标可再次显示。"
-              >右键托盘图标进入设置，可修改名字、称呼和置顶，下方衣架按钮可分别选择发型与服装。向下箭头隐藏露娜，双击系统托盘图标可再次显示。</span
+              data-i18n="右键托盘图标进入设置，可修改名字、称呼和置顶。向下箭头隐藏露娜，双击系统托盘图标可再次显示。"
+              >右键托盘图标进入设置，可修改名字、称呼和置顶。向下箭头隐藏露娜，双击系统托盘图标可再次显示。</span
             >
           </dd>
         </dl>
@@ -353,173 +348,6 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>
           </button>
         </div>
-      </form>
-    </section>
-    <section id="wardrobe" class="bottom-sheet interactive" hidden aria-labelledby="wardrobe-title">
-      <header>
-        <h1 id="wardrobe-title"><span data-i18n="换装">换装</span></h1>
-        <button
-          id="wardrobe-close"
-          title="关闭换装"
-          data-i18n-title="关闭换装"
-          aria-label="关闭换装"
-          data-i18n-aria-label="关闭换装"
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
-        </button>
-      </header>
-      <form id="wardrobe-form">
-        <div id="wardrobe-options">
-          <div id="look-preview" role="img" aria-label="露娜搭配预览" data-i18n-aria-label="露娜搭配预览"></div>
-          <input id="hair" type="hidden" value="original" /><input id="outfit" type="hidden" value="original" />
-          <div class="wardrobe-tabs" role="tablist" aria-label="换装分类" data-i18n-aria-label="换装分类">
-            <button
-              id="wardrobe-tab-hair"
-              type="button"
-              role="tab"
-              aria-selected="true"
-              aria-controls="hair-items"
-              title="发型"
-              data-i18n-title="发型"
-              aria-label="发型"
-              data-i18n-aria-label="发型"
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path
-                  d="M5 20V10a7 7 0 0 1 14 0v10l-4-2M5 20l4-2M7 10c3 0 4-2 5-5 0 3 2 5 5 5M8 10v4a4 4 0 0 0 8 0v-4"
-                />
-              </svg></button
-            ><button
-              id="wardrobe-tab-outfit"
-              type="button"
-              role="tab"
-              aria-selected="false"
-              aria-controls="outfit-items"
-              tabindex="-1"
-              title="服装"
-              data-i18n-title="服装"
-              aria-label="服装"
-              data-i18n-aria-label="服装"
-            >
-              <svg data-icon="shirt" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="m8 3-5 3 2 5 3-1v11h8V10l3 1 2-5-5-3a4 4 0 0 1-8 0Z" />
-              </svg>
-            </button>
-          </div>
-          <div id="hair-items" class="choice-grid" role="tabpanel" aria-labelledby="wardrobe-tab-hair">
-            <button
-              type="button"
-              class="look-card"
-              data-group="hair"
-              data-choice="original"
-              aria-pressed="false"
-              title="银紫长卷发"
-              data-i18n-title="银紫长卷发"
-              aria-label="银紫长卷发"
-              data-i18n-aria-label="银紫长卷发"
-            >
-              <span class="choice-thumb hair"><span class="choice-sprite" aria-hidden="true"></span></span></button
-            ><button
-              type="button"
-              class="look-card"
-              data-group="hair"
-              data-choice="straight"
-              aria-pressed="false"
-              title="黑长直 · 齐刘海"
-              data-i18n-title="黑长直 · 齐刘海"
-              aria-label="黑长直 · 齐刘海"
-              data-i18n-aria-label="黑长直 · 齐刘海"
-            >
-              <span class="choice-thumb hair"><span class="choice-sprite" aria-hidden="true"></span></span></button
-            ><button
-              type="button"
-              class="look-card"
-              data-group="hair"
-              data-choice="bob"
-              aria-pressed="false"
-              title="银色短发"
-              data-i18n-title="银色短发"
-              aria-label="银色短发"
-              data-i18n-aria-label="银色短发"
-            >
-              <span class="choice-thumb hair"><span class="choice-sprite" aria-hidden="true"></span></span></button
-            ><button
-              type="button"
-              class="look-card"
-              data-group="hair"
-              data-choice="twintails"
-              aria-pressed="false"
-              title="粉色双马尾"
-              data-i18n-title="粉色双马尾"
-              aria-label="粉色双马尾"
-              data-i18n-aria-label="粉色双马尾"
-            >
-              <span class="choice-thumb hair"><span class="choice-sprite" aria-hidden="true"></span></span>
-            </button>
-          </div>
-          <div id="outfit-items" class="choice-grid" role="tabpanel" aria-labelledby="wardrobe-tab-outfit" hidden>
-            <button
-              type="button"
-              class="look-card"
-              data-group="outfit"
-              data-choice="original"
-              aria-pressed="false"
-              title="紫色长裙"
-              data-i18n-title="紫色长裙"
-              aria-label="紫色长裙"
-              data-i18n-aria-label="紫色长裙"
-            >
-              <span class="choice-thumb outfit"><span class="choice-sprite" aria-hidden="true"></span></span></button
-            ><button
-              type="button"
-              class="look-card"
-              data-group="outfit"
-              data-choice="jk"
-              aria-pressed="false"
-              title="JK 制服 · 白色膝下袜"
-              data-i18n-title="JK 制服 · 白色膝下袜"
-              aria-label="JK 制服 · 白色膝下袜"
-              data-i18n-aria-label="JK 制服 · 白色膝下袜"
-            >
-              <span class="choice-thumb outfit"><span class="choice-sprite" aria-hidden="true"></span></span></button
-            ><button
-              type="button"
-              class="look-card"
-              data-group="outfit"
-              data-choice="secretary"
-              aria-pressed="false"
-              title="秘书制服"
-              data-i18n-title="秘书制服"
-              aria-label="秘书制服"
-              data-i18n-aria-label="秘书制服"
-            >
-              <span class="choice-thumb outfit"><span class="choice-sprite" aria-hidden="true"></span></span></button
-            ><button
-              type="button"
-              class="look-card"
-              data-group="outfit"
-              data-choice="nurse"
-              aria-pressed="false"
-              title="护士制服 · 膝下白袜"
-              data-i18n-title="护士制服 · 膝下白袜"
-              aria-label="护士制服 · 膝下白袜"
-              data-i18n-aria-label="护士制服 · 膝下白袜"
-            >
-              <span class="choice-thumb outfit"><span class="choice-sprite" aria-hidden="true"></span></span>
-            </button>
-          </div>
-        </div>
-        <div id="wardrobe-status" role="status"></div>
-        <button
-          class="primary"
-          type="submit"
-          title="保存搭配"
-          data-i18n-title="保存搭配"
-          aria-label="保存搭配"
-          data-i18n-aria-label="保存搭配"
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>
-        </button>
       </form>
     </section>
     <section

@@ -15,7 +15,6 @@ const allowed = new Set([
   'state',
   'life-memory',
   'settings',
-  'appearance',
   'system-stats',
   'weather-current',
   'weather-search',

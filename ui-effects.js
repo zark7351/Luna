@@ -3,7 +3,7 @@
   const reduced = matchMedia('(prefers-reduced-motion: reduce)'),
     running = new Set(),
     pulses = new WeakMap();
-  const names = new Set(['collect', 'capture', 'recording', 'wardrobe', 'reminder-save', 'reminder', 'complete']);
+  const names = new Set(['collect', 'capture', 'recording', 'reminder-save', 'reminder', 'complete']);
   function pulse(node, kind = 'tap') {
     if (!node || reduced.matches || !['reveal', 'enter'].includes(kind)) return;
     pulses.get(node)?.cancel();

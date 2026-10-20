@@ -140,7 +140,7 @@ function createScreenshot({
           resizable: false,
           show: false,
           skipTaskbar: true,
-          backgroundColor: live ? '#00000000' : '#191521',
+          backgroundColor: live ? '#00000000' : '#221814',
           webPreferences: {
             preload: path.join(__dirname, 'screenshot-preload.js'),
             contextIsolation: true,

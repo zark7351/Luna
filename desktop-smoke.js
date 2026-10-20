@@ -73,9 +73,7 @@ module.exports = async function runDesktopSmoke(live) {
       return;
     }
     if (process.argv.includes('--anger-sequence-test')) {
-      await require('./character-smoke').checkCharacter(win, app.getPath('temp'), 'comic-preview');
-      await win.webContents.executeJavaScript("appearance(document.querySelector('#pet'),'original','nurse')");
-      await require('./character-smoke').checkCharacter(win, app.getPath('temp'), 'nurse-preview');
+      await require('./character-smoke').checkCharacter(win, app.getPath('temp'), 'anger-preview');
       console.log(
         JSON.stringify(
           await require('./anger-smoke')({
@@ -114,7 +112,7 @@ module.exports = async function runDesktopSmoke(live) {
     document.querySelector('.petbar').style.transition='none';
     const wait=async check=>{const end=Date.now()+4000;while(!check()){if(Date.now()>end)throw Error('information UI timeout');await new Promise(r=>setTimeout(r,30));}};
     if(document.querySelector('#today-panel,#info-bar-enabled,#time-clock'))throw Error('permanent information UI remains');
-    if(document.querySelectorAll('#body-region-tabs button').length!==Object.keys(window.lunaBodyShortcuts.regions).length||document.querySelectorAll('#body-action-grid button').length!==9)throw Error('body shortcut choices');
+    if(document.querySelectorAll('#body-region-tabs button').length!==Object.keys(window.lunaBodyShortcuts.regions).length||document.querySelectorAll('#body-action-grid button').length!==8)throw Error('body shortcut choices');
     const stats=await window.pet.call('system-stats');if(!stats.ok||JSON.stringify(stats.value)!==JSON.stringify({cpu:25,memory:50,gpu:75}))throw Error('system stats bridge');
     openSettings();await wait(()=>!document.querySelector('#settings').hidden);document.querySelector('#settings-form').requestSubmit();await wait(()=>document.querySelector('#settings').hidden);showMessage('');
     showMessage('短暂消息',60);if(document.querySelector('#bubble').hidden)throw Error('bubble missing');await new Promise(r=>setTimeout(r,100));if(!document.querySelector('#bubble').hidden)throw Error('temporary bubble timeout');
@@ -230,7 +228,7 @@ module.exports = async function runDesktopSmoke(live) {
     result.trayPanels = true;
     const controls = await win.webContents.executeJavaScript(`(()=>{
     const buttons=[...document.querySelectorAll('.petbar button:not(#edge-expand)')];
-    if(buttons.length!==7||getComputedStyle(document.querySelector('#edge-expand')).display!=='none'||!document.querySelector('#hide svg[data-icon=hide]')||buttons.some(button=>button.textContent.trim()||!button.querySelector('svg')||!button.title||!button.getAttribute('aria-label'))||document.querySelector('.caption')||document.querySelector('#sleep')||document.querySelector('#settings-button')||document.querySelector('#help-button'))throw Error('pet icon toolbar');
+    if(buttons.length!==6||getComputedStyle(document.querySelector('#edge-expand')).display!=='none'||!document.querySelector('#hide svg[data-icon=hide]')||buttons.some(button=>button.textContent.trim()||!button.querySelector('svg')||!button.title||!button.getAttribute('aria-label'))||document.querySelector('.caption')||document.querySelector('#sleep')||document.querySelector('#settings-button')||document.querySelector('#help-button'))throw Error('pet icon toolbar');
     openHelp();const help=document.querySelector('#help'),bounds=help.getBoundingClientRect();
     if(!help.open||!help.contains(document.activeElement)||!help.textContent.includes('本地文件只保存路径')||bounds.top<0||bounds.bottom>document.body.clientHeight)throw Error('help dialog');
     if(getComputedStyle(help,'::backdrop').backgroundColor!=='rgba(0, 0, 0, 0)')throw Error('help backdrop must be transparent');
@@ -248,7 +246,7 @@ module.exports = async function runDesktopSmoke(live) {
     await win.webContents.executeJavaScript(
       `{if(document.querySelector('#help').open)throw Error('help Escape');openHelp();document.querySelector('#help-close').click();if(document.querySelector('#help').open)throw Error('help close');}`
     );
-    smokeStage = 'bubble-and-wardrobe';
+    smokeStage = 'bubble-and-character';
     result.helpClose = true;
     result.pureMode = await require('./pure-mode-smoke')({ win, restore, stateFile, output: app.getPath('temp') });
     result.bubbleInteraction = await require('./bubble-smoke').checkOrdinary(win);
@@ -265,80 +263,17 @@ module.exports = async function runDesktopSmoke(live) {
       stateFile,
       live.systemStats
     );
-    for (const file of new Set([
-      ...Object.values(require('./character-assets').looks).map(look => look.body.file),
-      'wardrobe-items.png',
-      'wardrobe-items-v2.png'
-    ])) {
-      const image = nativeImage.createFromPath(path.join(__dirname, 'assets', file));
-      if (image.isEmpty()) throw Error('wardrobe decode');
-      const pixels = image.toBitmap();
-      let transparent = 0;
-      for (let i = 3; i < pixels.length; i += 4) if (pixels[i] === 0) transparent++;
-      if ((transparent / pixels.length) * 4 < 0.15) throw Error('wardrobe alpha');
-    }
-    for (const hair of ['original', 'straight', 'bob', 'twintails'])
-      for (const outfit of ['original', 'jk', 'secretary', 'nurse']) {
-        await win.webContents.executeJavaScript(
-          `(async()=>{document.querySelector('#wardrobe-button').click();await new Promise(r=>setTimeout(r,150));document.querySelector('#wardrobe-tab-hair').click();document.querySelector('.look-card[data-group=hair][data-choice=${hair}]').click();document.querySelector('#wardrobe-tab-outfit').click();document.querySelector('.look-card[data-group=outfit][data-choice=${outfit}]').click();if([...document.querySelectorAll('.look-card')].some(card=>card.textContent.trim()||!getComputedStyle(card.querySelector('.choice-sprite')).backgroundImage.includes('wardrobe-items'))||document.querySelectorAll('.look-card[aria-pressed=true]').length!==2||document.querySelector('#wardrobe select'))throw Error('wardrobe grid selection');if(document.querySelector('#wardrobe').hidden||document.querySelector('#look-preview').dataset.hair!=='${hair}')throw Error('wardrobe preview');document.querySelector('#wardrobe-form').requestSubmit();for(let i=0;i<60&&!document.querySelector('#wardrobe').hidden;i++)await new Promise(r=>setTimeout(r,50));if(document.querySelector('#pet').dataset.bodyFile!==window.lunaCharacterAssets.getLook('${hair}','${outfit}').body.file||document.querySelector('#pet').dataset.hair!=='${hair}'||document.querySelector('#pet').dataset.outfit!=='${outfit}')throw Error('wardrobe applied');})()`
-        );
-        const saved = JSON.parse(fs.readFileSync(stateFile, 'utf8')).settings;
-        if (saved.hair !== hair || saved.outfit !== outfit) throw Error('wardrobe persisted');
-        await win.webContents.executeJavaScript(
-          `document.querySelector('#pet').classList.remove('happy','blink','sleeping');`
-        );
-        fs.writeFileSync(
-          path.join(app.getPath('temp'), 'luna-look-' + hair + '-' + outfit + '.png'),
-          (await win.webContents.capturePage()).toPNG()
-        );
-        await require('./character-smoke').checkCharacter(win, app.getPath('temp'), hair + '-' + outfit);
-      }
-    await win.webContents.executeJavaScript(
-      `(async()=>{const before=(await window.pet.call('state')).value.settings;const changed=(await window.pet.call('appearance',{hair:'straight',outfit:'jk',name:'不应覆盖',soundEnabled:!before.soundEnabled})).value.settings;if(changed.name!==before.name||changed.soundEnabled!==before.soundEnabled)throw Error('appearance changed general settings');const saved=(await window.pet.call('settings',{...before,hair:'original',outfit:'original'})).value.settings;if(saved.hair!=='straight'||saved.outfit!=='jk')throw Error('general settings reset wardrobe');})()`
-    );
-    await win.webContents.executeJavaScript(
-      `(async()=>{await openWardrobe();document.querySelector('#hair').value='original';document.querySelector('#outfit').value='original';document.querySelector('#wardrobe-form').requestSubmit();await new Promise(r=>setTimeout(r,150));})()`
-    );
-    await win.webContents.executeJavaScript(
-      `(async()=>{await openWardrobe();document.querySelector('#hair').value='straight';document.querySelector('#outfit').value='jk';document.querySelector('#hair').dispatchEvent(new Event('change'));if(document.querySelector('#pet').dataset.hair!=='original'||document.querySelector('#wardrobe-form .primary').getBoundingClientRect().bottom>document.body.clientHeight)throw Error('wardrobe draft layout');})()`
-    );
-    await new Promise(r => setTimeout(r, 200));
-    await win.webContents.executeJavaScript(
-      `(()=>{const tabs=[...document.querySelectorAll('.wardrobe-tabs button')];if(tabs.some(tab=>tab.textContent.trim()||!tab.querySelector('svg')||!tab.title||!tab.getAttribute('aria-label')))throw Error('wardrobe icon tabs');const hair=document.querySelector('#wardrobe-tab-hair');hair.focus();hair.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));if(document.querySelector('#outfit-items').hidden||!document.querySelector('#hair-items').hidden||document.activeElement.id!=='wardrobe-tab-outfit')throw Error('wardrobe keyboard tab');document.activeElement.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowLeft',bubbles:true}));if(document.querySelector('#hair-items').hidden||!document.querySelector('#outfit-items').hidden||document.querySelector('#hair').value!=='straight'||document.querySelector('#outfit').value!=='jk')throw Error('wardrobe tab preserves draft');const grid=document.querySelector('#hair-items'),extra=[];for(let i=0;i<8;i++){const card=grid.firstElementChild.cloneNode(true);extra.push(card);grid.append(card);}if(grid.scrollHeight<=grid.clientHeight)throw Error('wardrobe future scroll');grid.scrollTop=grid.scrollHeight;if(!grid.scrollTop)throw Error('wardrobe scroll');for(const card of extra)card.remove();document.querySelector('#wardrobe-tab-outfit').click();})()`
-    );
-    await new Promise(r => setTimeout(r, 150));
-    fs.writeFileSync(
-      path.join(app.getPath('temp'), 'luna-wardrobe-settings.png'),
-      (await win.webContents.capturePage()).toPNG()
-    );
-    await win.webContents.executeJavaScript(
-      `(()=>{const pane=document.querySelector('#wardrobe'),box=pane.getBoundingClientRect();if(Math.abs(box.bottom-(document.body.clientHeight-60))>1||getComputedStyle(pane).animationName!=='sheet-in'||!['library','recording','reminder'].every(name=>document.querySelector('#'+name+'-sheet').hidden))throw Error('wardrobe bottom sheet layout');})()`
-    );
-    await win.webContents.executeJavaScript(
-      `(async()=>{document.querySelector('#wardrobe-close').click();await openWardrobe();if(document.querySelector('#hair').value!=='original'||document.querySelector('#outfit').value!=='original')throw Error('wardrobe cancel');document.querySelector('#wardrobe-close').click();})()`
-    );
-    result.wardrobe = {
-      iconTabs: true,
-      keyboardTabs: true,
-      scrollGrid: true,
-      itemOnlyThumbnails: true,
-      noCardText: true,
-      cardGrid: true,
-      separatePanel: true,
-      preserveGeneralSettings: true,
-      cancelDraft: true,
-      independentChoices: true,
-      sixteenCombinations: true,
-      alignedExpressions: true,
-      centeredCharacter: true,
-      compactFeedbackPlacement: true,
-      fixedHeadAndBody: true,
-      localPaintedExpressions: true,
-      preview: true,
-      persisted: true,
-      expressions: true,
-      transparent: true
+    await require('./character-smoke').checkCharacter(win, app.getPath('temp'), 'idle');
+    result.character = {
+      animatedIdle: true,
+      transparent: true,
+      centredTorso: true,
+      reactionPoses: true,
+      noWardrobe: true
     };
+    await win.webContents.executeJavaScript(
+      `(async()=>{if(document.querySelector('#wardrobe,#wardrobe-button')||'hair' in (await window.pet.call('state')).value.settings)throw Error('wardrobe remains');})()`
+    );
     const measuredIdle = powerMonitor.getSystemIdleTime();
     if (!Number.isFinite(measuredIdle) || measuredIdle < 0) throw Error('system idle API');
     result.systemIdleAPI = true;
@@ -432,7 +367,7 @@ module.exports = async function runDesktopSmoke(live) {
       throw Error('local file reference');
     result.localFileDrop = true;
     const imageBytes = nativeImage
-      .createFromPath(path.join(__dirname, 'assets', 'character.png'))
+      .createFromPath(path.join(__dirname, 'assets', 'luna-avatar.png'))
       .resize({ width: 240 })
       .toPNG();
     await collection.addBytes('预览图片.png', new Uint8Array(imageBytes));
@@ -464,7 +399,7 @@ module.exports = async function runDesktopSmoke(live) {
       `(async()=>{document.querySelector('#library-button').click();await new Promise(r=>setTimeout(r,260));const sheet=document.querySelector('#library-sheet'),doc=document.querySelector('#library-frame').contentDocument;if(sheet.hidden||!doc.documentElement.classList.contains('embedded')||doc.querySelectorAll('#items .item').length<2)throw Error('embedded library content');if(doc.body.scrollWidth>doc.body.clientWidth||doc.querySelector('#items').getBoundingClientRect().bottom>doc.body.clientHeight)throw Error('embedded library overflow');const cards=[...doc.querySelectorAll('#items .item')].map(card=>card.getBoundingClientRect());if(cards[2]&&cards[2].top<Math.max(cards[0].bottom,cards[1].bottom))throw Error('embedded library overlapping rows');})()`
     );
     await win.webContents.executeJavaScript(
-      `(()=>{const body=document.body.getBoundingClientRect(),center=document.querySelector('#companion').getBoundingClientRect();for(const id of ['library-sheet','recording-sheet','reminder-sheet','settings','wardrobe']){const node=document.getElementById(id),hidden=node.hidden;node.hidden=false;const box=node.getBoundingClientRect();node.hidden=hidden;if(Math.abs(box.width-256)>1||Math.abs((box.left+box.right-center.left-center.right)/2)>1||box.right>body.right-11||box.left<body.left+11)throw Error('pet panel exceeds fixed content: '+id+' '+JSON.stringify({left:box.left,right:box.right,width:box.width}));}if(!document.querySelector('#library-frame').contentDocument.querySelector('#paste svg[data-icon=clipboard]'))throw Error('rounded clipboard icon');})()`
+      `(()=>{const body=document.body.getBoundingClientRect(),center=document.querySelector('#companion').getBoundingClientRect();for(const id of ['library-sheet','recording-sheet','reminder-sheet','settings']){const node=document.getElementById(id),hidden=node.hidden;node.hidden=false;const box=node.getBoundingClientRect();node.hidden=hidden;if(Math.abs(box.width-256)>1||Math.abs((box.left+box.right-center.left-center.right)/2)>1||box.right>body.right-11||box.left<body.left+11)throw Error('pet panel exceeds fixed content: '+id+' '+JSON.stringify({left:box.left,right:box.right,width:box.width}));}if(!document.querySelector('#library-frame').contentDocument.querySelector('#paste svg[data-icon=clipboard]'))throw Error('rounded clipboard icon');})()`
     );
     win.setBounds(beforePanelLayout);
     await new Promise(r => setTimeout(r, 200));
@@ -1085,7 +1020,7 @@ module.exports = async function runDesktopSmoke(live) {
     )
       throw Error('reminder sheet mutual exclusion');
     await win.webContents.executeJavaScript(
-      `(()=>{const pane=document.querySelector('#reminder-sheet'),box=pane.getBoundingClientRect();if(Math.abs(box.bottom-(document.body.clientHeight-60))>1||getComputedStyle(pane).animationName!=='sheet-in'||!document.querySelector('#wardrobe').hidden)throw Error('reminder bottom sheet layout');})()`
+      `(()=>{const pane=document.querySelector('#reminder-sheet'),box=pane.getBoundingClientRect();if(Math.abs(box.bottom-(document.body.clientHeight-60))>1||getComputedStyle(pane).animationName!=='sheet-in')throw Error('reminder bottom sheet layout');})()`
     );
     await reminderFrame().executeJavaScript(
       `(()=>{const doc=document.documentElement;if(doc.scrollWidth>doc.clientWidth||doc.scrollHeight>doc.clientHeight)throw Error('reminder compact overflow');document.querySelector('#title').value='未保存草稿';document.querySelector('#close-reminder').click();})()`
@@ -1325,7 +1260,6 @@ module.exports = async function runDesktopSmoke(live) {
     });
     live.libraryWin.destroy();
     smokeStage = 'hybrid-and-effects';
-    result.hybridCharacter = await require('./character-smoke').checkHybrid(win);
     result.effects = await require('./character-smoke').checkReactions(win);
     smokeStage = 'edge-dock';
     result.edgeDock = await require('./edge-smoke').check({

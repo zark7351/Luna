@@ -15,7 +15,6 @@
     screenshot: { hint: '点击截图', label: '截图', icon: 'capture' },
     recording: { hint: '点击打开录屏', label: '录屏', icon: 'record' },
     reminder: { hint: '点击打开提醒', label: '提醒', icon: 'bell' },
-    wardrobe: { hint: '点击打开换装', label: '换装', icon: 'shirt' },
     datetime: { hint: '点击查看日期时间', label: '日期时间', icon: 'clock' },
     stats: { hint: '点击查看系统占用', label: '系统占用', icon: 'stats' },
     weather: { hint: '点击查看天气', label: '天气', icon: 'sun' },
@@ -27,7 +26,7 @@
     arms: 'library',
     forbidden: '',
     legs: 'stats',
-    feet: 'wardrobe'
+    feet: 'reminder'
   });
   function validate(value) {
     return Object.fromEntries(
@@ -37,15 +36,17 @@
       ])
     );
   }
-  // Points are in the unshifted 512 x 1024 source drawing; sleeves and crossed hands belong to arms.
-  function regionAt(x, y, center = 256, forbidden = { y: 538, radiusX: 26, radiusY: 20 }) {
-    if (![x, y, center].every(Number.isFinite) || x < 0 || x >= 512 || y < 0 || y >= 1024) return null;
-    if (y < 200) return 'head';
-    if (y < 355 && Math.abs(x - center) < 68) return 'chest';
+  // Points are in the 270 x 332 Q-version frame. The big head ends at the chin; sleeves and hands are arms,
+  // the skirt centre and legs are legs. The tail on the far left does not trigger a shortcut.
+  function regionAt(x, y, center = 165, forbidden = { y: 262, radiusX: 12, radiusY: 9 }) {
+    if (![x, y, center].every(Number.isFinite) || x < 0 || x >= 270 || y < 0 || y >= 332) return null;
+    if (y < 152) return 'head';
+    if (x < center - 88) return null;
+    if (y < 212 && Math.abs(x - center) < 36) return 'chest';
     if (forbidden && Math.hypot((x - center) / forbidden.radiusX, (y - forbidden.y) / forbidden.radiusY) < 1 - 1e-9)
       return 'forbidden';
-    if (y < 545) return 'arms';
-    if (y < 885) return 'legs';
+    if (y < 270 && Math.abs(x - center) >= 38) return 'arms';
+    if (y < 312) return 'legs';
     return 'feet';
   }
   function createReactions({ now = Date.now } = {}) {

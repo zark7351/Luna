@@ -14,8 +14,6 @@ const defaults = {
   soundEnabled: true,
   bodyShortcuts: bodyShortcuts.defaults,
   weatherLocation: null,
-  hair: 'original',
-  outfit: 'original',
   saveDirectory: '',
   recordFrameRate: 60,
   recordFormat: 'mp4'
@@ -43,8 +41,6 @@ function validate(input = {}) {
   s.soundEnabled = input.soundEnabled !== false;
   s.bodyShortcuts = bodyShortcuts.validate(input.bodyShortcuts);
   s.weatherLocation = location(input.weatherLocation);
-  s.hair = ['original', 'straight', 'bob', 'twintails'].includes(input.hair) ? input.hair : 'original';
-  s.outfit = ['original', 'jk', 'secretary', 'nurse'].includes(input.outfit) ? input.outfit : 'original';
   s.saveDirectory =
     typeof input.saveDirectory === 'string' &&
     input.saveDirectory.length <= 4096 &&

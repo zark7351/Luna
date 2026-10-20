@@ -2,10 +2,10 @@
 
 本文件只记录**当前状态**，保持精简（建议不超过约 10 KB）。每次工作后更新「当前状态」「已知问题」「最近一次工作」「下一步」，不要逐轮追加流水；需要追溯时看 git log 或 [docs/HANDOFF-ARCHIVE.md](docs/HANDOFF-ARCHIVE.md)（2026-10-09 之前的逐轮记录，含已过期内容）。
 
-## 当前状态（2026-10-18）
+## 当前状态（2026-10-20）
 
-- 版本 1.0.0。main 是已发布的 1.0.0；**分支 `feature/liveliness`** 在开发「陪伴互动」（见下文「最近一次工作」），尚未合并、尚未打包。功能见 README.md；需求方向见 ROADMAP.md。
-- 已实现：16 套装扮（4 发型 × 4 服装）＋共用局部表情；五个身体部位＋禁区各可配置九种快捷功能；收藏夹（文本/链接卡片/文件引用/媒体）；截图（Ctrl+Alt+A）；FFmpeg 原像素区域录屏（NVENC，失败回退 x264）；提醒；日期/系统占用/天气气泡；生气两阶段互动；左右贴边收起；纯净模式；关闭到托盘；中英文；空闲自动休息；UI 音效。
+- 版本 1.0.0。main 是已发布的 1.0.0（feature/liveliness 已于 2026-10-20 合并进 main）。**分支 `feature-claude`** 在把角色换成 Q 版虎纹猫耳露娜（见「最近一次工作」），尚未打包。功能见 README.md；需求方向见 ROADMAP.md。
+- 已实现：Q 版待机动画（feature-claude）＋按姿势切换的播放器；五个身体部位＋禁区各可配置八种快捷功能；收藏夹（文本/链接卡片/文件引用/媒体）；截图（Ctrl+Alt+A）；FFmpeg 原像素区域录屏（NVENC，失败回退 x264）；提醒；日期/系统占用/天气气泡；生气两阶段互动；左右贴边收起；纯净模式；关闭到托盘；中英文；空闲自动休息；UI 音效；右键功能转盘；陪伴互动。换装已移除。
 - 便携版 `LunaPet-Windows/` 和安装包 `LunaPet-Release/LunaPet-1.0.0-Setup.exe`（都在仓库同级，未签名）已于 2026-10-12 基于 main 提交 `faab101` 重新构建，包含整理后的代码、独立 `desktop-smoke.js` 及当前全部功能。安装包 SHA256：04882f82ba5c76a02183bd1f00a344eff1c5a422181beb5b91dd7b32a3b89a32，SHA256SUMS.txt 已更新。真实安装目录未升级；包内交接为构建快照，最终验证看仓库本文件。
 - 打字聊天、AI、旧 API Key 均已移除，不要恢复（见 AGENTS.md）。
 
@@ -15,7 +15,7 @@
 - `desktop-smoke.js`：`--smoke-test` 完整集成检查（约 1350 行，大量以模板字符串形式注入渲染进程执行的代码）。由 `main.js` 在 smoke 模式下按需 require，并传入一个上下文对象：稳定的对象和函数直接传值，运行中会变化的状态（`state`、`libraryWin`、`angerPhase`、`trayMenu`、`captureShortcut`、`systemStats`、两个假时钟）用 getter/setter 读写，脚本里写作 `live.xxx`。它会随便携版一起打包，安装版 smoke 也要用到。
 - 主进程模块：`core.js`（状态默认值/校验/迁移、窗口尺寸常量）、`collection.js`、`reminders.js`/`reminder-alerts.js`、`screenshot.js`、`recording.js`/`native-recording.js`（FFmpeg）、`edge-dock.js`、`idle.js`、`weather.js`、`system-stats.js`、`link-preview.js`、`media.js`（luna-media 协议）、`file-actions.js`、`app-branding.js`、`sound-events.js`/`effect-events.js`、`i18n.js`＋`translations.js`。
 - `life.js`：陪伴互动的决策逻辑（问候、欢迎回来、休息/深夜提醒、自言自语、眨眼节奏、拖动反应、每日计数），注入时钟和随机数，可单元测试；`renderer.js` 负责定时器（每 30 秒 `tick`）、安静条件 `lifeCanSpeak` 和说话 `lifeSay`；主进程只通过 `life-memory` IPC 保存校验过的 `state.life`。smoke 模式下 `publicState().lifePaused` 为 true，真实引擎不说话，避免干扰气泡断言；专项检查在 `life-smoke.js`，用假时钟单独创建实例。
-- 渲染进程：`index.html`＋`renderer.js`（宠物主界面）、`character.js`/`character-assets.js`（装扮与局部表情）、`anger-interaction.js`、`body-shortcuts.js`、`pet-feedback.js`/`shortcut-bubbles.js`（气泡）、`library.*`（收藏夹）、`recording*`/`reminder*`/`screenshot*`（各自窗口与 preload）。
+- 渲染进程：`index.html`＋`renderer.js`（宠物主界面）、`character.js`/`character-assets.js`（Q 版姿势图集与播放）、`anger-interaction.js`、`body-shortcuts.js`、`pet-feedback.js`/`shortcut-bubbles.js`（气泡）、`library.*`（收藏夹）、`recording*`/`reminder*`/`screenshot*`（各自窗口与 preload）。
 - 根目录其他 `*-smoke.js` 是被 `desktop-smoke.js` 调用的专项检查；`tests/*.test.js` 是单元测试，`tests/*-smoke.cjs` 是安装包/联网/录屏分辨率等独立检查。
 - `design/`：素材生成提示词、原图与导出脚本（只做保留 alpha 的导出，不重绘）。
 
@@ -48,36 +48,27 @@
 ## 开发注意事项
 
 - 新界面文字加入 `translations.js` 并通过 `lunaI18n` 渲染；名字、昵称、收藏和提醒正文等用户数据不翻译。
-- 改外观时保持头发和身体像素固定，只换局部眼、嘴、脸红；新装扮复用表情包，并逐套校准锚点（`design/face-alignment-preview.*` 可以放大对照）。
+- 新姿势按 CHARACTER-ASSETS.md 出素材，用 `design/chibi/build-atlas.py` 打包成 WebP 图集，再在 `character-assets.js` 的 `poses` 登记；没有素材的姿势自动回退待机。
 - 所有异步窗口回调和 IPC 都检查 `liveWindow()` 或 `isDestroyed()`；生气锁定期间 IPC 只放行白名单。
 - smoke 测试启动方式会影响输出管道。需要读取输出时，让子进程保持 stdout 并等待退出。
 
-## 最近一次工作（2026-10-18，分支 feature/liveliness）
+## 最近一次工作（2026-10-20，分支 feature-claude）
 
-### 收藏夹整理
+### Q 版露娜原型
 
-- 用户请 Claude 评估收藏分类，确认全部按建议实现。数据层（`collection.js`）：可选 `pinned` 字段（加载时非 true 值丢弃）、`setPinned`；同内容文字/链接或同路径引用文件（Windows 不区分大小写）再次收藏时把原条目移到最后（即列表最前）并更新时间，返回 `duplicate: true`；`list()` 对引用文件做存在性检查，缺失时带 `missing: true`；`keepCopy` 把引用复制到当前保存目录并改为 copy；`cleanup({days:30, dryRun})` 删除 30 天前未置顶条目，只删露娜自己的副本、不动引用原文件。新 IPC：`collection-pin`、`collection-keep-copy`、`collection-cleanup`（已加入 preload 白名单和音效）。
-- 界面（`library.*`）：新增「全部」页签并作为默认页；全部页按 已置顶 / 今天 / 昨天 / 更早 分组；输入搜索时自动切到全部、在所有类别里搜；粘贴和截图后切到全部；卡片操作新增置顶、保存副本；引用文件左下角「引用」徽标，缺失为「已失效」；置顶卡片左上角图钉；全部页底部在有可清理条目时显示「清理 30 天前的 N 条收藏」，确认对话框说明副本会删除、原文件不受影响；工具栏新增「新建便签」，Ctrl+Enter 保存、Esc 只关编辑框。页签数变 5 个，大窗口搜索框位置相应右移。新增图标 pin、grid、keep、close。“置顶”已被置顶窗口设置占用（译作 Always on top），收藏用「已置顶 / 置顶收藏 / 取消置顶」。
-- 发现并修复：大收藏夹接收 `library-view` 时只认四个旧页签，展开小面板时会丢失「全部」视图。
-- 检查：新增 4 项单元测试（重复合并、置顶持久化与清洗、缺失标记与保存副本、清理范围）；新增 `library-smoke.js`（全部页签与计数、日期分组、全局搜索、置顶、便签与重复合并、Esc、引用徽标与保存副本，并截图 `luna-library-all.png`、`luna-library-sheet.png`）；剪贴板重复粘贴同一视频的旧断言改为验证合并；三处“粘贴/截图后停在图片页签”的断言改为全部页签。
-- 验证：单元测试 122/122；完整 smoke 与三个专项检查全部退出 0；已查看大窗口与小面板截图。未实现自动清理（只做了手动清理按钮，避免静默删除用户数据）；真实大文件“保存副本”的耗时未测。
+- 用户想用新形象（橙色长卷发、虎纹猫耳和尾巴、黑白几何连衣裙的 Q 版）重做桌宠：保留实用功能，砍掉换装；界面配色跟着改；默认站着，按情况切换坐下工作、睡觉、开心卖萌等姿势；不监听键盘，工作姿势只播动画。素材由用户用 Muse 生成透明序列帧。
+- 素材：用户给的待机帧 120 张 912×960 RGBA。前 3 帧底部有杂点，丢掉；首尾帧相差大，淡入淡出有重影，改为往返循环。`design/chibi/build-atlas.py` 裁到 768×944、缩到 270×332，每行 12 帧打包为 `assets/chibi/idle.webp`（117 帧，约 3.5 MB）。
+- 代码：`character-assets.js` 改为姿势表（`poses`、`poseFor` 回退待机、`frameAt` 往返/循环/单次）；`character.js` 用 requestAnimationFrame 按 24fps 在画布上播放，反应切姿势、没有姿势时小跳一下，休息时减速一半，减少动态效果时停在第一帧；点击命中读当前画面的透明度，部位按 Q 版帧坐标判定（`body-shortcuts.js` 的 `regionAt`，尾巴不触发）。人物框 180×221 DIP，窗口仍为 280×640，气泡下移到头顶上方。
+- 换装：删除换装面板、按钮、转盘项、`appearance` IPC、`hair/outfit` 设置（旧状态里的值迁移时丢弃）、快捷功能「换装」（脚默认改为提醒）、旧角色素材和 `design/` 里的旧角色脚本与原图。
+- 配色：把界面里紫色系颜色按色相映射到橘色（主色约 #e7733a）、奶白和深棕；托盘圆圈改橘色；用新形象头部重新导出 `luna-avatar.png` 和 `luna.ico`。
+- 检查：单元测试 116/116（重写角色素材测试、部位坐标测试）；`character-smoke.js` 改为检查待机在动、透明、躯干居中、反应姿势和气泡位置；body-shortcut/desktop/pure-mode/edge/anger 检查去掉换装并更新颜色和数量断言。在 Linux Xvfb 下 `--anger-sequence-test`、`--pure-mode-test`、`--edge-dock-test` 通过；完整 `--smoke-test` 在 Linux 上卡在“本地文件拖入”和“视频全屏”这两步，原代码在 Linux 上同样卡住，属于环境差异。**完整 smoke 需要在 Windows 上跑一遍。**
 
-### 右键功能转盘，去掉普通模式功能条
+### 更早（feature/liveliness，已合并）
 
-- 用户参考 Bongo Cat 的转盘，要求“做漂亮点，也要过渡动画”，并确认去掉下方功能条。新增 `wheel.js`：右键露娜弹出 10 个扇形（收藏夹、截图、录屏、提醒、换装、设置、纯净模式、陪伴互动、隐藏到托盘、退出）。每个扇形是铺满 264×264 的按钮，用 `clip-path: path()` 裁成圆角环形扇区，命中区域跟随可见形状；悬停或方向键选中时变成淡紫到粉的渐变、外凸 5%，中心圆显示图标、名称和陪伴开关状态。打开时扇形顺时针依次旋入（每个延迟 24ms），关闭时快速淡出；尊重系统“减少动态效果”。点击扇形后先等关闭动画结束（180ms）再执行，截图不会拍到转盘。点空白处关闭，且这一下不会穿透点到露娜。打开期间阻止贴边收起，陪伴互动保持安静。
-- 普通模式（未贴边）用 CSS 隐藏 `.petbar`；元素保留给纯净模式和贴边展开箭头。贴边对齐仍按原来居中的 236 DIP 区域计算，窗口尺寸未改。升级后首次启动用气泡提示一次右键用法（`localStorage` 记一次，smoke 中不提示）。说明面板和 README 已更新。新增图标 heart、sparkle、exit。
-- 修复上一版的 bug：设置里「陪伴互动」复选框的 id 与页面容器 `#companion` 重复，真实界面中开关不起作用（之前的检查也读到了容器，碰巧通过）。复选框改为 `#companion-enabled`，并在 smoke 中加入“全页 id 不重复”的检查。
-- 检查改动：新增 `wheel-smoke.js`（打开动画存在、10 个扇区命中、窗口内、贴边保持、悬停/键盘、Esc、陪伴开关动作、点空白不穿透；截图 `luna-wheel-opening/open/hover.png`）；原普通模式悬停功能条的断言改为“普通模式不显示功能条”；原生点击功能条打开收藏改为真实右键→左键点收藏扇区；pure-mode/edge/character 检查中依赖普通功能条的步骤改为走转盘或按尺寸计算。另把两处时序余量很小的旧断言放宽：提醒表单提交后等待列表改为最多 2 秒轮询；系统占用气泡 5 秒过期检查从 5.1 秒放宽到 5.5 秒。
-- 验证：单元测试 118/118（新增扇形几何 2 项）；完整 `--smoke-test`、`--pure-mode-test`、`--edge-dock-test`、`--anger-sequence-test` 全部退出 0。中途完整 smoke 有几次偶发时序失败（提醒表单、生气恢复、系统占用 5 秒），都是余量很小的等待；生气恢复那条未改，仍可能偶发。已查看转盘打开、悬停、动画中途和无功能条的截图。
-- 打包：用 9887b0c 构建了分支便携版 LunaPet-Windows/（安装包仍是 1.0.0），打包后 --smoke-test 退出 0（含转盘真实点击），已启动给用户体验。
-- 未验证：真实鼠标右键在不同 DPI/多屏下的手感。
-
-### 陪伴互动（同分支，之前完成）
-
-- `life.js` 第一版：每日问候与纪念日、欢迎回来、久坐/深夜提醒、自言自语与当天计数、眨眼节奏、拖动/甩动反应，统一安静条件和每日上限；设置开关；`state.life` 持久化。分支便携版曾在 b32f8ac 打包给用户体验。
+- 收藏夹整理（全部页签、置顶、重复合并、保存副本、清理与便签）、右键功能转盘、陪伴互动 `life.js`。细节见 git log。
 
 ## 下一步
 
-1. 用户正在体验分支便携版（转盘＋陪伴互动）。根据反馈调整频率、台词和甩动灵敏度，再合并到 main。
-2. 第二步候选（需用户确认）：补局部表情贴片（困倦半睁眼、打哈欠、惊讶、晕乎乎、看左右），Claude 写规格、GPT 生图、Claude 接入；全屏时自动安静；生日和节日。
+1. 在 Windows 上跑完整 `--smoke-test` 并打包分支便携版给用户看效果，根据反馈调整人物大小、气泡位置和配色。
+2. 用户按 CHARACTER-ASSETS.md 用 Muse 出其余姿势（工作、睡觉、开心、害羞、生气），接入后把“工作”接到截图/录屏、CPU 高和待机时偶尔触发。
 3. `main.js` 继续拆分、根目录 `*-smoke.js` 移到 `tests/`，优先级低。

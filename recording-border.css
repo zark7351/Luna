@@ -14,11 +14,11 @@ body {
 #outline {
   position: absolute;
   box-sizing: border-box;
-  border: 3px solid #a984c5;
+  border: 3px solid #eb8d5e;
   pointer-events: none;
 }
 body.recording #outline {
-  border-color: #dc7184;
+  border-color: #eca461;
 }
 #outline i {
   position: absolute;
@@ -57,8 +57,8 @@ body.recording #outline {
 [data-edge='se'] {
   width: 12px;
   height: 12px;
-  background: #ede2f7;
-  border: 1px solid #806096;
+  background: #fce7dd;
+  border: 1px solid #9b705b;
   box-sizing: border-box;
 }
 [data-edge='nw'] {
@@ -91,8 +91,8 @@ body.locked #outline i {
   align-items: center;
   gap: 3px;
   padding: 3px 5px;
-  background: #292735;
-  color: #f4ecfa;
+  background: #362a26;
+  color: #fbf0eb;
   border-radius: 5px;
   pointer-events: auto;
 }
@@ -121,7 +121,7 @@ button {
   font-size: 22px;
 }
 button:hover {
-  background: #50445f;
+  background: #624c41;
 }
 button:disabled {
   opacity: 0.4;

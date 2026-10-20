@@ -14,7 +14,7 @@ async function wait(win, script) {
             visible: win.isVisible(),
             bounds: win.getBounds(),
             renderer: await win.webContents.executeJavaScript(
-              "({edgeState,lastDockHold,dragStart,dragging,pureMode:settings.pureMode,sheets:['settings','wardrobe','library-sheet','recording-sheet','reminder-sheet'].filter(id=>!document.getElementById(id).hidden),help:document.querySelector('#help').open,reminder:!!feedback.getReminder()})"
+              "({edgeState,lastDockHold,dragStart,dragging,pureMode:settings.pureMode,sheets:['settings','library-sheet','recording-sheet','reminder-sheet'].filter(id=>!document.getElementById(id).hidden),help:document.querySelector('#help').open,reminder:!!feedback.getReminder()})"
             )
           })
       );
@@ -67,7 +67,7 @@ async function check({ win, dock, screen, ipcMain, stateFile, fireReminder }) {
     win.webContents.sendInputEvent({ type: 'mouseMove', ...center });
     await sleep(180);
     await win.webContents.executeJavaScript(
-      `(()=>{const bar=document.querySelector('.petbar'),button=document.querySelector('#edge-expand'),b=bar.getBoundingClientRect(),r=button.getBoundingClientRect(),style=getComputedStyle(bar),inner=getComputedStyle(button);if(!bar.matches(':hover')||style.backgroundColor!=='rgb(234, 223, 245)'||inner.backgroundColor!=='rgba(0, 0, 0, 0)'||Math.abs(b.width-r.width-2)>1||Math.abs(b.height-r.height-2)>1)throw Error('edge hover must fill the single outer silhouette');const corners=[style.borderTopLeftRadius,style.borderTopRightRadius,style.borderBottomRightRadius,style.borderBottomLeftRadius];if(JSON.stringify(corners)!==JSON.stringify(document.body.dataset.edgeCollapsed==='left'?['0px','13px','13px','0px']:['13px','0px','0px','13px']))throw Error('edge curve must mirror on either side');})()`
+      `(()=>{const bar=document.querySelector('.petbar'),button=document.querySelector('#edge-expand'),b=bar.getBoundingClientRect(),r=button.getBoundingClientRect(),style=getComputedStyle(bar),inner=getComputedStyle(button);if(!bar.matches(':hover')||style.backgroundColor!=='rgb(252, 228, 216)'||inner.backgroundColor!=='rgba(0, 0, 0, 0)'||Math.abs(b.width-r.width-2)>1||Math.abs(b.height-r.height-2)>1)throw Error('edge hover must fill the single outer silhouette');const corners=[style.borderTopLeftRadius,style.borderTopRightRadius,style.borderBottomRightRadius,style.borderBottomLeftRadius];if(JSON.stringify(corners)!==JSON.stringify(document.body.dataset.edgeCollapsed==='left'?['0px','13px','13px','0px']:['13px','0px','0px','13px']))throw Error('edge curve must mirror on either side');})()`
     );
     await sleep(100);
     fs.writeFileSync(

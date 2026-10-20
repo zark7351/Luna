@@ -23,7 +23,6 @@
   提示音播放失败: 'Sound playback failed',
   '你先忙，我小憩一下。': "Go ahead, I'll take a little rest.",
   '你回来啦。': 'Welcome back!',
-  '换好啦。': 'All dressed up!',
   ' · 桌面宠物': ' · Desktop pet',
   '好，我记住你的设置啦。': 'Got it! Your settings are saved.',
   '哼，别一直戳这里啦。': 'Hey, stop poking me there!',
@@ -173,7 +172,6 @@
   收藏: 'Collection',
   截图: 'Screenshot',
   录屏: 'Recording',
-  换装: 'Wardrobe',
   日期时间: 'Date & time',
   系统占用: 'System usage',
   设置: 'Settings',
@@ -209,11 +207,11 @@
   '铃铛里填写内容，选择定时或时长倒计时，到点气泡持续显示，点击右侧勾号完成，点击消息打开提醒面板；未完成时每 15 秒响一次，也可在提醒窗口完成或延后 5 分钟；设置中的声音开关控制所有声音。关闭露娜时不会提醒，重启或休眠恢复后会补提示。':
     'Add a scheduled reminder or countdown with the bell. Due reminders stay in a bubble: the check completes one; the message opens the panel. A sound repeats every 15 seconds until handled. Snooze for five minutes, or mute sounds in Settings. Luna must be running; missed reminders appear on restart or resume.',
   身体快捷功能: 'Body shortcuts',
-  '设置里先选部位，再选收藏、截图、录屏、提醒、换装、日期时间、系统占用、天气或设置。再次点击已选功能可取消，只触发表情。日期气泡包含年月日、时间和星期；系统占用气泡动态显示 5 秒。天气在设置选择城市后按点击查询，可手动搜索或点击 IP 定位；提醒优先显示。':
-    'Select a body part in Settings, then assign collection, capture, recording, reminders, wardrobe, date/time, system usage, weather, or settings. Click the selected action again to clear it and only show expressions. System usage shows for five seconds. Select a weather city by search or IP lookup; reminders take priority.',
+  '设置里先选部位，再选收藏、截图、录屏、提醒、日期时间、系统占用、天气或设置。再次点击已选功能可取消，只触发表情。日期气泡包含年月日、时间和星期；系统占用气泡动态显示 5 秒。天气在设置选择城市后按点击查询，可手动搜索或点击 IP 定位；提醒优先显示。':
+    'Select a body part in Settings, then assign collection, capture, recording, reminders, date/time, system usage, weather, or settings. Click the selected action again to clear it and only show expressions. System usage shows for five seconds. Select a weather city by search or IP lookup; reminders take priority.',
   设置与隐藏: 'Settings & hiding',
-  '右键托盘图标进入设置，可修改名字、称呼和置顶，下方衣架按钮可分别选择发型与服装。向下箭头隐藏露娜，双击系统托盘图标可再次显示。':
-    'Right-click the tray icon for Settings: name, nickname, language, and always on top. Choose hair and clothes with the hanger. Hide using the down arrow; double-click the tray icon to show Luna.',
+  '右键托盘图标进入设置，可修改名字、称呼和置顶。向下箭头隐藏露娜，双击系统托盘图标可再次显示。':
+    'Right-click the tray icon for Settings: name, nickname, language, and always on top. Hide using the down arrow; double-click the tray icon to show Luna.',
   关闭设置: 'Close settings',
   选择身体部位: 'Select body part',
   选择快捷功能: 'Select shortcut',
@@ -234,11 +232,6 @@
   声音: 'Sound',
   使用说明: 'Help',
   保存设置: 'Save settings',
-  关闭换装: 'Close wardrobe',
-  露娜搭配预览: 'Luna outfit preview',
-  换装分类: 'Wardrobe categories',
-  发型: 'Hair',
-  服装: 'Clothes',
   银紫长卷发: 'Silver-purple long curls',
   '黑长直 · 齐刘海': 'Long black hair · Straight bangs',
   银色短发: 'Short silver hair',
@@ -247,7 +240,6 @@
   'JK 制服 · 白色膝下袜': 'School uniform · White knee socks',
   秘书制服: 'Secretary uniform',
   '护士制服 · 膝下白袜': 'Nurse uniform · White knee socks',
-  保存搭配: 'Save outfit',
   提醒事项: 'Reminders',
   露娜收藏夹: "Luna's collection",
   添加文件: 'Add files',
@@ -354,7 +346,6 @@
   点击截图: 'Click to take a screenshot',
   点击打开录屏: 'Click to open recording',
   点击打开提醒: 'Click to open reminders',
-  点击打开换装: 'Click to open wardrobe',
   点击查看日期时间: 'Click to view date and time',
   点击查看系统占用: 'Click to view system usage',
   点击查看天气: 'Click to view weather',
@@ -456,6 +447,6 @@
   '清理天数无效。': 'Invalid cleanup period.',
   '已经收藏过了，移到最前面啦。': 'Already saved. Moved it to the top.',
   '便签已保存。': 'Note saved.',
-  '右键点击露娜弹出功能转盘：收藏、截图、录屏、提醒、换装、设置、纯净模式、陪伴互动、隐藏和退出。方向键可切换，按 Esc 或点空白处关闭。':
-    'Right-click Luna for the quick wheel: collection, screenshot, recording, reminders, wardrobe, settings, clean mode, companion chat, hide and quit. Use arrow keys to move; press Esc or click elsewhere to close.'
+  '右键点击露娜弹出功能转盘：收藏、截图、录屏、提醒、设置、纯净模式、陪伴互动、隐藏和退出。方向键可切换，按 Esc 或点空白处关闭。':
+    'Right-click Luna for the quick wheel: collection, screenshot, recording, reminders, settings, clean mode, companion chat, hide and quit. Use arrow keys to move; press Esc or click elsewhere to close.'
 }));

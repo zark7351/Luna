@@ -46,7 +46,7 @@ module.exports = async ({ win, restore, stateFile, output }) => {
     await sleep(350);
   };
   await read(
-    "closeSheets();document.querySelector('#settings').hidden=true;document.querySelector('#wardrobe').hidden=true;if(document.querySelector('#help').open)document.querySelector('#help').close();void 0;"
+    "closeSheets();document.querySelector('#settings').hidden=true;if(document.querySelector('#help').open)document.querySelector('#help').close();void 0;"
   );
   const saved = await read('JSON.parse(JSON.stringify(settings))');
   try {
@@ -71,7 +71,7 @@ module.exports = async ({ win, restore, stateFile, output }) => {
     if (!JSON.parse(fs.readFileSync(stateFile)).settings.pureMode) throw Error('pure mode not persisted');
     if (
       !(await read(
-        "(()=>{const bar=document.querySelector('.petbar');hideControls();return !!document.querySelector('#hide svg[data-icon=hide]')&&getComputedStyle(document.querySelector('#edge-expand')).display==='none'&&[...bar.querySelectorAll('button')].filter(b=>getComputedStyle(b).display!=='none').length===7&&getComputedStyle(document.querySelector('#pet')).display==='none'&&getComputedStyle(bar).visibility==='visible'&&bar.getAttribute('aria-hidden')==='false'&&!overControls(1,1)&&[...bar.querySelectorAll('button')].every(b=>getComputedStyle(b).borderTopWidth==='0px');})()"
+        "(()=>{const bar=document.querySelector('.petbar');hideControls();return !!document.querySelector('#hide svg[data-icon=hide]')&&getComputedStyle(document.querySelector('#edge-expand')).display==='none'&&[...bar.querySelectorAll('button')].filter(b=>getComputedStyle(b).display!=='none').length===6&&getComputedStyle(document.querySelector('#pet')).display==='none'&&getComputedStyle(bar).visibility==='visible'&&bar.getAttribute('aria-hidden')==='false'&&!overControls(1,1)&&[...bar.querySelectorAll('button')].every(b=>getComputedStyle(b).borderTopWidth==='0px');})()"
       ))
     )
       throw Error('clean toolbar layout/input');

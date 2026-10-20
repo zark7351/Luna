@@ -3,8 +3,8 @@
     13px 'Microsoft YaHei UI',
     'Segoe UI',
     sans-serif;
-  color: #79628c;
-  background: #faf6fd;
+  color: #906f5e;
+  background: #fef8f5;
 }
 * {
   box-sizing: border-box;
@@ -26,7 +26,7 @@ h1 {
 time {
   margin-left: auto;
   font-variant-numeric: tabular-nums;
-  color: #a18aaf;
+  color: #b39586;
 }
 .actions {
   display: flex;
@@ -36,14 +36,14 @@ time {
 button {
   height: 36px;
   flex: 1;
-  border: 1px solid #e2d3eb;
+  border: 1px solid #eddad1;
   border-radius: 11px;
-  background: #eee4f6;
-  color: #87629c;
+  background: #fce8de;
+  color: #a2745c;
   cursor: pointer;
 }
 button:hover {
-  background: #e6d7f0;
+  background: #fbdccc;
 }
 button:disabled {
   opacity: 0.4;
@@ -61,12 +61,12 @@ svg {
 p {
   margin: 10px 0 0;
   font-size: 11px;
-  color: #a18aaf;
+  color: #b39586;
   line-height: 1.6;
   overflow-wrap: anywhere;
 }
 button:focus-visible {
-  outline: 2px solid #a88bc1;
+  outline: 2px solid #eb8f61;
   outline-offset: 2px;
 }
 
@@ -84,7 +84,7 @@ h1 {
     600 13px/1.4 'Microsoft YaHei UI',
     'Segoe UI',
     sans-serif;
-  color: #7e6096;
+  color: #9b705b;
   letter-spacing: 0;
 }
 time {

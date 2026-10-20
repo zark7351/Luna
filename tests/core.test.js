@@ -70,17 +70,10 @@ test('设置快捷功能保存并经重启迁移保持，原有部位配置不�
   assert.deepEqual({ ...state.settings.bodyShortcuts, head: defaults.bodyShortcuts.head }, defaults.bodyShortcuts);
 });
 
-test('发型和服装独立保存，旧状态与非法值回退原版', () => {
-  for (const hair of ['original', 'straight', 'bob', 'twintails'])
-    for (const outfit of ['original', 'jk', 'secretary', 'nurse']) {
-      const state = migrateState({ settings: { hair, outfit } });
-      assert.equal(state.settings.hair, hair);
-      assert.equal(state.settings.outfit, outfit);
-      assert.deepEqual(migrateState(JSON.parse(JSON.stringify(state))), state);
-    }
-  const invalid = validate({ hair: '../../bad', outfit: null });
-  assert.equal(invalid.hair, 'original');
-  assert.equal(invalid.outfit, 'original');
+test('换装已移除，旧状态里的发型和服装不再保存', () => {
+  const state = migrateState({ settings: { hair: 'bob', outfit: 'nurse' } });
+  assert.equal(Object.hasOwn(state.settings, 'hair'), false);
+  assert.equal(Object.hasOwn(state.settings, 'outfit'), false);
 });
 
 test('恢复按需天气，仅保存有效城市坐标，排除 IP 与凭据', () => {

@@ -282,7 +282,7 @@ async function showLibrary(view) {
     frame: false,
     title: '露娜收藏夹',
     icon: appIcon,
-    backgroundColor: '#fcf9ff',
+    backgroundColor: '#fffbf9',
     show: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -645,7 +645,7 @@ else {
             screen.getAllDisplays().map(display => ({
               display_id: String(display.id),
               thumbnail: nativeImage
-                .createFromPath(path.join(__dirname, 'assets', 'character.png'))
+                .createFromPath(path.join(__dirname, 'assets', 'luna-avatar.png'))
                 .resize({ width: display.bounds.width * 2, height: display.bounds.height * 2 })
             }))
         : desktopCapturer.getSources.bind(desktopCapturer),
@@ -781,8 +781,6 @@ else {
         weatherLocation: Object.hasOwn(input || {}, 'weatherLocation')
           ? input.weatherLocation
           : state.settings.weatherLocation,
-        hair: state.settings.hair,
-        outfit: state.settings.outfit,
         recordFrameRate: input?.recordFrameRate ?? state.settings.recordFrameRate,
         recordFormat: state.settings.recordFormat
       });
@@ -832,18 +830,6 @@ else {
       if (liveWindow()) win.setAlwaysOnTop(next.top);
       for (const current of [win, libraryWin]) if (current && !current.isDestroyed()) configureAudio(current);
       syncCaptureShortcut();
-      return publicState();
-    });
-    handle('appearance', input => {
-      const next = validate({ ...state.settings, hair: input?.hair, outfit: input?.outfit });
-      const previous = state;
-      state = { ...state, settings: next };
-      try {
-        persist();
-      } catch (error) {
-        state = previous;
-        throw error;
-      }
       return publicState();
     });
     handle('pure-layout', expanded => {

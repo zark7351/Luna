@@ -34,8 +34,7 @@ function applySettings(value) {
 function syncDockHold() {
   if (viewStopped) return;
   const expanded =
-    $('help').open ||
-    ['settings', 'wardrobe', 'library-sheet', 'recording-sheet', 'reminder-sheet'].some(id => !$(id).hidden);
+    $('help').open || ['settings', 'library-sheet', 'recording-sheet', 'reminder-sheet'].some(id => !$(id).hidden);
   if (settings?.pureMode && expanded !== lastPureLayout) {
     lastPureLayout = expanded;
     api('pure-layout', expanded).catch(() => {});
@@ -66,55 +65,6 @@ window.pet.onSettingsChanged(value => {
   if (!viewStopped) applySettings(value);
 });
 window.pet.onEdgeDockChanged(applyEdgeDock);
-function appearance(node, hair, outfit) {
-  const look = window.lunaCharacterAssets.getLook(hair, outfit);
-  node.dataset.hair = hair;
-  node.dataset.outfit = outfit;
-  if (node.id === 'pet') return window.lunaCharacter.setLook(hair, outfit);
-  window.lunaCharacterAssets.applyBody(node, look);
-}
-function wardrobeTab(name, focus = false) {
-  if (focus && $('wardrobe-tab-' + name).getAttribute('aria-selected') !== 'true') window.uiSound('tab');
-  for (const group of ['hair', 'outfit']) {
-    const tab = $('wardrobe-tab-' + group),
-      active = group === name;
-    tab.setAttribute('aria-selected', String(active));
-    tab.tabIndex = active ? 0 : -1;
-    $(group + '-items').hidden = !active;
-  }
-  if (focus) $('wardrobe-tab-' + name).focus();
-}
-for (const group of ['hair', 'outfit']) {
-  const tab = $('wardrobe-tab-' + group);
-  tab.onclick = () => wardrobeTab(group, true);
-  tab.onkeydown = event => {
-    if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
-      event.preventDefault();
-      wardrobeTab(
-        event.key === 'Home' ? 'hair' : event.key === 'End' ? 'outfit' : group === 'hair' ? 'outfit' : 'hair',
-        true
-      );
-    }
-  };
-}
-function previewLook() {
-  const hair = $('hair').value,
-    outfit = $('outfit').value;
-  appearance($('look-preview'), hair, outfit);
-  window.lunaEffects.pulse($('look-preview'), 'reveal');
-  for (const card of document.querySelectorAll('.look-card')) {
-    const group = card.dataset.group,
-      value = card.dataset.choice;
-    card.setAttribute('aria-pressed', String($(group).value === value));
-  }
-}
-for (const card of document.querySelectorAll('.look-card'))
-  card.onclick = () => {
-    $(card.dataset.group).value = card.dataset.choice;
-    previewLook();
-  };
-$('hair').onchange = previewLook;
-$('outfit').onchange = previewLook;
 let completingReminder = false;
 let lastFeedback = '';
 const feedback = createPetFeedback({
@@ -162,10 +112,7 @@ let life = null,
   lifeSaveTimer = null,
   lifePaused = false;
 function panelsOpen() {
-  return (
-    $('help').open ||
-    ['settings', 'wardrobe', 'library-sheet', 'recording-sheet', 'reminder-sheet'].some(id => !$(id).hidden)
-  );
+  return $('help').open || ['settings', 'library-sheet', 'recording-sheet', 'reminder-sheet'].some(id => !$(id).hidden);
 }
 // Proactive lines wait for a quiet moment: no bubble, panel, reminder, drag or protected anger sequence.
 function lifeCanSpeak() {
@@ -274,7 +221,7 @@ function leaveControls() {
   if (controlsTimer === null) controlsTimer = setTimeout(hideControls, 350);
 }
 const dockObserver = new MutationObserver(syncDockHold);
-for (const id of ['help', 'settings', 'wardrobe', 'library-sheet', 'recording-sheet', 'reminder-sheet'])
+for (const id of ['help', 'settings', 'library-sheet', 'recording-sheet', 'reminder-sheet'])
   dockObserver.observe($(id), { attributes: true, attributeFilter: ['hidden', 'open'] });
 window.addEventListener('pagehide', () => {
   viewStopped = true;
@@ -388,7 +335,6 @@ window.pet.onEffect(name => {
     collect: 'library-button',
     capture: 'screenshot-button',
     recording: 'recording-button',
-    wardrobe: 'wardrobe-button',
     'reminder-save': 'reminder-button',
     complete: 'reminder-button'
   };
@@ -440,7 +386,6 @@ window.pet.onIdleChanged(rest);
 function openHelp() {
   closeSheets();
   $('settings').hidden = true;
-  $('wardrobe').hidden = true;
   if (!$('help').open) {
     $('help').showModal();
     window.uiSound('open');
@@ -457,7 +402,6 @@ $('settings-help').onclick = openHelp;
 async function openSettings() {
   cancelInfo();
   closeSheets();
-  $('wardrobe').hidden = true;
   if ($('help').open) $('help').close();
   ignore = false;
   window.pet.passthrough(false);
@@ -492,7 +436,6 @@ function openSheet(name) {
   cancelInfo();
   if ($('help').open) $('help').close();
   $('settings').hidden = true;
-  $('wardrobe').hidden = true;
   closeSheets();
   ignore = false;
   window.pet.passthrough(false);
@@ -527,53 +470,6 @@ $('settings-close').onclick = () => {
   $('settings').hidden = true;
   window.uiSound('close');
 };
-async function openWardrobe() {
-  closeSheets();
-  if ($('help').open) $('help').close();
-  $('settings').hidden = true;
-  ignore = false;
-  window.pet.passthrough(false);
-  try {
-    const state = await api('state');
-    $('hair').value = state.settings.hair;
-    $('outfit').value = state.settings.outfit;
-    previewLook();
-    wardrobeTab('hair');
-    $('wardrobe-status').textContent = '';
-    $('wardrobe').hidden = false;
-    window.uiSound('open');
-  } catch (error) {
-    showMessage(error.message);
-  }
-}
-$('wardrobe-button').onclick = openWardrobe;
-$('wardrobe-close').onclick = () => {
-  $('wardrobe').hidden = true;
-  window.uiSound('close');
-};
-document.addEventListener('keydown', event => {
-  if (event.key === 'Escape' && !$('wardrobe').hidden) {
-    $('wardrobe').hidden = true;
-    window.uiSound('close');
-  }
-});
-$('wardrobe-form').onsubmit = async event => {
-  event.preventDefault();
-  const save = $('wardrobe-form').querySelector('button[type=submit]');
-  save.disabled = true;
-  try {
-    const state = await api('appearance', { hair: $('hair').value, outfit: $('outfit').value });
-    settings = state.settings;
-    await appearance($('pet'), settings.hair, settings.outfit);
-    window.lunaCharacter.react('wardrobe');
-    $('wardrobe').hidden = true;
-    showMessage(t('换好啦。'));
-  } catch (error) {
-    $('wardrobe-status').textContent = error.message;
-  } finally {
-    save.disabled = false;
-  }
-};
 $('settings-form').onsubmit = async e => {
   e.preventDefault();
   const input = {
@@ -593,7 +489,6 @@ $('settings-form').onsubmit = async e => {
   try {
     const state = await api('settings', input);
     applySettings(state.settings);
-    appearance($('pet'), settings.hair, settings.outfit);
     document.title = settings.name + t(' · 桌面宠物');
     $('settings').hidden = true;
     showMessage(t('好，我记住你的设置啦。'));
@@ -729,7 +624,6 @@ async function performBodyShortcut(region) {
     if (['datetime', 'stats', 'weather'].includes(action)) {
       if (!feedback.getReminder()) infoBubbles.start(action);
     } else if (action === 'library') openSheet('library');
-    else if (action === 'wardrobe') await openWardrobe();
     else if (action === 'screenshot') await api('screenshot-start');
     else if (action === 'recording') await api('recording-show');
     else if (action === 'reminder') await api('reminder-show');
@@ -860,13 +754,7 @@ document.addEventListener('mouseleave', e => {
     return;
   }
   leaveControls();
-  if (
-    !$('library-sheet').hidden ||
-    !$('recording-sheet').hidden ||
-    !$('reminder-sheet').hidden ||
-    !$('wardrobe').hidden
-  )
-    return;
+  if (!$('library-sheet').hidden || !$('recording-sheet').hidden || !$('reminder-sheet').hidden) return;
   if (!$('help').open && !dragStart && !dropDepth) {
     ignore = true;
     window.pet.passthrough(true);
@@ -952,11 +840,10 @@ wheel = window.lunaWheel.createWheel({
   sound: name => window.uiSound(name),
   onToggle: syncDockHold,
   items: [
-    { id: 'library', label: '收藏夹', icon: 'folder', color: '#8b6cf0', run: () => openSheet('library') },
+    { id: 'library', label: '收藏夹', icon: 'folder', color: '#d9773a', run: () => openSheet('library') },
     { id: 'screenshot', label: '截图', icon: 'capture', color: '#3b9cf0', run: () => api('screenshot-start') },
     { id: 'recording', label: '录屏', icon: 'record', color: '#f0648a', run: () => api('recording-show') },
     { id: 'reminder', label: '提醒', icon: 'bell', color: '#f2a223', run: () => api('reminder-show') },
-    { id: 'wardrobe', label: '换装', icon: 'hanger', color: '#d96fd0', run: () => openWardrobe() },
     { id: 'settings', label: '设置', icon: 'settings', color: '#6a78f5', run: () => openSettings() },
     {
       id: 'pure',
@@ -996,7 +883,7 @@ $('pet').addEventListener('contextmenu', event => {
     document.documentElement.style.setProperty('--toolbar-width', s.toolbarWidth + 'px');
     applySettings(s.settings);
     applyEdgeDock(s.edgeDock);
-    appearance($('pet'), settings.hair, settings.outfit);
+    window.lunaCharacter.load();
     rest(s.sleeping === true);
     document.title = settings.name + t(' · 桌面宠物');
     lifePaused = s.lifePaused === true;

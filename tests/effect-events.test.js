@@ -10,7 +10,7 @@ test('视觉反馈仅对应已提交的成功动作，取消或全部失败不�
   assert.equal(operationEffect('collection-add-clipboard', { kind: 'files', saved: 0 }), null);
   assert.equal(operationEffect('collection-add-clipboard', { id: 'image', kind: 'file' }), 'collect');
   assert.equal(operationEffect('collection-add-text', { id: 'text' }), 'collect');
-  assert.equal(operationEffect('appearance', {}), 'wardrobe');
+  assert.equal(operationEffect('appearance', {}), null);
   assert.equal(operationEffect('reminder-save', {}), 'reminder-save');
   assert.equal(operationEffect('reminder-action', {}, { action: 'complete' }), 'complete');
   for (const action of ['snooze', 'delete', 'edit'])
