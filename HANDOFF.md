@@ -8,6 +8,7 @@
 - 已实现：Q 版待机动画（feature-claude）＋按姿势切换的播放器；点身体部位只播反应动画；收藏夹（文本/链接卡片/文件引用/媒体）；截图（Ctrl+Alt+A）；FFmpeg 原像素区域录屏（NVENC，失败回退 x264）；提醒；日期/系统占用/天气读取（暂无显示入口）；生气两阶段互动；左右贴边收起；纯净模式（只显示头上小花，点花开转盘）；关闭到托盘；中英文；空闲自动休息；UI 音效；右键功能转盘；陪伴互动。换装已移除。
 - 便携版 `LunaPet-Windows/` 和安装包 `LunaPet-Release/LunaPet-1.0.0-Setup.exe`（都在仓库同级，未签名）已于 2026-10-12 基于 main 提交 `faab101` 重新构建，包含整理后的代码、独立 `desktop-smoke.js` 及当前全部功能。安装包 SHA256：04882f82ba5c76a02183bd1f00a344eff1c5a422181beb5b91dd7b32a3b89a32，SHA256SUMS.txt 已更新。真实安装目录未升级；包内交接为构建快照，最终验证看仓库本文件。
 - 打字聊天、AI、旧 API Key 均已移除，不要恢复（见 AGENTS.md）。
+- 新角色素材：用户已确认 `design/tiger-chibi/standing-front-v4.png` 的原 Q 版脸型、无耳机和 3D 手办质感；v3 改脸方向已放弃。`design/tiger-chibi/idle/` 已制作呼吸、眨眼、摇尾巴的 6 秒/30 FPS/180 帧透明循环，包含 WebP、GIF/MP4 预览、原图/闭眼参考与独立导出工具；无损 APNG 母版和中间帧仅留本地并忽略。闭眼图由内置 image_gen 生成，眼睛局部合成，其余用 v4 网格动画。已检查采样图、透明 alpha、首尾相同及脚底固定；工具通过语法/Prettier 检查，详见该目录 README 和 verification.json。这套 `design/tiger-chibi/` 素材是另一条制作路线，已随 2026-10-20 提交进仓库供参考；应用里实际运行的是 Muse 生成的 v3 待机帧（见「最近一次工作」），两者都可作为后续姿势的外观参考。
 
 ## 代码结构速览
 
@@ -26,7 +27,8 @@
 - 桌面集成检查：`node_modules/electron/dist/electron.exe . --smoke-test`，约 2 分钟，退出码 0 为通过，结果写入被忽略的 smoke-result.json。可加专项参数：`--capture-debug`、`--pure-mode-test`、`--edge-dock-test`、`--anger-sequence-test`、`--recording-live-test`（真实桌面录制）、`--stats-live-test`（真实 CPU/内存/GPU）。`--anger-preview` 让本次启动第一次必定触发生气，便于人工预览。
 - 安装包检查：`node tests/installer-smoke.cjs`（隔离安装→安装版 smoke→重复安装→卸载），`--package-only` 只做文件一致性。
 - 代码格式：Prettier 3.9.9（`.prettierrc.json`）。提交前执行 `npm run format`，或用 `npm run format:check` 检查。Markdown、assets、installer、package-lock 不参与格式化。
-- 当前终端没有 npm 命令，node_modules 尚未安装 Prettier；本轮未运行 npm ci 或格式检查。Prettier 的锁文件条目此前手工写入（integrity 已对照 npm registry 校验），需要在有 npm 的环境中执行 npm ci 确认。
+- 换电脑继续 feature-claude：`git clone https://github.com/zark7351/Luna.git` → `git checkout feature-claude` → `npm ci` → `node node_modules/electron/install.js` → `npm start`；改完跑 `npm test`，涉及桌面行为再跑完整 smoke。
+- 待机原始序列帧 `pet-idle-frames-v3.zip`（约 79 MB，120 张 912×960 PNG）**不在仓库里**，在原开发电脑的“下载”文件夹；仓库里只有打包好的 `assets/chibi/idle.webp`。要重新裁切或重打包，需要把这个 zip 拷到新电脑。
 
 ## 构建与发布
 
@@ -42,6 +44,8 @@
 - 150% DPI 下 Chromium 按物理像素量化，窗口尺寸和边框断言要允许 1 DIP 或 1 个物理像素的误差。
 - 完整 smoke 末尾的贴边恢复偶尔出现 `native edge test move timed out`；本轮完整检查未复现。可以单独用 `--edge-dock-test` 诊断。
 - 退出时出现 Chromium `GPU state invalid` 日志不影响结果，以退出码为准。
+- **Windows 完整 smoke 未通过（2026-10-20，提交 28ef9e4 + v3 图集）**：退出码 1，`SMOKE_STAGE bubble-and-character Error: flower wheel placement {"w":{"y":272,"height":264,"bottom":536},"f":{"y":51,"height":56,"bottom":107},"h":128,"bounds":{"x":447,"y":522,"width":280,"height":128}}`（`pure-mode-smoke.js:88`）。点小花后窗口先长到 640、转盘也打开了，但约 550 ms 后窗口又回到 280×128，转盘仍按展开布局画在 272 处。窗口在屏幕中部（y=522），不是靠近顶部的情况，所以 28ef9e4 的“顶部时向下打开”没有覆盖它。怀疑模拟点击拿不到前台焦点、转盘因失焦收起后窗口缩回（同 wheel-smoke 的已知现象），或纯净模式的尺寸同步把窗口改回了小尺寸；之后在 wheel.js 临时记录 blur/focus/close 再跑：单独 `--pure-mode-test` 通过，完整 smoke 两次都**通过了**这一步，没能复现，所以原因未确认，也没有改代码（临时日志已撤掉）。这两次完整 smoke 改为卡在后面的收藏夹步骤：`copyFileToClipboard`（desktop-smoke.js:497）报“文件复制失败…剪贴板可能正被其他程序占用”。直接调用复现得到 PowerShell `SetFileDropList` 的“请求的剪贴板操作失败”，即 OpenClipboard 被这台电脑上的其他程序占着，属于环境问题（2026-10-18 同一步骤曾通过）。下一台电脑上先重跑完整 smoke：如果小花转盘仍偶发失败，在 `openFlowerWheel`（renderer.js）和 wheel.js 的 blur 关闭处加日志；可选修法是放大窗口后先聚焦再 `wheel.show`，或 blur 后约 150 ms 仍无焦点才收起转盘。用户手动使用时未反馈此问题。
+- 尾巴最下端一小段点击会算作手臂（`body-shortcuts.js` 的 `regionAt` 只排除了 x < center−88），待收紧。
 - 检查脚本的稳定性（2026-10-18）：模拟输入拿不到 Windows 前台焦点，转盘会因窗口失焦按设计收起，所以 wheel-smoke 里的 openNatively/clickSector 会重试右键，没有系统焦点时也放宽了焦点断言；收藏夹检查结束时会等列表刷新完再继续，避免后面的视频全屏请求拿到已被替换的元素。最后一轮验证：源码完整 smoke 2 次加三个专项检查全部通过，打包版完整 smoke 2 次通过；第 3 次卡在原有的“收藏夹视频进入全屏”步骤（awaited requestFullscreen 没有超时，约 16 分钟无进展，已手动结束）。原因未查明，可能与当时用户在用电脑有关；下次可以给这一步加超时和日志后再复现。
 - 没有代码签名、自动更新和 LICENSE 文件。
 
@@ -69,6 +73,8 @@
 
 ## 下一步
 
-1. 在 Windows 上跑完整 `--smoke-test` 并打包分支便携版给用户看效果，根据反馈调整人物大小、气泡位置和配色。
-2. 用户按 CHARACTER-ASSETS.md 用 Muse 出其余姿势（工作、睡觉、开心、害羞、生气），接入后把“工作”接到截图/录屏、CPU 高和待机时偶尔触发。
-3. `main.js` 继续拆分、根目录 `*-smoke.js` 移到 `tests/`，优先级低。
+1. 在另一台 Windows 电脑上重跑完整 smoke，确认小花转盘偶发失败和剪贴板失败是否仍出现（见「已知问题」），全部通过后打包分支便携版给用户看效果，根据反馈调整人物大小、气泡位置和配色。
+2. 用户按 CHARACTER-ASSETS.md 用 Muse 出其余姿势（工作、睡觉、开心、害羞、生气），接入后把“工作”接到截图/录屏、CPU 高和待机时偶尔触发；点身体各部位接到对应反应姿势。
+3. 用动画表现日期、天气、系统占用（读取代码 `shortcut-bubbles.js`、`system-stats`/`weather-current` IPC 和天气城市设置都还在）。
+4. 收紧尾巴末端的点击区域。
+5. `main.js` 继续拆分、根目录 `*-smoke.js` 移到 `tests/`，优先级低。

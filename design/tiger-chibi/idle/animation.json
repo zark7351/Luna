@@ -1,0 +1,22 @@
+{
+  "source": "../standing-front-v4.png",
+  "closedEyes": "blink-closed-source.png",
+  "width": 768,
+  "height": 808,
+  "fps": 30,
+  "frames": 180,
+  "durationSeconds": 6,
+  "loop": true,
+  "effects": [
+    "local-breathing-deformation",
+    "eyelid-blink",
+    "local-tail-sway"
+  ],
+  "blinkStartSeconds": [
+    1.62,
+    4.32
+  ],
+  "feetFixed": true,
+  "loopSeamIdentical": true,
+  "firstFrameSha256": "191d3045ec0265e6ea644de080004e80960eb13b4f30a291caac9acb8c3905d9"
+}

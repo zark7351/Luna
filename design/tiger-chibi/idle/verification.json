@@ -1,0 +1,64 @@
+{
+  "frameCount": 180,
+  "allFrames768x808": true,
+  "allFramesHaveTransparentAndOpaquePixels": true,
+  "allFramesFeetIdentical": true,
+  "maximumOuterBorderAlpha": 1,
+  "distinctFrameHashes": 116,
+  "loopEndpointExactlyMatches": true,
+  "artifacts": {
+    "idle-transparent.webp": {
+      "size": [
+        768,
+        808
+      ],
+      "frames": 180,
+      "durationMs": 5999,
+      "loop": 0,
+      "bytes": 22509186,
+      "alphaRange": [
+        0,
+        255
+      ]
+    },
+    "idle-transparent-master.apng": {
+      "size": [
+        768,
+        808
+      ],
+      "frames": 180,
+      "durationMs": 6000.0,
+      "loop": 0,
+      "bytes": 111692984,
+      "alphaRange": [
+        0,
+        255
+      ]
+    },
+    "idle-preview.gif": {
+      "size": [
+        384,
+        404
+      ],
+      "frames": 180,
+      "durationMs": 6000,
+      "loop": 0,
+      "bytes": 3222575,
+      "alphaRange": [
+        255,
+        255
+      ]
+    },
+    "idle-preview.mp4": {
+      "size": [
+        768,
+        808
+      ],
+      "frames": 180,
+      "durationMs": 6000,
+      "fps": 30,
+      "bytes": 1433047,
+      "verifiedWith": "ffprobe"
+    }
+  }
+}
