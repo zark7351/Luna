@@ -62,7 +62,7 @@
 
 - 用户想用新形象（橙色长卷发、虎纹猫耳和尾巴、黑白几何连衣裙的 Q 版）重做桌宠：保留实用功能，砍掉换装；界面配色跟着改；默认站着，按情况切换坐下工作、睡觉、开心卖萌等姿势；不监听键盘，工作姿势只播动画。素材由用户用 Muse 生成透明序列帧。
 - 素材：待机帧用 v4（`pet-idle-frames-v4.zip`，120 张 912×960 RGBA，2026-10-21 替换 v3；没有呼出的白雾）。前 2 帧脚的位置不同会跳，丢掉；首尾帧相差大，改为往返循环。v4 原图里人物取景偏大：每帧鞋底都被画面下边缘切平，26 帧尾巴尖碰到左边缘被切，属于源素材问题，裁切沿用 v3 的参数以保持人物大小和位置不变；以后让 Muse 出图时四周多留白。`design/chibi/build-atlas.py --skip 2 --crop 0,16,768,960` 缩到 270×332，每行 12 帧打包为 `assets/chibi/idle.webp`（118 帧）。
-- 代码：`character-assets.js` 改为姿势表（`poses`、`poseFor` 回退待机、`frameAt` 往返/循环/单次）；`character.js` 用 requestAnimationFrame 按 16fps 在画布上播放，反应切姿势、没有姿势时小跳一下，休息时减速一半，减少动态效果时停在第一帧；点击命中读当前画面的透明度，部位按 Q 版帧坐标判定（`body-shortcuts.js` 的 `regionAt`，尾巴不触发），点击只播反应动画。人物框 180×221 DIP，窗口仍为 280×640，气泡下移到头顶上方。
+- 代码：`character-assets.js` 改为姿势表（`poses`、`poseFor` 回退待机、`frameAt` 往返/循环/单次）；`character.js` 用 requestAnimationFrame 按 12fps 在画布上播放（2026-10-21 用户觉得 16fps 偏快，放慢；往返约 19.5 秒），反应切姿势、没有姿势时小跳一下，休息时减速一半，减少动态效果时停在第一帧；点击命中读当前画面的透明度，部位按 Q 版帧坐标判定（`body-shortcuts.js` 的 `regionAt`，尾巴不触发），点击只播反应动画。人物框 180×221 DIP，窗口仍为 280×640，气泡下移到头顶上方。
 - 换装：删除换装面板、按钮、转盘项、`appearance` IPC、`hair/outfit` 设置（旧状态里的值迁移时丢弃）、快捷功能「换装」（脚默认改为提醒）、旧角色素材和 `design/` 里的旧角色脚本与原图。
 - 配色：把界面里紫色系颜色按色相映射到橘色（主色约 #e7733a）、奶白和深棕；托盘圆圈改橘色；用新形象头部重新导出 `luna-avatar.png` 和 `luna.ico`。
 - 检查：单元测试 116/116（重写角色素材测试、部位坐标测试）；`character-smoke.js` 改为检查待机在动、透明、躯干居中、反应姿势和气泡位置；body-shortcut/desktop/pure-mode/edge/anger 检查去掉换装并更新颜色和数量断言。在 Linux Xvfb 下 `--anger-sequence-test`、`--pure-mode-test`、`--edge-dock-test` 通过；完整 `--smoke-test` 在 Linux 上卡在“本地文件拖入”和“视频全屏”这两步，原代码在 Linux 上同样卡住，属于环境差异。**完整 smoke 需要在 Windows 上跑一遍。**
