@@ -7,7 +7,7 @@
   // Frame size in atlas pixels; the body centre is where the torso sits, the tail extends to the left.
   const stage = Object.freeze({ width: 270, height: 332, center: 165 });
   const poses = {
-    idle: { file: 'chibi/idle.webp', frames: 118, columns: 12, fps: 12, loop: 'pingpong' }
+    idle: { file: 'chibi/idle.webp', frames: 177, columns: 12, fps: 16, loop: 'pingpong' }
   };
   // Expressions requested by the app map to poses; missing poses play idle with a small hop.
   const expressionPoses = Object.freeze({

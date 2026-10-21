@@ -8,7 +8,7 @@
 - 已实现：Q 版待机动画（feature-claude）＋按姿势切换的播放器；点身体部位只播反应动画；收藏夹（文本/链接卡片/文件引用/媒体）；截图（Ctrl+Alt+A）；FFmpeg 原像素区域录屏（NVENC，失败回退 x264）；提醒；日期/系统占用/天气读取（暂无显示入口）；生气两阶段互动；左右贴边收起；纯净模式（只显示头上小花，点花开转盘）；关闭到托盘；中英文；空闲自动休息；UI 音效；右键功能转盘；陪伴互动。换装已移除。
 - 便携版 `LunaPet-Windows/` 和安装包 `LunaPet-Release/LunaPet-1.0.0-Setup.exe`（都在仓库同级，未签名）已于 2026-10-12 基于 main 提交 `faab101` 重新构建，包含整理后的代码、独立 `desktop-smoke.js` 及当前全部功能。安装包 SHA256：04882f82ba5c76a02183bd1f00a344eff1c5a422181beb5b91dd7b32a3b89a32，SHA256SUMS.txt 已更新。真实安装目录未升级；包内交接为构建快照，最终验证看仓库本文件。
 - 打字聊天、AI、旧 API Key 均已移除，不要恢复（见 AGENTS.md）。
-- 新角色素材：用户已确认 `design/tiger-chibi/standing-front-v4.png` 的原 Q 版脸型、无耳机和 3D 手办质感；v3 改脸方向已放弃。`design/tiger-chibi/idle/` 已制作呼吸、眨眼、摇尾巴的 6 秒/30 FPS/180 帧透明循环，包含 WebP、GIF/MP4 预览、原图/闭眼参考与独立导出工具；无损 APNG 母版和中间帧仅留本地并忽略。闭眼图由内置 image_gen 生成，眼睛局部合成，其余用 v4 网格动画。已检查采样图、透明 alpha、首尾相同及脚底固定；工具通过语法/Prettier 检查，详见该目录 README 和 verification.json。这套 `design/tiger-chibi/` 素材是另一条制作路线，已随 2026-10-20 提交进仓库供参考；应用里实际运行的是 Muse 生成的 v4 待机帧（见「最近一次工作」），两者都可作为后续姿势的外观参考。
+- 新角色素材：用户已确认 `design/tiger-chibi/standing-front-v4.png` 的原 Q 版脸型、无耳机和 3D 手办质感；v3 改脸方向已放弃。`design/tiger-chibi/idle/` 已制作呼吸、眨眼、摇尾巴的 6 秒/30 FPS/180 帧透明循环，包含 WebP、GIF/MP4 预览、原图/闭眼参考与独立导出工具；无损 APNG 母版和中间帧仅留本地并忽略。闭眼图由内置 image_gen 生成，眼睛局部合成，其余用 v4 网格动画。已检查采样图、透明 alpha、首尾相同及脚底固定；工具通过语法/Prettier 检查，详见该目录 README 和 verification.json。这套 `design/tiger-chibi/` 素材是另一条制作路线，已随 2026-10-20 提交进仓库供参考；应用里实际运行的是 Muse 生成的 v4-slow 待机帧（见「最近一次工作」），两者都可作为后续姿势的外观参考。
 
 ## 代码结构速览
 
@@ -28,7 +28,7 @@
 - 安装包检查：`node tests/installer-smoke.cjs`（隔离安装→安装版 smoke→重复安装→卸载），`--package-only` 只做文件一致性。
 - 代码格式：Prettier 3.9.9（`.prettierrc.json`）。提交前执行 `npm run format`，或用 `npm run format:check` 检查。Markdown、assets、installer、package-lock 不参与格式化。
 - 换电脑继续 feature-claude：`git clone https://github.com/zark7351/Luna.git` → `git checkout feature-claude` → `npm ci` → `node node_modules/electron/install.js` → `npm start`；改完跑 `npm test`，涉及桌面行为再跑完整 smoke。
-- 待机原始序列帧 `pet-idle-frames-v4.zip`（约 78 MB，120 张 912×960 PNG；上一版为 v3.zip）**不在仓库里**，在原开发电脑的“下载”文件夹；仓库里只有打包好的 `assets/chibi/idle.webp`。要重新裁切或重打包，需要把这个 zip 拷到新电脑。
+- 待机原始序列帧 `pet-idle-frames-v4-slow.zip`（约 119 MB，180 张 912×960 PNG；之前用过 v3.zip、v4.zip）**不在仓库里**，在原开发电脑的“下载”文件夹；仓库里只有打包好的 `assets/chibi/idle.webp`。要重新裁切或重打包，需要把这个 zip 拷到新电脑。
 
 ## 构建与发布
 
@@ -61,8 +61,8 @@
 ### Q 版露娜原型
 
 - 用户想用新形象（橙色长卷发、虎纹猫耳和尾巴、黑白几何连衣裙的 Q 版）重做桌宠：保留实用功能，砍掉换装；界面配色跟着改；默认站着，按情况切换坐下工作、睡觉、开心卖萌等姿势；不监听键盘，工作姿势只播动画。素材由用户用 Muse 生成透明序列帧。
-- 素材：待机帧用 v4（`pet-idle-frames-v4.zip`，120 张 912×960 RGBA，2026-10-21 替换 v3；没有呼出的白雾）。前 2 帧脚的位置不同会跳，丢掉；首尾帧相差大，改为往返循环。v4 原图里人物取景偏大：每帧鞋底都被画面下边缘切平，26 帧尾巴尖碰到左边缘被切，属于源素材问题，裁切沿用 v3 的参数以保持人物大小和位置不变；以后让 Muse 出图时四周多留白。`design/chibi/build-atlas.py --skip 2 --crop 0,16,768,960` 缩到 270×332，每行 12 帧打包为 `assets/chibi/idle.webp`（118 帧）。
-- 代码：`character-assets.js` 改为姿势表（`poses`、`poseFor` 回退待机、`frameAt` 往返/循环/单次）；`character.js` 用 requestAnimationFrame 按 12fps 在画布上播放（2026-10-21 用户觉得 16fps 偏快，放慢；往返约 19.5 秒），反应切姿势、没有姿势时小跳一下，休息时减速一半，减少动态效果时停在第一帧；点击命中读当前画面的透明度，部位按 Q 版帧坐标判定（`body-shortcuts.js` 的 `regionAt`，尾巴不触发），点击只播反应动画。人物框 180×221 DIP，窗口仍为 280×640，气泡下移到头顶上方。
+- 素材：待机帧用 v4-slow（`pet-idle-frames-v4-slow.zip`，180 张 912×960 RGBA，2026-10-21 替换 v4；动作与 v4 相同但更慢，没有呼出的白雾）。前 3 帧脚的位置不同会跳，丢掉；首尾帧相差大，改为往返循环。原图人物取景偏大：每帧鞋底都被画面下边缘切平，39 帧尾巴尖碰到左边缘被切，属于源素材问题，裁切沿用 v3 的参数以保持人物大小和位置不变；以后让 Muse 出图时四周多留白。`design/chibi/build-atlas.py --skip 3 --crop 0,16,768,960` 缩到 270×332，每行 12 帧打包为 `assets/chibi/idle.webp`（177 帧，约 4.9 MB）。
+- 代码：`character-assets.js` 改为姿势表（`poses`、`poseFor` 回退待机、`frameAt` 往返/循环/单次）；`character.js` 用 requestAnimationFrame 按 16fps 在画布上播放（v4-slow 素材本身更慢，往返约 22 秒；之前 v4 曾临时降到 12fps），反应切姿势、没有姿势时小跳一下，休息时减速一半，减少动态效果时停在第一帧；点击命中读当前画面的透明度，部位按 Q 版帧坐标判定（`body-shortcuts.js` 的 `regionAt`，尾巴不触发），点击只播反应动画。人物框 180×221 DIP，窗口仍为 280×640，气泡下移到头顶上方。
 - 换装：删除换装面板、按钮、转盘项、`appearance` IPC、`hair/outfit` 设置（旧状态里的值迁移时丢弃）、快捷功能「换装」（脚默认改为提醒）、旧角色素材和 `design/` 里的旧角色脚本与原图。
 - 配色：把界面里紫色系颜色按色相映射到橘色（主色约 #e7733a）、奶白和深棕；托盘圆圈改橘色；用新形象头部重新导出 `luna-avatar.png` 和 `luna.ico`。
 - 检查：单元测试 116/116（重写角色素材测试、部位坐标测试）；`character-smoke.js` 改为检查待机在动、透明、躯干居中、反应姿势和气泡位置；body-shortcut/desktop/pure-mode/edge/anger 检查去掉换装并更新颜色和数量断言。在 Linux Xvfb 下 `--anger-sequence-test`、`--pure-mode-test`、`--edge-dock-test` 通过；完整 `--smoke-test` 在 Linux 上卡在“本地文件拖入”和“视频全屏”这两步，原代码在 Linux 上同样卡住，属于环境差异。**完整 smoke 需要在 Windows 上跑一遍。**
