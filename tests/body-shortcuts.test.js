@@ -9,7 +9,7 @@ test('点击部位只触发动画，不再有快捷功能配置', () => {
     ['head', 'chest', 'arms'].map(region => r.click(region).expression),
     ['happy', 'shy', 'wink']
   );
-  assert.equal(r.click('tail'), null);
+  for (const region of ['ear-left', 'ear-right', 'tail']) assert.deepEqual(r.click(region), { expression: region });
 });
 test('连续点击始终保持普通反应，不累计生气或影响其他部位', () => {
   const r = createReactions();
@@ -18,19 +18,19 @@ test('连续点击始终保持普通反应，不累计生气或影响其他部�
     assert.deepEqual(r.click('head'), { expression: 'happy' });
     assert.deepEqual(r.click('arms'), { expression: 'wink' });
   }
-  for (const region of ['forbidden', 'legs', 'feet', 'tail', 'missing', '__proto__'])
-    assert.equal(r.click(region), null);
+  for (const region of ['forbidden', 'legs', 'feet', 'missing', '__proto__']) assert.equal(r.click(region), null);
 });
 
-test('2D 半身帧区分头胸和两侧手臂，尾巴、画面外和非法点无作用', () => {
+test('2D 半身区分头胸、手臂、左右耳及尾巴，画面外和非法点无作用', () => {
   assert.equal(regionAt(210, 135), 'head');
-  assert.equal(regionAt(250, 30), 'head');
+  assert.equal(regionAt(250, 30), 'ear-right');
+  assert.equal(regionAt(105, 70), 'ear-left');
   assert.equal(regionAt(228, 218), 'chest');
   assert.equal(regionAt(175, 214), 'arms');
   assert.equal(regionAt(275, 255), 'arms');
-  assert.equal(regionAt(58, 180), null);
-  assert.equal(regionAt(66, 210), null);
-  assert.equal(regionAt(66, 240), null);
+  assert.equal(regionAt(58, 180), 'tail');
+  assert.equal(regionAt(66, 210), 'tail');
+  assert.equal(regionAt(66, 240), 'tail');
   assert.equal(regionAt(228, 285), null);
   assert.equal(regionAt(-1, 200), null);
   assert.equal(regionAt(228, NaN), null);

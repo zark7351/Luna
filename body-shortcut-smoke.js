@@ -6,7 +6,7 @@ async function point(win, region) {
   return win.webContents.executeJavaScript(`(async()=>{
   const canvas=document.querySelector('#pet canvas.character-face'),stage=window.lunaCharacterAssets.stage,c=stage.center;
   const data=canvas.getContext('2d').getImageData(0,0,stage.width,stage.height).data,box=canvas.getBoundingClientRect();
-  const target={head:[210,135],chest:[c,218],arms:[175,214]}['${region}'],edge=3;
+  const target={head:[210,135],chest:[c,218],arms:[175,214],'ear-left':[105,70],'ear-right':[247,38],tail:[66,210]}['${region}'],edge=3;
   if(!target)throw Error('body region not visible in half-body pose: ${region}');
   const solid=(x,y)=>{for(let dy=-edge;dy<=edge;dy++)for(let dx=-edge;dx<=edge;dx++){const px=x+dx,py=y+dy;if(px<0||py<0||px>=stage.width||py>=stage.height||data[(py*stage.width+px)*4+3]<200)return false;}return true;};
   let nearest=null,best=Infinity;
@@ -41,7 +41,7 @@ async function check(win, output, stateFile, stats) {
     !(await read(
       `(()=>{const canvas=document.querySelector('#pet canvas'),box=canvas.getBoundingClientRect(),stage=window.lunaCharacterAssets.stage;
       const sample=(x,y)=>window.lunaCharacter.hitRegion(box.left+x/stage.width*box.width,box.top+y/stage.height*box.height);
-      return sample(228,262)==='arms'&&sample(66,210)===null&&canvas.getContext('2d').getImageData(66,210,1,1).data[3]>32;})()`
+      return sample(228,262)==='arms'&&sample(66,210)==='tail'&&canvas.getContext('2d').getImageData(66,210,1,1).data[3]>32;})()`
     ))
   )
     throw Error('half-body arms or tail hit regions');

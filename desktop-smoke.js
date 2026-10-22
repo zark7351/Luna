@@ -45,6 +45,11 @@ module.exports = async function runDesktopSmoke(live) {
   let smokeStage = 'startup';
   try {
     await new Promise(r => setTimeout(r, 1200));
+    if (process.argv.includes('--appendage-test')) {
+      console.log(JSON.stringify(await require('./appendage-smoke').check(win, app.getPath('temp'))));
+      app.exit(0);
+      return;
+    }
     if (process.argv.includes('--appearance-test')) {
       console.log(JSON.stringify(await require('./appearance-smoke').check({ win, edgeDock, restore, stateFile })));
       app.exit(0);
@@ -99,6 +104,7 @@ module.exports = async function runDesktopSmoke(live) {
       `(async()=>{const s=await window.pet.call('state');if(!s.ok||'history' in s.value||document.querySelector('#chat-form'))throw Error('chat remains');openSettings();await new Promise(r=>setTimeout(r,200));if(document.querySelector('#settings').hidden)throw Error('settings');document.querySelector('#settings-close').click();document.querySelector('#pet').click();if(!document.querySelector('#pet').classList.contains('happy'))throw Error('expression');return {settings:true,expression:true,bridge:true,noChat:true};})()`
     );
     result.appearance = appearance;
+    result.appendages = await require('./appendage-smoke').check(win, app.getPath('temp'));
     const migrated = JSON.parse(fs.readFileSync(stateFile, 'utf8'));
     if (
       Object.hasOwn(migrated, 'key') ||

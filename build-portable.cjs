@@ -58,6 +58,8 @@ try {
     'weather.js',
     'weather-ui.js',
     'body-shortcuts.js',
+    'appendage-motion.js',
+    'appendage-smoke.js',
     'shortcut-bubbles.js',
     'body-shortcut-smoke.js',
     'edge-dock.js',

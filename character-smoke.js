@@ -15,7 +15,7 @@ async function checkCharacter(win, output, label) {
     const box=pet.getBoundingClientRect(),body=document.body.getBoundingClientRect();
     if(box.left<body.left||box.right>body.right||Math.abs((box.left+box.right-body.left-body.right)/2)>1)throw Error('character outside or off centre');
     if(Math.abs(box.width/box.height-stage.width/stage.height)>0.002)throw Error('half-body portrait stretched');
-    if(window.lunaCharacter.hitRegion(box.left+66/stage.width*box.width,box.top+210/stage.height*box.height)!==null)throw Error('tail triggers body reaction');
+    if(window.lunaCharacter.hitRegion(box.left+66/stage.width*box.width,box.top+210/stage.height*box.height)!=='tail')throw Error('tail local reaction hit region');
     for(const expression of ['happy','wink','smile','shy','pout']){
       window.lunaCharacter.cancel();window.lunaCharacter.react(expression);
       if(window.lunaCharacter.expression!==expression||!Object.hasOwn(window.lunaCharacterAssets.poses,canvas.dataset.pose))throw Error('reaction pose: '+expression);

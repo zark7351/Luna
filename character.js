@@ -13,6 +13,7 @@
     const ctx = canvas.getContext('2d', { willReadFrequently: true }),
       images = new Map(),
       loaded = new Map();
+    const appendages = window.claudeAppendages.createRenderer(canvas);
     let expression = 'neutral',
       pose = 'idle',
       poseStart = performance.now(),
@@ -87,6 +88,8 @@
         stage.width,
         stage.height
       );
+      appendages.draw(ctx, time);
+      canvas.dataset.motion = appendages.active.join(' ');
     }
     function loop(time) {
       frame = null;
@@ -101,6 +104,7 @@
       for (const timer of timers) clearTimeout(timer);
       timers = [];
       reaction = null;
+      appendages.clear();
       draw();
     }
     async function load() {
@@ -116,6 +120,12 @@
       }
     }
     function react(name) {
+      if (Object.hasOwn(window.claudeAppendages.durations, name)) {
+        if (stopped || reduced.matches || !loaded.has('idle')) return false;
+        const started = appendages.play(name);
+        draw();
+        return started;
+      }
       const types = {
         collect: 'wink',
         capture: 'wink',
@@ -170,6 +180,7 @@
       cancel();
       if (frame !== null) cancelAnimationFrame(frame);
       observer.disconnect();
+      appendages.stop();
       reduced.removeEventListener('change', motionChanged);
       window.removeEventListener('pagehide', stop);
     }
@@ -187,7 +198,9 @@
     }
     function hitRegion(clientX, clientY) {
       const point = hitPoint(clientX, clientY);
-      return point ? window.lunaBodyShortcuts.regionAt(point.x, point.y, stage.center) : null;
+      if (!point) return null;
+      const [x, y] = appendages.sourcePoint(point.x, point.y);
+      return window.lunaBodyShortcuts.regionAt(x, y, stage.center);
     }
     return {
       load,
@@ -197,6 +210,9 @@
       stop,
       hitRegion,
       hitTest: (x, y) => !!hitPoint(x, y),
+      get motions() {
+        return appendages.active;
+      },
       get expression() {
         return expression;
       },

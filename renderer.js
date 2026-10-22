@@ -532,6 +532,10 @@ function cancelInfo() {
 // Clicking a body part only plays its reaction animation.
 function reactToBody(region) {
   if (viewStopped || !region) return;
+  if (Object.hasOwn(window.claudeAppendages.durations, region)) {
+    window.lunaCharacter.react(region);
+    return;
+  }
   rest(false);
   cancelInfo();
   const reaction = bodyReactions.click(region);

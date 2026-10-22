@@ -1,15 +1,18 @@
 // Clicking a visible body part always plays its ordinary reaction, regardless of click frequency.
 (function (root, factory) {
-  if (typeof module === 'object' && module.exports) module.exports = factory();
-  else root.lunaBodyShortcuts = factory();
-})(globalThis, () => {
+  if (typeof module === 'object' && module.exports) module.exports = factory(require('./appendage-motion'));
+  else root.lunaBodyShortcuts = factory(root.claudeAppendages);
+})(globalThis, appendages => {
   const regions = Object.freeze({
     head: '脑袋',
     chest: '胸部',
-    arms: '手臂'
+    arms: '手臂',
+    'ear-left': '左侧耳朵',
+    'ear-right': '右侧耳朵',
+    tail: '尾巴'
   });
   // Polygon coordinates follow the 384 x 292 half-body portrait. The resting hands take priority over
-  // the cheek and chest; the tail, loose hair outside the head, and cropped lower body have no reaction.
+  // the cheek and chest. Ears and tail have separate local motions; cropped lower body has no reaction.
   const hitAreas = [
     [
       'arms',
@@ -80,13 +83,19 @@
   function regionAt(x, y, center = 228) {
     if (![x, y, center].every(Number.isFinite) || x < 0 || x >= 384 || y < 0 || y >= 292) return null;
     const localX = x - (center - 228);
+    const appendage = appendages.regionAt(localX, y);
+    if (appendage) return appendage;
     return hitAreas.find(([, points]) => contains(points, localX, y))?.[0] || null;
   }
   function createReactions() {
     return {
       click(region) {
         if (!Object.hasOwn(regions, region)) return null;
-        return { expression: { head: 'happy', chest: 'shy', arms: 'wink' }[region] };
+        return {
+          expression: Object.hasOwn(appendages.durations, region)
+            ? region
+            : { head: 'happy', chest: 'shy', arms: 'wink' }[region]
+        };
       }
     };
   }

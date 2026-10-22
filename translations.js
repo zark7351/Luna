@@ -193,8 +193,8 @@
   关闭说明: 'Close help',
   '桌面上的小伙伴，帮你收好临时内容。': 'Your desktop companion, keeping things handy.',
   互动与移动: 'Interact & move',
-  '点击脑袋、胸部或手臂，她会播放对应的动画。普通气泡点击关闭，按住角色可拖动位置；右键打开功能转盘。电脑连续 5 分钟没有键鼠操作，她会自动休息；恢复操作后自动唤醒。':
-    'Click her head, chest or arms and she plays a matching animation. Click ordinary bubbles to dismiss; hold Claude to drag; right-click for the quick wheel. After five idle minutes, she rests and wakes when you return.',
+  '点击脑袋、胸部或手臂，她会播放对应的动画。点耳朵会快速轻抖，点尾巴会起一阵波动。普通气泡点击关闭，按住角色可拖动位置；右键打开功能转盘。电脑连续 5 分钟没有键鼠操作，她会自动休息；恢复操作后自动唤醒。':
+    'Click her head, chest or arms and she plays a matching animation. Tap an ear for a quick twitch or her tail for a ripple. Click ordinary bubbles to dismiss; hold Claude to drag; right-click for the quick wheel. After five idle minutes, she rests and wakes when you return.',
   拖来就能收藏: 'Drop to save',
   '将文件、文字或网页链接拖到克劳德身上。收藏夹按类型显示，图片和视频可以预览。':
     'Drop files, text, or links onto Claude. Browse by category; preview images and videos.',
