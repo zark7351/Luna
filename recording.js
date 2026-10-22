@@ -34,7 +34,7 @@ function createRecording({
   });
   window.on('closed', () => {
     window = null;
-    if (session) fail('克劳德窗口已关闭。').catch(() => {});
+    if (session) fail('claudex 窗口已关闭。').catch(() => {});
   });
   window.webContents.on('render-process-gone', () => {
     if (session) fail('录屏进程中断，请重新录制。').catch(() => {});
@@ -335,7 +335,7 @@ function createRecording({
       try {
         await commit(current.writer);
         current.saved = true;
-        reset(current, '录屏已收藏。');
+        reset(current, '这段录屏，替你收好了。');
         onSound('capture-done');
         return true;
       } catch (error) {

@@ -37,7 +37,7 @@ function fixture() {
   };
 }
 test('日期时间用自然对话表示当地日期、星期和时段；缺失硬件读数不伪装为 0%', () => {
-  assert.equal(dateText(new Date(2026, 9, 8, 10, 1, 5)), '今天是2026年10月8日，星期四。\n现在是上午10点01分哦。');
+  assert.equal(dateText(new Date(2026, 9, 8, 10, 1, 5)), '今天是2026年10月8日，星期四。\n现在是上午10点01分。');
   for (const [hour, expected] of [
     [0, '凌晨零点整'],
     [5, '凌晨5点整'],

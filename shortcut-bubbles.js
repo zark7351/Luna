@@ -30,7 +30,7 @@
       '。\n现在是' +
       period +
       clock +
-      '哦。'
+      '。'
     );
   }
   function statsText(value, translate = text => text) {

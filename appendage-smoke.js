@@ -17,7 +17,7 @@ async function check(win, output) {
       const ctx=surface.getContext('2d',{willReadFrequently:true});let clock=0;
       const motion=api.createRenderer(surface,{now:()=>clock});
       motion.play(part);
-      const times=part==='tail'?[0,.2,.4,.6,.8,1.12]:[0,.07,.18,.32,.43,.52];
+      const times=part==='tail'?[0,.14,.28,.52,.8,api.durations.tail]:[0,.07,.18,.32,.43,.52];
       let changedAlpha=0;
       times.forEach((seconds,col)=>{
         ctx.clearRect(0,0,384,292);ctx.drawImage(base,0,0);const before=ctx.getImageData(0,0,384,292).data;
@@ -27,6 +27,8 @@ async function check(win, output) {
           const i=(y*384+x)*4;
           if(x<px||x>=px+pw||y<py||y>=py+ph){for(let k=0;k<4;k++)if(before[i+k]!==after[i+k])throw Error('local motion changed fixed pixels: '+part);}
           else if(Math.abs(before[i+3]-after[i+3])>32)changedAlpha++;
+          if(part==='tail'&&before[i+3]===255&&((x>=102&&x<118&&y>=148&&y<196)||(x>=100&&x<120&&y>=197&&y<262)||(x>=90&&x<106&&y>=211&&y<261)||(x>=80&&x<98&&y>=232&&y<262)||(x>=65&&x<81&&y>=247&&y<269)))for(let k=0;k<4;k++)if(before[i+k]!==after[i+k])throw Error('tail moved foreground hair: '+x+','+y+' at '+seconds);
+          if(seconds===api.durations[part])for(let k=0;k<4;k++)if(before[i+k]!==after[i+k])throw Error('local motion did not restore original pixels: '+part);
           if((x===0||x===383||y===0||y===291)&&after[i+3])throw Error('local motion touches frame border: '+part);
         }
         display.fillStyle='#f1eae0';display.fillRect(col*384,row*316,384,316);display.drawImage(surface,col*384,row*316);
@@ -41,6 +43,32 @@ async function check(win, output) {
     path.join(output, 'claude-appendage-contact-sheet.png'),
     Buffer.from(qa.sheet.split(',')[1], 'base64')
   );
+  const hairCheck = await read(`(async()=>{
+    const api=window.claudeAppendages,image=new Image();
+    image.src='assets/luna-2d/idle.webp';await image.decode();
+    const base=document.createElement('canvas'),surface=document.createElement('canvas');
+    base.width=surface.width=384;base.height=surface.height=292;
+    const source=base.getContext('2d',{willReadFrequently:true}),ctx=surface.getContext('2d',{willReadFrequently:true});
+    const hair=[[102,148,16,48],[100,197,20,65],[90,211,16,50],[80,232,18,30],[65,247,16,22]];
+    let clock=0,samples=0;const motion=api.createRenderer(surface,{now:()=>clock});
+    try{
+      for(let frame=0;frame<192;frame+=24){
+        source.clearRect(0,0,384,292);source.drawImage(image,frame%12*384,Math.floor(frame/12)*292,384,292,0,0,384,292);
+        const original=source.getImageData(0,0,384,292).data;
+        clock=0;motion.clear();motion.play('tail');
+        for(const seconds of [.14,.28,.52,.8,1.1]){
+          ctx.clearRect(0,0,384,292);ctx.drawImage(base,0,0);clock=seconds*1000;motion.draw(ctx,clock);
+          const moved=ctx.getImageData(0,0,384,292).data;
+          for(const [x,y,w,h] of hair)for(let py=y;py<y+h;py++)for(let px=x;px<x+w;px++){
+            const i=(py*384+px)*4;if(original[i+3]!==255)continue;
+            for(let k=0;k<4;k++)if(original[i+k]!==moved[i+k])throw Error('tail moved hair in idle frame '+frame+' at '+px+','+py);
+            samples++;
+          }
+        }
+      }
+      return {idleFrames:8,motionSamples:40,fixedHairPixels:samples};
+    }finally{motion.stop();}
+  })()`);
   const until = async test => {
     const end = Date.now() + 2200;
     while (!(await test())) {
@@ -94,6 +122,7 @@ async function check(win, output) {
   return {
     nativeEarAndTailClicks: true,
     independentPatches: qa.stats,
+    isolatedTailHair: hairCheck,
     noWholeBodyHop: true,
     scaledHitRegions: true,
     reducedMotion: true

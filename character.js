@@ -18,6 +18,8 @@
       pose = 'idle',
       poseStart = performance.now(),
       reaction = null,
+      reactionStart = 0,
+      smilePatch = null,
       timers = [],
       frame = null,
       stopped = false;
@@ -31,6 +33,32 @@
         await asset.decode();
         return asset;
       });
+    async function loadSmile() {
+      try {
+        const image = await loadImage(assets.smile.file);
+        if (stopped) return;
+        const [width, height] = assets.smile.sourceSize;
+        if (image.naturalWidth !== width || image.naturalHeight !== height) throw Error('Smile source size mismatch');
+        const [, , w, h] = assets.smile.crop;
+        const patch = document.createElement('canvas');
+        patch.width = w;
+        patch.height = h;
+        const paint = patch.getContext('2d');
+        paint.drawImage(image, ...assets.smile.crop, 0, 0, w, h);
+        // Feather only the surrounding skin; keep the entire painted mouth opaque.
+        paint.globalCompositeOperation = 'destination-in';
+        paint.translate(w / 2, h / 2);
+        paint.scale(w / 2, h / 2);
+        const mask = paint.createRadialGradient(0, 0, 0.64, 0, 0, 1);
+        mask.addColorStop(0, '#fff');
+        mask.addColorStop(1, 'transparent');
+        paint.fillStyle = mask;
+        paint.fillRect(-1, -1, 2, 2);
+        smilePatch = patch;
+      } catch (error) {
+        console.warn('微笑素材加载失败', error.message);
+      }
+    }
     function getImage(name) {
       const definition = assets.poses[name];
       if (!images.has(name)) {
@@ -76,6 +104,7 @@
         // Sleeping reuses idle at half speed until a sleep pose exists.
         speed = expression === 'sleeping' && pose === 'idle' ? 0.5 : 1,
         index = reduced.matches ? 0 : assets.frameAt(definition, ((time - poseStart) / 1000) * speed);
+      canvas.dataset.frame = index;
       ctx.clearRect(0, 0, stage.width, stage.height);
       ctx.drawImage(
         image,
@@ -89,6 +118,13 @@
         stage.height
       );
       appendages.draw(ctx, time);
+      if (expression === 'smile' && smilePatch) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'source-atop';
+        ctx.globalAlpha = assets.smileOpacity(time - reactionStart, reduced.matches);
+        ctx.drawImage(smilePatch, ...assets.smile.target);
+        ctx.restore();
+      }
       canvas.dataset.motion = appendages.active.join(' ');
     }
     function loop(time) {
@@ -100,17 +136,18 @@
     function start() {
       if (!stopped && frame === null) frame = requestAnimationFrame(loop);
     }
-    function cancel() {
+    function cancel(keepAppendages = false) {
       for (const timer of timers) clearTimeout(timer);
       timers = [];
       reaction = null;
-      appendages.clear();
+      if (!keepAppendages) appendages.clear();
+      canvas.getAnimations().forEach(animation => animation.cancel());
       draw();
     }
     async function load() {
       if (stopped) return false;
       try {
-        await getImage('idle');
+        await Promise.all([getImage('idle'), loadSmile()]);
         if (stopped) return false;
         draw();
         start();
@@ -127,12 +164,12 @@
         return started;
       }
       const types = {
-        collect: 'wink',
+        collect: 'smile',
         capture: 'wink',
-        recording: 'smile',
-        'reminder-save': 'smile',
-        reminder: 'smile',
-        complete: 'happy',
+        recording: 'wink',
+        'reminder-save': 'wink',
+        reminder: 'neutral',
+        complete: 'smile',
         wink: 'wink',
         smile: 'smile',
         shy: 'shy',
@@ -141,29 +178,20 @@
         sleepy: 'closed'
       };
       if (!Object.hasOwn(types, name) || stopped) return false;
-      cancel();
+      if (reaction === 'smile' && types[name] === 'smile') return true;
+      cancel(types[name] === 'smile');
       if (pet.classList.contains('sleeping')) return true;
       reaction = types[name];
+      reactionStart = performance.now();
       draw();
-      // Without a matching pose she still answers with a small hop.
-      if (!reduced.matches && assets.poseFor(reaction) === 'idle' && reaction !== 'closed')
-        canvas.animate(
-          [
-            { transform: 'translateY(0)' },
-            { transform: 'translateY(-6%)', offset: 0.35 },
-            { transform: 'translateY(0)', offset: 0.7 },
-            { transform: 'translateY(-1.5%)', offset: 0.85 },
-            { transform: 'translateY(0)' }
-          ],
-          { duration: reaction === 'pout' ? 260 : 520, easing: 'ease-out' }
-        );
+      // Missing painted poses keep idle; never substitute whole-body movement.
       timers.push(
         setTimeout(
           () => {
             reaction = null;
             draw();
           },
-          name === 'reminder' ? 2400 : 1800
+          reaction === 'smile' ? assets.smile.duration : name === 'reminder' ? 2400 : 1800
         )
       );
       return true;

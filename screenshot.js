@@ -80,7 +80,7 @@ function createScreenshot({
       close(current);
       await save(png);
       if (!disposed) {
-        onMessage('截图已收藏。', true);
+        onMessage('截图收好了。这个画面，替你留着。', true);
         onEvent('capture-done');
       }
       return { ok: true };

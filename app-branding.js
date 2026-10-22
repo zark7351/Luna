@@ -1,5 +1,9 @@
 const path = require('node:path');
-const APP_ID = 'Claude.Companion.Desktop';
+const APP_NAME = 'claudex';
+const APP_ID = 'claudex.Companion.Desktop';
+const EXE_NAME = APP_NAME + '.exe';
+const PORTABLE_DIR = APP_NAME + '-Windows';
+const RELEASE_DIR = APP_NAME + '-Release';
 const appIcon = path.join(__dirname, 'assets', 'claude.ico');
 // The fourteen-petal hair flower, matching the clean-mode SVG. Windows expects premultiplied BGRA.
 function trayBitmap(size = 32) {
@@ -45,4 +49,4 @@ function trayBitmap(size = 32) {
 function createTrayIcon(nativeImage) {
   return nativeImage.createFromBitmap(trayBitmap(), { width: 32, height: 32 });
 }
-module.exports = { APP_ID, appIcon, trayBitmap, createTrayIcon };
+module.exports = { APP_NAME, APP_ID, EXE_NAME, PORTABLE_DIR, RELEASE_DIR, appIcon, trayBitmap, createTrayIcon };

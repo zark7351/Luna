@@ -94,7 +94,7 @@
         return {
           expression: Object.hasOwn(appendages.durations, region)
             ? region
-            : { head: 'happy', chest: 'shy', arms: 'wink' }[region]
+            : { head: 'smile', chest: 'shy', arms: 'wink' }[region]
         };
       }
     };

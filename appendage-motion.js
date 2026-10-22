@@ -3,12 +3,28 @@
   if (typeof module === 'object' && module.exports) module.exports = factory();
   else root.claudeAppendages = factory();
 })(globalThis, () => {
-  const durations = Object.freeze({ 'ear-left': 0.52, 'ear-right': 0.52, tail: 1.12 });
+  const durations = Object.freeze({ 'ear-left': 0.52, 'ear-right': 0.52, tail: 1.32 });
   const patches = Object.freeze({
     'ear-left': [64, 24, 111, 96],
     'ear-right': [195, 0, 107, 106],
     tail: [0, 115, 126, 165]
   });
+  // The cut follows the transparent gap beside the tail, then the hair overlap.
+  // Everything on the hair side remains an untransformed foreground layer.
+  const tailCut = Object.freeze([
+    [0, 118],
+    [94, 118],
+    [96, 155],
+    [102, 171],
+    [110, 178],
+    [102, 185],
+    [97, 190],
+    [98, 202],
+    [84, 210],
+    [76, 218],
+    [68, 227],
+    [0, 227]
+  ]);
   const areas = [
     [
       'ear-left',
@@ -81,6 +97,44 @@
       0.035 * pulse(t, 0.37, 0.14)
     );
   }
+  function angleTrack(t, keys) {
+    if (!Number.isFinite(t) || t <= 0 || t >= durations.tail) return 0;
+    for (let i = 1; i < keys.length; i++) {
+      const [end, angle] = keys[i];
+      if (t > end) continue;
+      const [start, previous] = keys[i - 1];
+      const q = (t - start) / (end - start);
+      const ease = q * q * q * (q * (q * 6 - 15) + 10);
+      return previous + (angle - previous) * ease;
+    }
+    return 0;
+  }
+  const tailRootKeys = [
+    [0, 0],
+    [0.28, -0.095],
+    [0.76, 0.022],
+    [1.32, 0]
+  ];
+  const tailTipKeys = [
+    [0, 0],
+    [0.1, 0],
+    [0.38, 0.028],
+    [0.86, -0.012],
+    [1.32, 0]
+  ];
+  function tailAngles(t) {
+    return [angleTrack(t, tailRootKeys), angleTrack(t, tailTipKeys)];
+  }
+  const tailSample = (x, y) => contains(tailCut, x, y);
+  function tailPoint(x, y, time) {
+    const [root, follow] = tailAngles(time);
+    // Keep the whole hook rigid. Only the hidden lower stem bends into its root.
+    const angle = (root + follow * 0.35) * (1 - smooth(202, 226, y));
+    if (!angle) return [x, y];
+    const vx = x - 58,
+      vy = y - 225;
+    return [58 + Math.cos(angle) * vx - Math.sin(angle) * vy, 225 + Math.sin(angle) * vx + Math.cos(angle) * vy];
+  }
   function deform(x, y, times = {}) {
     const ox = (x / 384) * 1552 - 52,
       oy = (y / 292) * 1182 - 48;
@@ -97,18 +151,8 @@
       dx += (Math.cos(angle) * vx - Math.sin(angle) * vy - vx) * weight;
       dy += (Math.sin(angle) * vx + Math.cos(angle) * vy - vy) * weight;
     }
-    if (Number.isFinite(times.tail)) {
-      const tail = (1 - smooth(255, 365, ox)) * smooth(482, 528, oy) * (1 - smooth(899, 1000, oy));
-      const distance = clamp((1000 - oy) / 470);
-      // Propagation delay grows towards the tip. The root hardly moves while the flexible tip follows through.
-      const q = (times.tail - distance * 0.27) / 0.78;
-      if (q > 0 && q < 1) {
-        const wave = Math.sin(q * Math.PI * 2) * Math.sin(q * Math.PI) ** 2;
-        dx += 62 * wave * tail * (0.18 + 0.82 * distance);
-        dy += 16 * wave * tail * distance;
-      }
-    }
-    return [x + (dx * 384) / 1552, y + (dy * 292) / 1182];
+    const point = [x + (dx * 384) / 1552, y + (dy * 292) / 1182];
+    return Number.isFinite(times.tail) && tailSample(x, y) ? tailPoint(...point, times.tail) : point;
   }
   function createController({ now = () => performance.now() } = {}) {
     const active = new Map();
@@ -145,6 +189,9 @@
       buffer,
       indices,
       texture,
+      tailLayer,
+      foreground,
+      tailMask,
       lost = false;
     function init() {
       output = document.createElement('canvas');
@@ -220,6 +267,34 @@
       gl.uniform1i(gl.getUniformLocation(program, 'sprite'), 0);
       gl.viewport(0, 0, 384, 292);
       gl.clearColor(0, 0, 0, 0);
+      const surface = () => {
+        const value = document.createElement('canvas');
+        value.width = 384;
+        value.height = 292;
+        return value;
+      };
+      tailLayer = surface();
+      foreground = surface();
+      tailMask = surface();
+      const mask = tailMask.getContext('2d');
+      mask.beginPath();
+      tailCut.forEach(([x, y], i) => (i ? mask.lineTo(x, y) : mask.moveTo(x, y)));
+      mask.closePath();
+      mask.fill();
+      const cutPixels = mask.getImageData(0, 0, 384, 292);
+      for (let i = 3; i < cutPixels.data.length; i += 4) cutPixels.data[i] = cutPixels.data[i] >= 128 ? 255 : 0;
+      mask.putImageData(cutPixels, 0, 0);
+    }
+    function renderMesh(source, transform) {
+      for (let i = 0; i < vertices.length; i += 4) {
+        const point = transform(vertices[i + 2] * 384, vertices[i + 3] * 292);
+        vertices[i] = point[0];
+        vertices[i + 1] = point[1];
+      }
+      gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.DYNAMIC_DRAW);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.drawElements(gl.TRIANGLES, 64 * 48 * 6, gl.UNSIGNED_SHORT, 0);
     }
     return {
       play(name) {
@@ -237,20 +312,30 @@
         const times = controller.times(at),
           names = Object.keys(times);
         if (!names.length || lost || !gl) return;
-        for (let i = 0; i < vertices.length; i += 4) {
-          const point = deform(vertices[i + 2] * 384, vertices[i + 3] * 292, times);
-          vertices[i] = point[0];
-          vertices[i + 1] = point[1];
-        }
-        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.DYNAMIC_DRAW);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
-        gl.clear(gl.COLOR_BUFFER_BIT);
-        gl.drawElements(gl.TRIANGLES, 64 * 48 * 6, gl.UNSIGNED_SHORT, 0);
-        // Copy only affected local rectangles; every face, mouth, hand and clothing pixel outside is untouched.
-        for (const name of names) {
+        const ears = names.filter(name => name !== 'tail');
+        const earTimes = { ...times, tail: undefined };
+        if (ears.length) renderMesh(canvas, (x, y) => deform(x, y, earTimes));
+        for (const name of ears) {
           const [x, y, w, h] = patches[name];
           ctx.clearRect(x, y, w, h);
           ctx.drawImage(output, x, y, w, h, x, y, w, h);
+        }
+        if (names.includes('tail') && tailAngles(times.tail).some(angle => angle !== 0)) {
+          const layer = tailLayer.getContext('2d'),
+            front = foreground.getContext('2d');
+          for (const target of [layer, front]) {
+            target.clearRect(0, 0, 384, 292);
+            target.drawImage(canvas, 0, 0);
+            target.save();
+            target.globalCompositeOperation = target === layer ? 'destination-in' : 'destination-out';
+            target.drawImage(tailMask, 0, 0);
+            target.restore();
+          }
+          renderMesh(tailLayer, (x, y) => tailPoint(x, y, times.tail));
+          const [x, y, w, h] = patches.tail;
+          ctx.clearRect(x, y, w, h);
+          ctx.drawImage(output, x, y, w, h, x, y, w, h);
+          ctx.drawImage(foreground, x, y, w, h, x, y, w, h);
         }
       },
       sourcePoint(x, y) {
@@ -277,8 +362,21 @@
         gl.deleteBuffer(indices);
         gl.deleteProgram(program);
         gl.getExtension('WEBGL_lose_context')?.loseContext();
+        for (const surface of [tailLayer, foreground, tailMask]) if (surface) surface.width = surface.height = 0;
       }
     };
   }
-  return Object.freeze({ durations, patches, regionAt, deform, earAngle, createController, createRenderer });
+  return Object.freeze({
+    durations,
+    patches,
+    regionAt,
+    deform,
+    earAngle,
+    tailAngles,
+    tailPoint,
+    tailSample,
+    tailCut,
+    createController,
+    createRenderer
+  });
 });

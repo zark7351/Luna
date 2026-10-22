@@ -54,7 +54,7 @@ async function check(win, output, stateFile, stats) {
   if ('bodyShortcuts' in JSON.parse(fs.readFileSync(stateFile)).settings) throw Error('body shortcut setting remains');
   // Each part only plays its animation: no tooltip, bubble, sheet, settings or screenshot window.
   for (const [region, expression] of [
-    ['head', 'happy'],
+    ['head', 'smile'],
     ['arms', 'wink'],
     ['chest', 'shy']
   ]) {
@@ -65,6 +65,11 @@ async function check(win, output, stateFile, stats) {
       ))
     )
       throw Error('body click did more than animate: ' + region);
+    if (
+      !(await read(`document.querySelector('.character-face').getAnimations().every(animation=>
+      animation.effect.getKeyframes().every(frame=>!frame.transform))`))
+    )
+      throw Error('body click still triggered whole-body hop: ' + region);
     if (
       require('electron')
         .BrowserWindow.getAllWindows()
@@ -77,6 +82,19 @@ async function check(win, output, stateFile, stats) {
     )
       throw Error('body click opened a tool window: ' + region);
   }
+  const lower = await read(`(()=>{const b=document.querySelector('.character-face').getBoundingClientRect();
+    return {x:Math.round(b.left+228/384*b.width),y:Math.round(b.top+262/292*b.height)};})()`);
+  const lowerTop = await read(`document.querySelector('.character-face').getBoundingClientRect().top`);
+  win.webContents.sendInputEvent({ type: 'mouseMove', ...lower });
+  win.webContents.sendInputEvent({ type: 'mouseDown', ...lower, button: 'left', clickCount: 1 });
+  win.webContents.sendInputEvent({ type: 'mouseUp', ...lower, button: 'left', clickCount: 1 });
+  await sleep(180);
+  if (
+    !(await read(`window.lunaCharacter.expression==='wink'&&
+    Math.abs(document.querySelector('.character-face').getBoundingClientRect().top-${lowerTop})<0.1&&
+    document.querySelector('.character-face').getAnimations().every(a=>a.effect.getKeyframes().every(f=>!f.transform))`))
+  )
+    throw Error('lower hand click still moved character');
   const dragPoint = await point(win, 'head');
   await until(() => read(idle), 'reaction did not return to idle before drag');
   win.webContents.sendInputEvent({ type: 'mouseMove', ...dragPoint });
@@ -154,7 +172,7 @@ async function check(win, output, stateFile, stats) {
       throw Error('repeated click interrupted normal interaction');
   }
   await click(win, 'head');
-  if (!(await read(`window.lunaCharacter.expression==='happy'`))) throw Error('head reaction after repeated clicks');
+  if (!(await read(`window.lunaCharacter.expression==='smile'`))) throw Error('head reaction after repeated clicks');
   if (
     !(await read(
       `(async()=>{const state=await window.pet.call('state');await openSettings();return state.ok&&!document.querySelector('#settings').hidden;})()`
@@ -175,6 +193,7 @@ async function check(win, output, stateFile, stats) {
     halfBodyFrame: true,
     alphaHitRegions: true,
     animationOnly: true,
+    lowerHandNoHop: true,
     dragDoesNotActivate: true,
     informationReaders: true,
     dynamicFiveSeconds: true,

@@ -76,6 +76,8 @@ select:focus-visible {
   width: var(--pet-width);
   height: calc(var(--pet-width) * 292 / 384);
   padding: 0;
+  /* The portrait is a transparent button; do not outline its rectangular hit box. */
+  outline: 0;
   pointer-events: auto;
   transform-origin: 50% 100%;
   touch-action: none;

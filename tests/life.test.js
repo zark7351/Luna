@@ -70,7 +70,7 @@ test('first launch introduces Luna once, then stays quiet', () => {
   const { life, said, saved, advance } = setup();
   life.start();
   assert.equal(life.tick(), true);
-  assert.equal(said[0].text, '初次见面，我是露娜，以后请多关照！');
+  assert.equal(said[0].text, '我是露娜。以后这里，就留个位置给我吧。');
   assert.equal(saved().firstSeen, '2026-10-14');
   assert.equal(saved().lastGreeting, '2026-10-14');
   advance(MINUTE);
@@ -89,8 +89,8 @@ test('daily greeting follows the time of day, weekday and nickname', () => {
   });
   life.start();
   life.tick();
-  assert.equal(friday.said[0].text, '主人，早上好！今天也一起加油吧。\n今天是周五，再坚持一下就周末啦！');
-  assert.equal(friday.said[0].expression, 'happy');
+  assert.equal(friday.said[0].text, '主人，早上好。不必着急，先醒醒神。\n周五了，留点空闲给自己吧。');
+  assert.equal(friday.said[0].expression, 'smile');
 });
 
 test('milestone days replace the weekday line', () => {
@@ -100,7 +100,7 @@ test('milestone days replace the weekday line', () => {
   });
   life.start();
   life.tick();
-  assert.equal(said[0].text, '晚上好，今天辛苦啦。\n今天是我们认识的第 7 天哦。');
+  assert.equal(said[0].text, '晚上好。忙了一天，过来歇一会儿吧。\n陪你 7 天了。真好。');
 });
 
 test('busy moments postpone the greeting instead of dropping it', () => {
@@ -118,13 +118,37 @@ test('welcome-back lines depend on how long the user was away', () => {
   life.start();
   life.sleep();
   advance(5 * MINUTE);
-  assert.equal(life.wake().text, '你回来啦。');
+  assert.equal(life.wake().text, '回来啦。我还在这儿呢。');
   life.sleep();
   advance(30 * MINUTE);
-  assert.equal(life.wake().text, '回来啦，刚才离开了 35 分钟呢。');
+  assert.equal(life.wake().text, '回来啦。歇了 35 分钟，舒服些了吗？');
   life.sleep();
   advance(2 * 60 * MINUTE);
-  assert.equal(life.wake().text, '你走了好久，我都快睡着了……');
+  assert.equal(life.wake().text, '回来啦。我刚刚差一点就睡着了。');
+});
+
+test('安静陪伴复用原有频率与次数上限，忙碌时延期，欢迎回来使用微笑', () => {
+  let quiet = false,
+    randomCalls = 0;
+  const { life, advance, said } = setup({
+    at: new Date(2026, 9, 14, 10, 0),
+    memory: { firstSeen: '2026-10-01', lastGreeting: '2026-10-14' },
+    random: () => (randomCalls++ === 0 ? 0.999 : 0.85),
+    canSpeak: () => quiet
+  });
+  life.start();
+  advance(49 * MINUTE);
+  assert.equal(life.tick(), false);
+  advance(2 * MINUTE);
+  assert.equal(life.tick(), false);
+  quiet = true;
+  assert.equal(life.tick(), true);
+  assert.deepEqual(said, [{ text: '', expression: 'smile' }]);
+  assert.equal(life.memory().proactive, 1);
+  assert.equal(life.tick(), false);
+  life.sleep();
+  advance(10 * MINUTE);
+  assert.equal(life.wake().expression, 'smile');
 });
 
 test('waking on a new day greets instead of welcoming back', () => {
@@ -146,7 +170,7 @@ test('long focus earns a rest reminder, repeated at most hourly and three times 
   life.tick();
   advance(5 * MINUTE);
   assert.equal(life.tick(), true);
-  assert.equal(said.at(-1).text, '已经连续忙了 1 个多小时了，起来走走吧。');
+  assert.equal(said.at(-1).text, '已经忙了 1 个多小时。起来走走，我又不会跑。');
   const reminders = () => said.filter(item => /忙了|眼睛|坐太久/.test(item.text)).length;
   advance(30 * MINUTE);
   life.tick();
@@ -178,7 +202,7 @@ test('late at night she asks the user to rest, at most twice', () => {
   });
   life.start();
   assert.equal(life.tick(), true);
-  assert.equal(said[0].text, '已经很晚了，早点休息吧。');
+  assert.equal(said[0].text, '已经很晚了。今天就先放过自己吧。');
   for (let i = 0; i < 8; i++) {
     advance(30 * MINUTE);
     life.tick();
@@ -196,7 +220,7 @@ test('chatter mentions today’s activity and respects the daily limit', () => {
   life.note('unknown');
   advance(26 * MINUTE);
   assert.equal(life.tick(), true);
-  assert.equal(said[0].text, '今天已经截了 3 张图了，好勤快。');
+  assert.equal(said[0].text, '今天已经收好 3 张截图了。都在收藏夹里。');
   for (let i = 0; i < 40; i++) {
     advance(30 * MINUTE);
     if (isLateNight(new Date(2026, 9, 14, 9, 30 + 26 + i * 30))) break;

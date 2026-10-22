@@ -20,8 +20,8 @@ const t = text => i18n.translate(text, state?.settings.language);
 const fs = require('node:fs');
 const path = require('node:path');
 const petSize = require('./pet-size');
-app.setName('Claude');
-const { APP_ID, appIcon, createTrayIcon } = require('./app-branding');
+const { APP_NAME, APP_ID, appIcon, createTrayIcon } = require('./app-branding');
+app.setName(APP_NAME);
 if (process.platform === 'win32') app.setAppUserModelId(APP_ID);
 const { pathToFileURL } = require('node:url');
 const reportFatal = error => {
@@ -290,7 +290,7 @@ async function showLibrary(view) {
     minWidth: 560,
     minHeight: 400,
     frame: false,
-    title: '克劳德收藏夹',
+    title: 'claudex 收藏夹',
     icon: appIcon,
     backgroundColor: '#fffbf9',
     show: false,
@@ -536,7 +536,7 @@ else {
     tray = new Tray(createTrayIcon(nativeImage));
     function syncTray() {
       if (quitting || !tray || tray.isDestroyed()) return;
-      tray.setToolTip(t('克劳德 · 桌面伙伴'));
+      tray.setToolTip(t('claudex · 桌面伙伴'));
       trayMenu = Menu.buildFromTemplate([
         { id: 'settings', label: t('设置'), click: () => openPetPanel('settings') },
         { id: 'help', label: t('使用说明'), click: () => openPetPanel('help') },
@@ -671,7 +671,7 @@ else {
       if (!liveWindow()) throw Error('窗口已关闭');
       const current = win;
       const result = await dialog.showOpenDialog(current, {
-        title: t('选择克劳德文件保存目录'),
+        title: t('选择 claudex 文件保存目录'),
         defaultPath: state.settings.saveDirectory || app.getPath('documents'),
         properties: ['openDirectory', 'createDirectory']
       });

@@ -9,18 +9,32 @@
   const poses = {
     idle: { file: 'luna-2d/idle.webp', frames: 192, columns: 12, fps: 24, loop: 'loop' }
   };
-  // Expressions requested by the app map to poses; missing poses play idle with a small hop.
+  // Expressions requested by the app map to poses; missing poses keep idle.
   const expressionPoses = Object.freeze({
     neutral: 'idle',
     closed: 'idle',
     sleeping: 'sleep',
     working: 'work',
     happy: 'happy',
-    smile: 'happy',
+    smile: 'idle',
     wink: 'happy',
     shy: 'shy',
     pout: 'idle'
   });
+  // Approved portrait: use only the mouth, aligned to the transparent idle source.
+  const smile = {
+    file: 'luna-2d/smile-source.png',
+    sourceSize: [1448, 1086],
+    crop: [748, 556, 122, 81],
+    target: [((753 + 52) * 384) / 1552, ((575 + 48) * 292) / 1182, (122 * 384) / 1552, (81 * 292) / 1182],
+    duration: 2600,
+    fadeIn: 180,
+    fadeOut: 420
+  };
+  function smileOpacity(elapsed, reduced = false) {
+    if (elapsed < 0 || elapsed >= smile.duration) return 0;
+    return reduced ? 1 : Math.min(1, elapsed / smile.fadeIn, (smile.duration - elapsed) / smile.fadeOut);
+  }
   function validatePose(pose) {
     if (
       !pose ||
@@ -60,5 +74,5 @@
     return Object.freeze(value);
   }
   Object.values(poses).forEach(validatePose);
-  return freeze({ stage, poses, expressionPoses, validatePose, validateImage, poseFor, frameAt });
+  return freeze({ stage, poses, smile, smileOpacity, expressionPoses, validatePose, validateImage, poseFor, frameAt });
 });

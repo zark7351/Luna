@@ -132,8 +132,16 @@ function lifeCanSpeak() {
     !panelsOpen()
   );
 }
+function playSmile(text) {
+  if (viewStopped || sleeping || settings?.pureMode || feedback.getReminder()) return false;
+  if (text) showMessage(text);
+  window.lunaCharacter.react('smile');
+  return true;
+}
 function lifeSay(text, expression) {
-  if (viewStopped || settings?.pureMode || !showMessage(text, 5200)) return false;
+  if (viewStopped || sleeping || settings?.pureMode || feedback.getReminder()) return false;
+  if (!text) return lifeCanSpeak() && playSmile();
+  if (!showMessage(text, 5200)) return false;
   window.lunaCharacter.react(expression);
   return true;
 }
@@ -177,7 +185,7 @@ $('bubble-complete').onclick = async event => {
   $('bubble-complete').disabled = true;
   try {
     await api('reminder-complete', reminder.id);
-    showMessage(t('提醒完成啦。'));
+    playSmile(t('办好了？嗯，做得不错。'));
   } catch (error) {
     $('bubble-complete').title = error.message;
   } finally {
@@ -236,8 +244,7 @@ window.addEventListener('pagehide', () => {
 });
 function happy(text) {
   if (sleeping) return;
-  window.lunaCharacter.react(['wink', 'smile', 'shy'][Math.floor(Math.random() * 3)]);
-  showMessage(text);
+  if (!playSmile(text)) return;
   clearTimeout(happyTimer);
   $('pet').classList.remove('blink');
   $('pet').classList.add('happy');
@@ -328,7 +335,10 @@ window.pet.onSound(name => {
 });
 window.pet.onEffect(name => {
   life?.note(name);
+  if (feedback.getReminder()) return;
   window.lunaEffects.burst(name);
+  if (name === 'collect') playSmile(t('嗯，替你收好了。慢慢看。'));
+  if (name === 'complete') playSmile(t('办好了？嗯，做得不错。'));
   const buttons = {
     collect: 'library-button',
     capture: 'screenshot-button',
@@ -342,6 +352,7 @@ window.pet.onReminderDue(value => {
   infoBubbles.cancel();
   if (value) {
     rest(false);
+    window.lunaCharacter.cancel();
     if (feedback.getReminder()?.id !== value.id) window.lunaEffects.burst('reminder');
   } else {
     sounds.reminder.pause();
@@ -372,8 +383,10 @@ function rest(value) {
   // The companion engine varies these lines (greeting, time away); without it keep the original two.
   const line = life ? (sleeping ? life.sleep() : life.wake()) : null;
   if (dropDepth) return;
-  if (!line) showMessage(sleeping ? t('你先忙，我小憩一下。') : t('你回来啦。'));
-  else if (showMessage(line.text, 5200) && !sleeping) window.lunaCharacter.react(line.expression);
+  if (!line) {
+    if (sleeping) showMessage(t('你忙吧。我在这儿眯一会儿。'));
+    else playSmile(t('回来啦。我还在这儿呢。'));
+  } else if (showMessage(line.text, 5200) && !sleeping) window.lunaCharacter.react(line.expression);
 }
 window.pet.onIdleChanged(rest);
 function openHelp() {
@@ -479,47 +492,52 @@ $('settings-form').onsubmit = async e => {
   try {
     const state = await api('settings', input);
     applySettings(state.settings);
-    document.title = t('克劳德 · 桌面宠物');
+    document.title = t('claudex · 桌面宠物');
     $('settings').hidden = true;
-    showMessage(t('好，我记住你的设置啦。'));
+    showMessage(t('嗯，记下了。按你的意思来。'));
   } catch (err) {
     $('settings-status').textContent = err.message;
   }
 };
 const bodyReactions = window.lunaBodyShortcuts.createReactions();
 let wheelScale = null,
-  sizeQueue = Promise.resolve();
+  sizeQueue = Promise.resolve(),
+  scaleRequest = 0;
+function canResizeAt(event) {
+  return (
+    !viewStopped &&
+    !!settings &&
+    !settings.pureMode &&
+    !edgeState.collapsed &&
+    !dragStart &&
+    !panelsOpen() &&
+    !wheel?.isOpen &&
+    window.lunaCharacter.hitTest(event.clientX, event.clientY)
+  );
+}
+function queueScale(next) {
+  if (next === (wheelScale ?? settings.petScale)) return;
+  const request = ++scaleRequest;
+  wheelScale = next;
+  sizeQueue = sizeQueue
+    .then(async () => {
+      if (viewStopped) return;
+      const state = await api('pet-scale', next);
+      if (!viewStopped) applySettings(state.settings);
+    })
+    .catch(error => {
+      if (!viewStopped) showMessage(error.message);
+    })
+    .finally(() => {
+      if (request === scaleRequest) wheelScale = null;
+    });
+}
 $('pet').addEventListener(
   'wheel',
   event => {
-    if (
-      viewStopped ||
-      settings?.pureMode ||
-      edgeState.collapsed ||
-      dragStart ||
-      panelsOpen() ||
-      wheel?.isOpen ||
-      !window.lunaCharacter.hitTest(event.clientX, event.clientY) ||
-      !Number.isFinite(event.deltaY) ||
-      !event.deltaY
-    )
-      return;
+    if (!canResizeAt(event) || !Number.isFinite(event.deltaY) || !event.deltaY) return;
     event.preventDefault();
-    const next = window.claudePetSize.next(wheelScale ?? settings.petScale, event.deltaY);
-    if (next === (wheelScale ?? settings.petScale)) return;
-    wheelScale = next;
-    sizeQueue = sizeQueue
-      .then(async () => {
-        if (viewStopped) return;
-        const state = await api('pet-scale', next);
-        if (!viewStopped) applySettings(state.settings);
-      })
-      .catch(error => {
-        if (!viewStopped) showMessage(error.message);
-      });
-    sizeQueue.finally(() => {
-      if (wheelScale === next) wheelScale = null;
-    });
+    queueScale(window.claudePetSize.next(wheelScale ?? settings.petScale, event.deltaY));
   },
   { passive: false }
 );
@@ -538,13 +556,23 @@ function reactToBody(region) {
   }
   rest(false);
   cancelInfo();
+  if (feedback.getReminder()) return;
   const reaction = bodyReactions.click(region);
+  if (
+    region === 'head' &&
+    settings?.companion !== false &&
+    !lifePaused &&
+    !feedback.getMessage() &&
+    Math.random() < 0.2
+  )
+    showMessage(t('嗯？怎么了？'));
   window.lunaCharacter.react(reaction.expression);
   clearTimeout(happyTimer);
   $('pet').classList.add('happy');
   happyTimer = setTimeout(() => $('pet').classList.remove('happy'), 1900);
 }
 $('pet').onclick = event => {
+  if (event.button !== 0) return;
   if (dragging) {
     dragging = false;
     return;
@@ -553,6 +581,11 @@ $('pet').onclick = event => {
   reactToBody(region);
 };
 $('pet').onpointerdown = e => {
+  if (e.button === 1 && canResizeAt(e)) {
+    e.preventDefault();
+    queueScale(1);
+    return;
+  }
   if (e.button !== 0) return;
   dragStart = { x: e.screenX, y: e.screenY, clientX: e.clientX, clientY: e.clientY };
   syncDockHold();
@@ -601,6 +634,7 @@ function endDrag() {
   if (moved) window.pet.drag(false);
 }
 $('pet').onpointerup = event => {
+  if (event.button !== 0) return;
   if (dragStart && !dragging && movedPointer(event)) {
     dragging = true;
     window.pet.drag(true);
@@ -720,7 +754,7 @@ document.addEventListener('dragenter', e => {
   if (!dropDepth) beforeDropText = $('bubble').textContent;
   dropDepth++;
   $('companion').classList.add('drop-ready');
-  showMessage(t('放到这里，我会帮你收藏。'), 0);
+  showMessage(t('放这儿吧，我替你收着。'), 0);
   ignore = false;
   window.pet.passthrough(false);
 });
@@ -742,7 +776,7 @@ document.addEventListener('drop', async e => {
   dropDepth = 0;
   $('companion').classList.remove('drop-ready');
   rest(false);
-  showMessage(t('正在收藏…'), 0);
+  showMessage(t('稍等，替你收好……'), 0);
   try {
     // FileList itself cannot be passed through Electron's context bridge.
     const files = Array.from(e.dataTransfer.files);
@@ -754,9 +788,9 @@ document.addEventListener('drop', async e => {
         const content = droppedText(e.dataTransfer);
         if (!content) throw Error(t('这个拖入内容没有本机文件或可用链接。'));
         const item = await api('collection-add-text', content);
-        happy(item.kind === 'link' ? t('链接收好啦。') : t('文字收好啦。'));
+        happy(item.kind === 'link' ? t('链接收好了，想看时再打开。') : t('这段文字，替你收好了。'));
       } else {
-        if (saved) happy(t('收好啦，收藏了 {count} 个文件。', { count: saved }));
+        if (saved) happy(t('{count} 个文件，收好了。', { count: saved }));
         else if (failed.length) throw Error(failed[0]);
         if (failed.length && saved)
           showMessage(feedback.getMessage() + t('另有 {count} 个未成功。', { count: failed.length }));
@@ -765,7 +799,7 @@ document.addEventListener('drop', async e => {
       const content = droppedText(e.dataTransfer);
       if (!content) throw Error(t('没有识别到文件、文字或链接。'));
       const item = await api('collection-add-text', content);
-      happy(item.kind === 'link' ? t('链接收好啦。') : t('文字收好啦。'));
+      happy(item.kind === 'link' ? t('链接收好了，想看时再打开。') : t('这段文字，替你收好了。'));
     }
   } catch (error) {
     showMessage(error.message);
@@ -816,7 +850,7 @@ wheel = window.lunaWheel.createWheel({
       off: () => settings?.companion === false,
       run: async () => {
         const next = await saveQuickSetting({ companion: settings?.companion === false });
-        showMessage(t(next.companion ? '好呀，我会多陪你说说话。' : '好，那我安静陪着你。'));
+        showMessage(t(next.companion ? '好，想起什么，我就陪你说两句。' : '那就安静待着吧。我在这里。'));
       }
     },
     { id: 'hide', label: '隐藏到托盘', icon: 'hide', color: '#7a88a6', run: () => api('hide') },
@@ -841,7 +875,7 @@ $('pet').addEventListener('contextmenu', event => {
     applyEdgeDock(s.edgeDock);
     window.lunaCharacter.load();
     rest(s.sleeping === true);
-    document.title = t('克劳德 · 桌面宠物');
+    document.title = t('claudex · 桌面宠物');
     lifePaused = s.lifePaused === true;
     api('life-memory')
       .then(memory => {
@@ -855,7 +889,7 @@ $('pet').addEventListener('contextmenu', event => {
     } catch {}
     if (!wheelHinted)
       setTimeout(() => {
-        if (viewStopped || settings?.pureMode || !showMessage(t('右键点我，就能打开功能转盘哦。'), 6000)) return;
+        if (viewStopped || settings?.pureMode || !showMessage(t('要找工具，右键点我就好。'), 6000)) return;
         try {
           localStorage.setItem('luna-wheel-hint', '1');
         } catch {}
@@ -878,5 +912,5 @@ window.addEventListener('luna-language-changed', () => {
   api('reminder-list')
     .then(items => reminderCount(items.filter(item => item.status !== 'done').length))
     .catch(() => {});
-  if (settings) document.title = t('克劳德 · 桌面宠物');
+  if (settings) document.title = t('claudex · 桌面宠物');
 });

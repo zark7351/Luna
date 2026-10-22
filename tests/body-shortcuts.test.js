@@ -7,7 +7,7 @@ test('点击部位只触发动画，不再有快捷功能配置', () => {
   const r = createReactions();
   assert.deepEqual(
     ['head', 'chest', 'arms'].map(region => r.click(region).expression),
-    ['happy', 'shy', 'wink']
+    ['smile', 'shy', 'wink']
   );
   for (const region of ['ear-left', 'ear-right', 'tail']) assert.deepEqual(r.click(region), { expression: region });
 });
@@ -15,7 +15,7 @@ test('连续点击始终保持普通反应，不累计生气或影响其他部�
   const r = createReactions();
   for (let i = 0; i < 30; i++) {
     assert.deepEqual(r.click('chest'), { expression: 'shy' });
-    assert.deepEqual(r.click('head'), { expression: 'happy' });
+    assert.deepEqual(r.click('head'), { expression: 'smile' });
     assert.deepEqual(r.click('arms'), { expression: 'wink' });
   }
   for (const region of ['forbidden', 'legs', 'feet', 'missing', '__proto__']) assert.equal(r.click(region), null);

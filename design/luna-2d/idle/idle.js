@@ -78,6 +78,7 @@
     attribute vec2 aPosition;
     uniform vec2 uSize;
     uniform float uTime;
+    uniform mediump float uTailPass;
     varying vec2 vUV;
     float ss(float a, float b, float v) { return smoothstep(a, b, v); }
     float twitch(float t, float start) {
@@ -97,14 +98,16 @@
       float rightAngle = -0.075 * twitch(uTime, 2.42) - 0.10 * twitch(uTime, 5.85);
       p += (rotateAround(aPosition, vec2(470.0, 365.0), leftAngle) - aPosition) * leftEar;
       p += (rotateAround(aPosition, vec2(946.0, 240.0), rightAngle) - aPosition) * rightEar;
-      float tail = (1.0-ss(255.0, 365.0, aPosition.x));
-      tail *= ss(482.0, 528.0, aPosition.y) * (1.0-ss(899.0, 1000.0, aPosition.y));
-      float tip = pow(clamp((1000.0-aPosition.y)/470.0, 0.0, 1.0), 1.1);
-      float phase = uTime * 6.28318530718 / 8.0;
-      float lag = (940.0-aPosition.y)*0.002;
-      float wave = sin(phase+lag)-sin(lag);
-      p.x += 36.0 * wave * tail * tip;
-      p.y += 11.0 * (sin(phase+0.6)-sin(0.6)) * tail * tip;
+      if (uTailPass > 0.5) {
+        vec2 stage = (aPosition + vec2(52.0,48.0)) / (uSize + vec2(104.0,96.0)) * vec2(384.0,292.0);
+        float angle = 0.045 * sin(uTime * 6.28318530718 / 8.0) * (1.0-ss(202.0,226.0,stage.y));
+        if (abs(angle) > 0.000001) {
+          stage = rotateAround(stage, vec2(58.0,225.0), angle);
+          p = stage / vec2(384.0,292.0) * (uSize+vec2(104.0,96.0))-vec2(52.0,48.0);
+        } else {
+          p = aPosition;
+        }
+      }
       vec2 padded = (p + vec2(52.0, 48.0)) / (uSize + vec2(104.0, 96.0));
       gl_Position = vec4(padded.x*2.0-1.0, 1.0-padded.y*2.0, 0.0, 1.0);
     }
@@ -118,8 +121,13 @@
       `
     precision mediump float;
     uniform sampler2D uSprite;
+    uniform sampler2D uTailMask;
+    uniform mediump float uTailPass;
     varying vec2 vUV;
-    void main() { gl_FragColor = texture2D(uSprite, vUV); }
+    void main() {
+      float mask = texture2D(uTailMask, vUV).a;
+      gl_FragColor = texture2D(uSprite, vUV) * (uTailPass > 0.5 ? mask : 1.0-mask);
+    }
   `
     )
   );
@@ -131,9 +139,12 @@
   const position = gl.getAttribLocation(program, 'aPosition');
   const timeUniform = gl.getUniformLocation(program, 'uTime');
   const sizeUniform = gl.getUniformLocation(program, 'uSize');
+  const tailPassUniform = gl.getUniformLocation(program, 'uTailPass');
   gl.uniform1i(gl.getUniformLocation(program, 'uSprite'), 0);
+  gl.uniform1i(gl.getUniformLocation(program, 'uTailMask'), 1);
   gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
-  gl.disable(gl.BLEND);
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
   gl.clearColor(0, 0, 0, 0);
 
   const textures = new Map();
@@ -196,6 +207,9 @@
     gl.uniform1f(timeUniform, t);
     gl.bindTexture(gl.TEXTURE_2D, texture(Math.round(blink(t) * 12)));
     gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.uniform1f(tailPassUniform, 1);
+    gl.drawElements(gl.TRIANGLES, indexCount, gl.UNSIGNED_SHORT, 0);
+    gl.uniform1f(tailPassUniform, 0);
     gl.drawElements(gl.TRIANGLES, indexCount, gl.UNSIGNED_SHORT, 0);
     gl.finish();
   }
@@ -207,6 +221,31 @@
     openPatches = EYES.map(eye => patch(original, eye, w, h));
     closedPatches = EYES.map(eye => patch(closed, eye, w, h, -18));
     gl.uniform2f(sizeUniform, w, h);
+    const mask = document.createElement('canvas');
+    mask.width = w;
+    mask.height = h;
+    const maskContext = mask.getContext('2d');
+    maskContext.beginPath();
+    window.claudeAppendages.tailCut.forEach(([x, y], i) => {
+      const sx = (x / 384) * (w + 104) - 52,
+        sy = (y / 292) * (h + 96) - 48;
+      if (i) maskContext.lineTo(sx, sy);
+      else maskContext.moveTo(sx, sy);
+    });
+    maskContext.closePath();
+    maskContext.fill();
+    const cutPixels = maskContext.getImageData(0, 0, w, h);
+    for (let i = 3; i < cutPixels.data.length; i += 4) cutPixels.data[i] = cutPixels.data[i] >= 128 ? 255 : 0;
+    maskContext.putImageData(cutPixels, 0, 0);
+    gl.activeTexture(gl.TEXTURE1);
+    const maskTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, maskTexture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, mask);
+    gl.activeTexture(gl.TEXTURE0);
     const columns = 112,
       rows = 84,
       vertices = [],

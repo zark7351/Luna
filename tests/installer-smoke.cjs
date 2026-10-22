@@ -6,7 +6,8 @@ const fs = require('node:fs'),
   crypto = require('node:crypto');
 const { spawn } = require('node:child_process');
 const version = require('../package.json').version;
-const setup = path.resolve(__dirname, '..', '..', 'Claude-Release', `Claude-${version}-Setup.exe`);
+const { APP_NAME, EXE_NAME, PORTABLE_DIR, RELEASE_DIR } = require('../app-branding');
+const setup = path.resolve(__dirname, '..', '..', RELEASE_DIR, `${APP_NAME}-${version}-Setup.exe`);
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'luna-installer-test-')),
   target = path.join(root, 'app');
 const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
@@ -55,7 +56,7 @@ async function check() {
       '/LOG=' + path.join(root, log)
     ]);
   await install('install.log');
-  const exe = path.join(target, 'Claude.exe'),
+  const exe = path.join(target, EXE_NAME),
     appDir = path.join(target, 'resources', 'app');
   assert.ok(fs.existsSync(exe));
   assert.equal(JSON.parse(fs.readFileSync(path.join(appDir, 'package.json'))).version, version);
@@ -66,7 +67,7 @@ async function check() {
   const originalExe = hash(exe);
   console.log('INSTALL_PASS');
   if (process.argv.includes('--package-only')) {
-    const portable = path.resolve(__dirname, '..', '..', 'Claude-Windows');
+    const portable = path.resolve(__dirname, '..', '..', PORTABLE_DIR);
     let count = 0;
     function compare(relative = '') {
       for (const entry of fs.readdirSync(path.join(portable, relative), { withFileTypes: true })) {

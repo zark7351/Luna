@@ -10,6 +10,8 @@
   ],
   "allFramesHandsFixed": true,
   "allFramesMouthFixed": true,
+  "allFramesHairFixed": true,
+  "fixedRegionMaxRgbDelta": 1,
   "outerBorderMaximumAlpha": 0,
   "loopEndpointExactlyMatches": true,
   "motionChecks": {
@@ -27,7 +29,7 @@
       "frames": 192,
       "durationMs": 7999,
       "loop": 0,
-      "bytes": 5874332,
+      "bytes": 4584686,
       "alphaRange": [
         0,
         255
@@ -39,9 +41,9 @@
         584
       ],
       "frames": 192,
-      "durationMs": 8000.0,
+      "durationMs": 8000.000000000023,
       "loop": 0,
-      "bytes": 23849459,
+      "bytes": 20613896,
       "alphaRange": [
         0,
         255
@@ -55,7 +57,7 @@
       "frames": 192,
       "durationMs": 8000,
       "loop": 0,
-      "bytes": 1422889,
+      "bytes": 964326,
       "alphaRange": [
         255,
         255

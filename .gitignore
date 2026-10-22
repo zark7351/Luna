@@ -6,6 +6,8 @@ release/
 LunaPet-Windows/
 Claude-Windows/
 Claude-Release/
+claudex-Windows/
+claudex-Release/
 *.exe
 *.zip
 

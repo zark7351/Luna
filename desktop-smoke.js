@@ -45,6 +45,11 @@ module.exports = async function runDesktopSmoke(live) {
   let smokeStage = 'startup';
   try {
     await new Promise(r => setTimeout(r, 1200));
+    if (process.argv.includes('--smile-test')) {
+      console.log(JSON.stringify(await require('./smile-smoke').check(live, app.getPath('temp'))));
+      app.exit(0);
+      return;
+    }
     if (process.argv.includes('--appendage-test')) {
       console.log(JSON.stringify(await require('./appendage-smoke').check(win, app.getPath('temp'))));
       app.exit(0);

@@ -21,63 +21,68 @@
 
   const line = (text, expression = 'smile') => ({ text, expression });
   const lines = {
-    firstMeeting: line('初次见面，我是{name}，以后请多关照！', 'happy'),
+    firstMeeting: line('我是{name}。以后这里，就留个位置给我吧。'),
     greeting: {
       morning: [
-        line('早上好！今天也一起加油吧。', 'happy'),
-        line('早呀，昨晚睡得好吗？'),
-        line('早上好～新的一天开始啦。', 'wink')
+        line('早上好。不必着急，先醒醒神。'),
+        line('醒啦？先照顾好自己，再忙别的。'),
+        line('早安。嗯，见到你，心情倒是不错。')
       ],
-      noon: [line('中午好，记得按时吃饭哦。'), line('中午啦，先吃饭再忙吧。', 'wink')],
-      afternoon: [line('下午好，今天第一次见面呢。'), line('下午好～我等你好久啦。', 'shy')],
-      evening: [line('晚上好，今天辛苦啦。'), line('晚上好～今天过得怎么样？', 'wink')],
-      late: [line('这么晚才来呀……要早点休息哦。', 'pout')]
+      noon: [line('中午了。先去吃饭，我替你守着这里。'), line('到午饭时间了，别让自己饿着。', 'wink')],
+      afternoon: [line('下午好。嗯，这会儿最适合偷闲。'), line('来啦？午后的事，也慢慢来。', 'shy')],
+      evening: [line('晚上好。忙了一天，过来歇一会儿吧。'), line('晚上好。今天就对自己宽容一点。', 'wink')],
+      late: [line('这么晚还醒着呀。坐一会儿，就去休息吧。', 'pout')]
     },
     weekday: {
-      1: '周一啦，慢慢进入状态就好。',
-      5: '今天是周五，再坚持一下就周末啦！',
-      6: '周末也来找我呀，别太累哦。',
-      0: '周末也来找我呀，别太累哦。'
+      1: '周一嘛，一件一件来就好。',
+      5: '周五了，留点空闲给自己吧。',
+      6: '周末的空闲，分我一点就好。',
+      0: '周末的空闲，分我一点就好。'
     },
-    milestone: '今天是我们认识的第 {days} 天哦。',
+    milestone: '陪你 {days} 天了。真好。',
     welcome: {
-      short: [line('你回来啦。'), line('欢迎回来～', 'happy')],
-      medium: [line('回来啦，刚才离开了 {minutes} 分钟呢。'), line('欢迎回来，休息得怎么样？', 'wink')],
-      long: [line('你走了好久，我都快睡着了……', 'pout'), line('回来啦！离开了 {hours} 个多小时呢。', 'happy')],
-      veryLong: [line('终于回来啦，我等了好久。', 'shy')],
-      late: [line('这么晚还要忙吗？别熬太晚哦。', 'pout')]
+      short: [line('回来啦。我还在这儿呢。'), line('欢迎回来。过来歇一会儿吧。')],
+      medium: [line('回来啦。歇了 {minutes} 分钟，舒服些了吗？'), line('歇过了？那我也打起一点精神。')],
+      long: [line('回来啦。我刚刚差一点就睡着了。'), line('离开 {hours} 个多小时了。回来就先歇一会儿吧。')],
+      veryLong: [line('欢迎回来。今天剩下的时间，慢慢过吧。')],
+      late: [line('还要忙一会儿？可别把明天的精神也用掉了。', 'pout')]
     },
     sleep: {
-      normal: [line('你先忙，我小憩一下。'), line('那我先闭目养神一会儿。')],
-      late: [line('好晚了，我先睡啦……')]
+      normal: [line('你忙吧。我在这儿眯一会儿。'), line('我先闭目养神，有事再叫我。')],
+      late: [line('夜深了，我先眯一会儿。你也别太晚。')]
     },
     work: [
-      line('已经连续忙了 {hours} 个多小时了，起来走走吧。', 'shy'),
-      line('眼睛累了吧？看看远处，休息一下。'),
-      line('坐太久对腰不好哦，站起来伸个懒腰吧。', 'wink')
+      line('已经忙了 {hours} 个多小时。起来走走，我又不会跑。', 'shy'),
+      line('眼睛也该歇歇了。看一会儿远处，再回来吧。'),
+      line('坐太久了，去伸个懒腰。慢慢来就好。', 'wink')
     ],
-    late: [line('已经很晚了，早点休息吧。', 'pout'), line('都这个点了……明天再继续好不好？', 'shy')],
+    late: [line('已经很晚了。今天就先放过自己吧。', 'pout'), line('都这个点了，剩下的留给明天，好不好？', 'shy')],
     counts: {
-      capture: line('今天已经截了 {count} 张图了，好勤快。', 'wink'),
-      collect: line('今天帮你收藏了 {count} 样东西啦。'),
-      complete: line('今天完成了 {count} 个提醒，真棒！', 'happy')
+      capture: line('今天已经收好 {count} 张截图了。都在收藏夹里。', 'wink'),
+      collect: line('今天替你收好了 {count} 样东西。慢慢挑着看吧。'),
+      complete: line('今天办完 {count} 件提醒了。嗯，做得不错。')
     },
     chatter: {
-      morning: [line('上午效率最高，冲呀！', 'happy')],
-      noon: [line('肚子有点饿了……你吃饭了吗？', 'pout')],
-      sleepy: [line('午后好困……我偷偷打个哈欠。', 'sleepy')],
-      evening: [line('天黑啦，屏幕别太亮，保护眼睛。')],
+      morning: [line('早上的光，适合慢慢醒一醒。')],
+      noon: [line('该吃点东西了。好好吃饭，也算正事。', 'pout')],
+      sleepy: [line('午后嘛……稍微犯个懒，也没关系。', 'sleepy')],
+      evening: [line('夜色正好。把手边的事，慢慢收个尾吧。')],
       any: [
-        line('♪～', 'smile'),
-        line('（偷偷看你一眼）', 'shy'),
-        line('我在这儿陪着你呢。'),
-        line('有什么要我帮你收藏的吗？', 'wink'),
-        line('喝口水吧，我也陪你喝。'),
-        line('今天的天空是什么颜色的呢……')
+        line('嗯……这样待着，就很好。', 'smile'),
+        line('看你一眼。好啦，继续忙你的吧。'),
+        line('你忙你的。我在这儿，正好偷个闲。'),
+        line('有想留着的东西，就交给我吧。', 'wink'),
+        line('去喝口水吧。回来时，我还在这里。'),
+        line('把今天过得舒服一点，也很要紧。'),
+        line('偶尔什么都不做，也挺好的。'),
+        line('这点清静，还挺合我心意。'),
+        line('我可不是在发呆。是在养精神。'),
+        line('嗯？没什么事，就陪我坐一会儿吧。'),
+        line('')
       ]
     },
-    dragStart: [line('哇，要带我去哪儿？', 'shy'), line('慢点慢点～', 'pout')],
-    shake: line('别晃啦，头好晕……', 'sleepy')
+    dragStart: [line('嗯？要换个位置看风景吗？', 'shy'), line('慢些呀，我还没坐稳呢。', 'pout')],
+    shake: line('唔，慢一点……我有点晕。', 'sleepy')
   };
 
   const pad = n => String(n).padStart(2, '0');

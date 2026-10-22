@@ -1,11 +1,12 @@
 const fs = require('node:fs');
 const path = require('node:path');
+const { APP_NAME, EXE_NAME, PORTABLE_DIR } = require('./app-branding');
 const { ensureRcedit, ensureFFmpeg, run } = require('./prepare-build-tools.cjs');
 try {
   if (process.platform !== 'win32') throw Error('Please build the Windows portable app on Windows.');
   const source = __dirname;
   const runtime = path.join(source, 'node_modules', 'electron', 'dist');
-  const output = path.resolve(source, '..', 'Claude-Windows');
+  const output = path.resolve(source, '..', PORTABLE_DIR);
   const appDir = path.join(output, 'resources', 'app');
   const files = [
     'translations.js',
@@ -73,6 +74,7 @@ try {
     'character-assets.js',
     'CHARACTER-ASSETS.md',
     'character-smoke.js',
+    'smile-smoke.js',
     'reminder-input-smoke.js',
     'bubble-smoke.js',
     'pet-feedback.js',
@@ -100,7 +102,7 @@ try {
   }
   fs.mkdirSync(output, { recursive: true });
   for (const entry of fs.readdirSync(runtime)) {
-    const targetName = entry === 'electron.exe' ? 'Claude.exe' : entry;
+    const targetName = entry === 'electron.exe' ? EXE_NAME : entry;
     fs.cpSync(path.join(runtime, entry), path.join(output, targetName), { recursive: true, force: true });
   }
   fs.mkdirSync(appDir, { recursive: true });
@@ -129,7 +131,7 @@ try {
   fs.copyFileSync(path.join(source, 'README.md'), path.join(output, '使用说明.md'));
   const version = require('./package.json').version;
   run(ensureRcedit(), [
-    path.join(output, 'Claude.exe'),
+    path.join(output, EXE_NAME),
     '--set-icon',
     path.join(source, 'assets', 'claude.ico'),
     '--set-file-version',
@@ -138,23 +140,23 @@ try {
     version,
     '--set-version-string',
     'ProductName',
-    '克劳德',
+    APP_NAME,
     '--set-version-string',
     'FileDescription',
-    '克劳德 ' + version + ' 桌面宠物',
+    APP_NAME + ' ' + version + ' 桌面宠物',
     '--set-version-string',
     'OriginalFilename',
-    'Claude.exe',
+    EXE_NAME,
     '--set-version-string',
     'InternalName',
-    'Claude',
+    APP_NAME,
     '--set-requested-execution-level',
     'asInvoker'
   ]);
-  console.log(`Build complete: ${path.join(output, 'Claude.exe')}`);
+  console.log(`Build complete: ${path.join(output, EXE_NAME)}`);
 } catch (error) {
   console.error(`Build failed: ${error.message}`);
   if (['EBUSY', 'EPERM', 'EACCES'].includes(error.code))
-    console.error('Close the running Claude companion portable app and retry.');
+    console.error('Close the running claudex portable app and retry.');
   process.exitCode = 1;
 }

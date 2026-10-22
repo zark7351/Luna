@@ -62,3 +62,17 @@ test('非法素材路径和帧布局在加载前拒绝', () => {
   );
   assert.ok(Object.isFrozen(assets.poses.idle));
 });
+
+test('微笑短暂显现并平滑收回，减少动态效果时不渐变，始终复用待机时钟', () => {
+  assert.equal(assets.poseFor('smile'), 'idle');
+  assert.equal(assets.smileOpacity(-1), 0);
+  assert.equal(assets.smileOpacity(0), 0);
+  assert.equal(assets.smileOpacity(90), 0.5);
+  assert.equal(assets.smileOpacity(500), 1);
+  assert.equal(assets.smileOpacity(2390), 0.5);
+  assert.equal(assets.smileOpacity(2600), 0);
+  assert.equal(assets.smileOpacity(0, true), 1);
+  assert.equal(assets.smileOpacity(2600, true), 0);
+  const bytes = fs.readFileSync(path.join(__dirname, '..', 'assets', assets.smile.file));
+  assert.deepEqual([bytes.readUInt32BE(16), bytes.readUInt32BE(20)], assets.smile.sourceSize);
+});

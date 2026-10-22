@@ -17,7 +17,7 @@
       if (!stopped)
         render({
           message: reminder
-            ? translate('到时间啦：') +
+            ? translate('到时间了：') +
               reminder.title +
               (reminder.remaining > 1 ? translate('（还有 ') + (reminder.remaining - 1) + translate(' 条）') : '')
             : message,

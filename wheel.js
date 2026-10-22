@@ -112,7 +112,7 @@
       runTimer = null,
       returnFocus = null;
     function refresh() {
-      wheel.setAttribute('aria-label', translate('克劳德功能'));
+      wheel.setAttribute('aria-label', translate('claudex 功能'));
       items.forEach((item, index) => {
         const off = item.off?.() === true;
         buttons[index].classList.toggle('off', off);
