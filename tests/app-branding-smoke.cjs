@@ -17,9 +17,9 @@ app
     fs.writeFileSync(path.join(output, 'tray.png'), tray.toPNG());
     const decoded = nativeImage.createFromBuffer(tray.toPNG()).toBitmap();
     const center = (16 * 32 + 16) * 4;
-    assert.equal(decoded[center + 3], 0);
+    assert.deepEqual([...decoded.subarray(center, center + 4)], [20, 26, 42, 255]);
     const ring = (3 * 32 + 16) * 4;
-    assert.deepEqual([...decoded.subarray(ring, ring + 4)], [170, 104, 144, 255]);
+    assert.ok(decoded[ring + 3] > 0);
     console.log('NATIVE_BRANDING_PASS ' + output);
     app.exit(0);
   })

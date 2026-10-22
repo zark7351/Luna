@@ -1,6 +1,6 @@
 const fs = require('node:fs');
 const path = require('node:path');
-// Q-version Luna: the idle atlas animates, keeps alpha, centres the torso and reactions return to idle.
+// 2D Luna: the landscape atlas animates without stretching or clipping, and reactions return to idle.
 async function checkCharacter(win, output, label) {
   await win.webContents.executeJavaScript(`(async()=>{
     const pet=document.querySelector('#pet'),canvas=pet.querySelector('canvas.character-face'),stage=window.lunaCharacterAssets.stage;
@@ -12,10 +12,11 @@ async function checkCharacter(win, output, label) {
     let moved=0;for(let i=3;i<first.length;i+=4)if(first[i]!==later[i])moved++;
     if(moved<50)throw Error('idle pose does not animate');
     if(later[3]!==0||later[(stage.width-1)*4+3]!==0)throw Error('character corners not transparent');
-    let sum=0,count=0;for(let y=150;y<260;y++)for(let x=0;x<stage.width;x++)if(later[(y*stage.width+x)*4+3]>200&&x>stage.center-60){sum+=x;count++;}
-    const box=pet.getBoundingClientRect(),torso=box.left+(sum/count)*box.width/stage.width,body=document.body.getBoundingClientRect();
-    if(Math.abs(torso-(body.left+body.right)/2)>14)throw Error('character off centre: '+torso);
-    for(const expression of ['happy','wink','smile','shy','angry','furious','pout']){
+    const box=pet.getBoundingClientRect(),body=document.body.getBoundingClientRect();
+    if(box.left<body.left||box.right>body.right||Math.abs((box.left+box.right-body.left-body.right)/2)>1)throw Error('character outside or off centre');
+    if(Math.abs(box.width/box.height-stage.width/stage.height)>0.002)throw Error('half-body portrait stretched');
+    if(window.lunaCharacter.hitRegion(box.left+66/stage.width*box.width,box.top+210/stage.height*box.height)!==null)throw Error('tail triggers body reaction');
+    for(const expression of ['happy','wink','smile','shy','pout']){
       window.lunaCharacter.cancel();window.lunaCharacter.react(expression);
       if(window.lunaCharacter.expression!==expression||!Object.hasOwn(window.lunaCharacterAssets.poses,canvas.dataset.pose))throw Error('reaction pose: '+expression);
     }

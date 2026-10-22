@@ -40,7 +40,7 @@ module.exports = async ({ win, restore, stateFile, output }) => {
           item +
           ' ' +
           (await read(
-            'JSON.stringify({focus:document.hasFocus(),panels:panelsOpen(),inert:document.body.inert,pure:settings.pureMode,protected:angerInteraction.protected,ignore})'
+            'JSON.stringify({focus:document.hasFocus(),panels:panelsOpen(),inert:document.body.inert,pure:settings.pureMode,ignore})'
           ))
       );
     await sleep(350);
@@ -72,7 +72,7 @@ module.exports = async ({ win, restore, stateFile, output }) => {
             JSON.stringify(win.getBounds()) +
             JSON.stringify(p) +
             (await read(
-              "JSON.stringify({open:wheel.isOpen,panels:panelsOpen(),inert:document.body.inert,protected:angerInteraction.protected,press:flowerPress,dragStart,dragging,flower:document.querySelector('#pure-flower').getBoundingClientRect().toJSON(),h:innerHeight})"
+              "JSON.stringify({open:wheel.isOpen,panels:panelsOpen(),inert:document.body.inert,press:flowerPress,dragStart,dragging,flower:document.querySelector('#pure-flower').getBoundingClientRect().toJSON(),h:innerHeight})"
             ))
         );
       await sleep(40);

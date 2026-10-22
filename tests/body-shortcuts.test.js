@@ -6,64 +6,41 @@ test('点击部位只触发动画，不再有快捷功能配置', () => {
   assert.deepEqual(Object.keys(shortcuts).sort(), ['createReactions', 'regionAt', 'regions']);
   const r = createReactions();
   assert.deepEqual(
-    ['head', 'chest', 'arms', 'forbidden', 'legs', 'feet'].map(region => r.click(region).expression),
-    ['happy', 'shy', 'wink', 'shy', 'smile', 'pout']
+    ['head', 'chest', 'arms'].map(region => r.click(region).expression),
+    ['happy', 'shy', 'wink']
   );
   assert.equal(r.click('tail'), null);
 });
-test('十秒内三次敏感点击必定生气，恰好十秒排除旧点击', () => {
-  let time = 0;
-  const r = createReactions({ now: () => time });
-  r.click('chest');
-  time = 6000;
-  r.click('chest');
-  time = 9999;
-  assert.equal(r.click('chest').annoyed, true);
-  r.reset();
-  time = 0;
-  r.click('chest');
-  time = 6000;
-  r.click('chest');
-  time = 10000;
-  assert.equal(r.click('chest').annoyed, false);
-});
-test('Q 版帧坐标区分头胸、两侧手臂、裙子与腿、脚；尾巴和非法点无作用', () => {
-  assert.equal(regionAt(165, 100), 'head');
-  assert.equal(regionAt(165, 185), 'chest');
-  assert.equal(regionAt(110, 240), 'arms');
-  assert.equal(regionAt(225, 250), 'arms');
-  assert.equal(regionAt(165, 240), 'legs');
-  assert.equal(regionAt(150, 300), 'legs');
-  assert.equal(regionAt(165, 320), 'feet');
-  assert.equal(regionAt(40, 200), null);
-  assert.equal(regionAt(-1, 200), null);
-  assert.equal(regionAt(165, NaN), null);
-  assert.equal(regionAt(270, 100), null);
-});
-test('频繁点击胸部或禁区必定触发，其他部位不增加计数且重置有效', () => {
-  let time = 1000;
-  const r = createReactions({ now: () => time });
-  assert.equal(r.click('head').expression, 'happy');
-  assert.equal(r.click('chest').annoyed, false);
-  r.click('arms');
-  assert.equal(r.click('forbidden').annoyed, false);
-  assert.equal(r.click('chest').annoyed, true);
-  assert.equal(r.click('legs').expression, 'smile');
-  time += 10001;
-  assert.equal(r.click('chest').annoyed, false);
-  r.reset();
-  assert.equal(r.click('chest').annoyed, false);
+test('连续点击始终保持普通反应，不累计生气或影响其他部位', () => {
+  const r = createReactions();
+  for (let i = 0; i < 30; i++) {
+    assert.deepEqual(r.click('chest'), { expression: 'shy' });
+    assert.deepEqual(r.click('head'), { expression: 'happy' });
+    assert.deepEqual(r.click('arms'), { expression: 'wink' });
+  }
+  for (const region of ['forbidden', 'legs', 'feet', 'tail', 'missing', '__proto__'])
+    assert.equal(r.click(region), null);
 });
 
-test('禁区在衣物覆盖中央小范围内，与胸部共用敏感点击计数', () => {
-  assert.equal(regionAt(165, 262), 'forbidden');
-  assert.notEqual(regionAt(177, 262), 'forbidden');
-  assert.notEqual(regionAt(165, 271), 'forbidden');
-  assert.equal(regionAt(165, 290), 'legs');
-  const r = createReactions({ random: () => 0 });
-  assert.equal(r.click('forbidden').expression, 'shy');
-  assert.equal(r.click('chest').annoyed, false);
-  assert.equal(r.click('forbidden').annoyed, true);
-  r.reset();
-  assert.equal(r.click('forbidden').annoyed, false);
+test('2D 半身帧区分头胸和两侧手臂，尾巴、画面外和非法点无作用', () => {
+  assert.equal(regionAt(210, 135), 'head');
+  assert.equal(regionAt(250, 30), 'head');
+  assert.equal(regionAt(228, 218), 'chest');
+  assert.equal(regionAt(175, 214), 'arms');
+  assert.equal(regionAt(275, 255), 'arms');
+  assert.equal(regionAt(58, 180), null);
+  assert.equal(regionAt(66, 210), null);
+  assert.equal(regionAt(66, 240), null);
+  assert.equal(regionAt(228, 285), null);
+  assert.equal(regionAt(-1, 200), null);
+  assert.equal(regionAt(228, NaN), null);
+  assert.equal(regionAt(384, 100), null);
+  assert.equal(regionAt(228, 292), null);
+});
+test('托腮的手优先于脸颊和胸部，前臂不会误判为未露出的下半身', () => {
+  assert.equal(regionAt(181, 187), 'arms');
+  assert.equal(regionAt(193, 218), 'arms');
+  assert.equal(regionAt(228, 262), 'arms');
+  for (let y = 0; y < 292; y += 3)
+    for (let x = 0; x < 384; x += 3) assert.ok(!['legs', 'feet', 'forbidden'].includes(regionAt(x, y)), `${x},${y}`);
 });

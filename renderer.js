@@ -1,10 +1,7 @@
 const t = window.lunaI18n.t;
 const $ = id => document.getElementById(id);
 window.lunaCharacter = createLunaCharacter($('pet'));
-let wheel = null,
-  angerInteraction = null,
-  heldReminder = null,
-  returnSpeechUntil = 0;
+let wheel = null;
 let settings,
   sleeping = false,
   happyTimer,
@@ -23,6 +20,7 @@ const api = async (name, payload) => {
 };
 function applySettings(value) {
   settings = value;
+  document.documentElement.style.setProperty('--pet-width', 256 * value.petScale + 'px');
   document.body.classList.toggle('pure-mode', value.pureMode);
   lastPureLayout = undefined;
   if (value.pureMode) showControls();
@@ -54,7 +52,7 @@ function applyEdgeDock(value) {
   edgeState = value;
   document.body.dataset.edgeCollapsed = value.collapsed ? value.side : '';
   const button = $('edge-expand');
-  button.title = t('展开露娜');
+  button.title = t('展开克劳德');
   button.setAttribute('aria-label', button.title);
   button.querySelector('path').setAttribute('d', value.side === 'right' ? 'm15 6-6 6 6 6' : 'm9 6 6 6-6 6');
   if (value.collapsed) {
@@ -106,7 +104,6 @@ const infoBubbles = createShortcutBubbles({
   requestWeather: () => api('weather-current')
 });
 const showMessage = (text, delay) => {
-  if (angerInteraction?.protected) return false;
   infoBubbles.cancel();
   return feedback.show(text, delay);
 };
@@ -117,7 +114,7 @@ let life = null,
 function panelsOpen() {
   return $('help').open || ['settings', 'library-sheet', 'recording-sheet', 'reminder-sheet'].some(id => !$(id).hidden);
 }
-// Proactive lines wait for a quiet moment: no bubble, panel, reminder, drag or protected anger sequence.
+// Proactive lines wait for a quiet moment: no bubble, panel, reminder, drag.
 function lifeCanSpeak() {
   return (
     !viewStopped &&
@@ -129,7 +126,6 @@ function lifeCanSpeak() {
     !dragStart &&
     !dropDepth &&
     !document.body.inert &&
-    !angerInteraction?.protected &&
     !feedback.getReminder() &&
     !feedback.getMessage() &&
     !infoBubbles.active &&
@@ -146,7 +142,7 @@ function startLife(memory) {
     say: lifeSay,
     canSpeak: lifeCanSpeak,
     translate: t,
-    name: () => settings?.name || '露娜',
+    name: () => settings?.name || '克劳德',
     nickname: () => settings?.nickname || '',
     separator: () => (window.lunaI18n.language === 'en' ? ', ' : '，'),
     load: () => memory,
@@ -228,7 +224,6 @@ for (const id of ['help', 'settings', 'library-sheet', 'recording-sheet', 'remin
   dockObserver.observe($(id), { attributes: true, attributeFilter: ['hidden', 'open'] });
 window.addEventListener('pagehide', () => {
   viewStopped = true;
-  angerInteraction.stop();
   dockObserver.disconnect();
   infoBubbles.stop();
   feedback.stop();
@@ -344,10 +339,6 @@ window.pet.onEffect(name => {
   if (buttons[name]) window.lunaEffects.pulse($(buttons[name]), 'select');
 });
 window.pet.onReminderDue(value => {
-  if (angerInteraction?.protected || Date.now() < returnSpeechUntil) {
-    heldReminder = value;
-    return;
-  }
   infoBubbles.cancel();
   if (value) {
     rest(false);
@@ -372,7 +363,6 @@ $('edge-expand').onclick = () => api('edge-expand').catch(error => showMessage(e
 $('hide').onclick = () => api('hide').catch(error => showMessage(error.message));
 $('library-button').onclick = () => openSheet('library');
 function rest(value) {
-  if (angerInteraction?.protected) return;
   if (sleeping === value) return;
   sleeping = value;
   clearTimeout(happyTimer);
@@ -489,7 +479,7 @@ $('settings-form').onsubmit = async e => {
   try {
     const state = await api('settings', input);
     applySettings(state.settings);
-    document.title = settings.name + t(' · 桌面宠物');
+    document.title = t('克劳德 · 桌面宠物');
     $('settings').hidden = true;
     showMessage(t('好，我记住你的设置啦。'));
   } catch (err) {
@@ -497,59 +487,41 @@ $('settings-form').onsubmit = async e => {
   }
 };
 const bodyReactions = window.lunaBodyShortcuts.createReactions();
-angerInteraction = window.createAngerInteraction({
-  onStage: stage => {
-    if (viewStopped) return;
-    if (stage === 'angry' || stage === 'furious') {
-      cancelInfo();
-      heldReminder = feedback.getReminder() || heldReminder;
-      feedback.updateReminder(null);
-      sounds.reminder.pause();
-      window.lunaCharacter.react(stage);
-      clearTimeout(happyTimer);
-      $('pet').classList.remove('happy');
-      feedback.show(t(stage === 'angry' ? '哼，别一直戳这里啦。' : '你个变态！不理你了！'), 3100);
-      document.body.inert = stage === 'furious';
-      api('anger-mode', stage).catch(() => {});
-    } else if (stage === 'absent') {
-      document.body.inert = true;
-      api('anger-hide').catch(() => angerInteraction.returned());
-    } else if (stage === 'returned') {
-      document.body.inert = false;
-      bodyReactions.reset();
-      window.lunaCharacter.cancel();
-      window.lunaCharacter.react('happy');
-      returnSpeechUntil = Date.now() + 4500;
-      feedback.show(t('嘿嘿，我回来啦～'), 4500);
-      setTimeout(() => {
-        if (!viewStopped && !angerInteraction.protected && heldReminder) {
-          feedback.updateReminder(heldReminder);
-          heldReminder = null;
-        }
-      }, 4500);
-    } else {
-      document.body.inert = false;
-      if (heldReminder) {
-        feedback.updateReminder(heldReminder);
-        heldReminder = null;
-      }
-      api('anger-mode', 'normal').catch(() => {});
-    }
-  }
-});
-window.pet.onAbsence(value => {
-  if (!value) angerInteraction.returned();
-});
-// Keep the protected dialogue visible; only body clicks can add to the escalation counter.
-document.addEventListener(
-  'click',
+let wheelScale = null,
+  sizeQueue = Promise.resolve();
+$('pet').addEventListener(
+  'wheel',
   event => {
-    if (angerInteraction.protected && !event.target.closest('#pet')) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-    }
+    if (
+      viewStopped ||
+      settings?.pureMode ||
+      edgeState.collapsed ||
+      dragStart ||
+      panelsOpen() ||
+      wheel?.isOpen ||
+      !window.lunaCharacter.hitTest(event.clientX, event.clientY) ||
+      !Number.isFinite(event.deltaY) ||
+      !event.deltaY
+    )
+      return;
+    event.preventDefault();
+    const next = window.claudePetSize.next(wheelScale ?? settings.petScale, event.deltaY);
+    if (next === (wheelScale ?? settings.petScale)) return;
+    wheelScale = next;
+    sizeQueue = sizeQueue
+      .then(async () => {
+        if (viewStopped) return;
+        const state = await api('pet-scale', next);
+        if (!viewStopped) applySettings(state.settings);
+      })
+      .catch(error => {
+        if (!viewStopped) showMessage(error.message);
+      });
+    sizeQueue.finally(() => {
+      if (wheelScale === next) wheelScale = null;
+    });
   },
-  true
+  { passive: false }
 );
 function cancelInfo() {
   if (infoBubbles.active) {
@@ -559,8 +531,6 @@ function cancelInfo() {
 }
 // Clicking a body part only plays its reaction animation.
 function reactToBody(region) {
-  // Let the short angry reaction finish instead of replacing it on the next click.
-  if (angerInteraction.click(region)) return;
   if (viewStopped || !region) return;
   rest(false);
   cancelInfo();
@@ -569,7 +539,6 @@ function reactToBody(region) {
   clearTimeout(happyTimer);
   $('pet').classList.add('happy');
   happyTimer = setTimeout(() => $('pet').classList.remove('happy'), 1900);
-  if (reaction.annoyed) angerInteraction.trigger();
 }
 $('pet').onclick = event => {
   if (dragging) {
@@ -580,7 +549,7 @@ $('pet').onclick = event => {
   reactToBody(region);
 };
 $('pet').onpointerdown = e => {
-  if (e.button !== 0 || angerInteraction.protected) return;
+  if (e.button !== 0) return;
   dragStart = { x: e.screenX, y: e.screenY, clientX: e.clientX, clientY: e.clientY };
   syncDockHold();
   dragging = false;
@@ -638,7 +607,7 @@ $('pet').onpointercancel = endDrag;
 window.addEventListener('blur', endDrag);
 const grip = $('toolbar-drag');
 grip.onpointerdown = e => {
-  if (e.button !== 0 || angerInteraction.protected) return;
+  if (e.button !== 0) return;
   dragStart = { x: e.screenX, y: e.screenY, clientX: e.clientX, clientY: e.clientY };
   dragging = false;
   syncDockHold();
@@ -667,7 +636,7 @@ document.addEventListener(
 // The clean-mode flower drags like the toolbar grip; a click without moving opens the wheel above it.
 const flower = $('pure-flower');
 async function openFlowerWheel() {
-  if (viewStopped || angerInteraction.protected || document.body.inert || panelsOpen() || wheel.isOpen) return;
+  if (viewStopped || document.body.inert || panelsOpen() || wheel.isOpen) return;
   cancelInfo();
   lastPureLayout = true;
   const compact = innerHeight;
@@ -683,7 +652,7 @@ async function openFlowerWheel() {
 }
 let flowerPress = null;
 flower.onpointerdown = e => {
-  if (e.button !== 0 || angerInteraction.protected) return;
+  if (e.button !== 0) return;
   dragStart = { x: e.screenX, y: e.screenY, clientX: e.clientX, clientY: e.clientY, toolbar: true };
   dragging = false;
   flowerPress = { moved: false };
@@ -855,7 +824,7 @@ wheel = window.lunaWheel.createWheel({
 });
 $('pet').addEventListener('contextmenu', event => {
   event.preventDefault();
-  if (viewStopped || angerInteraction.protected || document.body.inert || settings?.pureMode || panelsOpen()) return;
+  if (viewStopped || document.body.inert || settings?.pureMode || panelsOpen()) return;
   endDrag();
   cancelInfo();
   wheel.show(event.clientX, event.clientY);
@@ -868,7 +837,7 @@ $('pet').addEventListener('contextmenu', event => {
     applyEdgeDock(s.edgeDock);
     window.lunaCharacter.load();
     rest(s.sleeping === true);
-    document.title = settings.name + t(' · 桌面宠物');
+    document.title = t('克劳德 · 桌面宠物');
     lifePaused = s.lifePaused === true;
     api('life-memory')
       .then(memory => {
@@ -905,5 +874,5 @@ window.addEventListener('luna-language-changed', () => {
   api('reminder-list')
     .then(items => reminderCount(items.filter(item => item.status !== 'done').length))
     .catch(() => {});
-  if (settings) document.title = settings.name + t(' · 桌面宠物');
+  if (settings) document.title = t('克劳德 · 桌面宠物');
 });

@@ -19,6 +19,7 @@ function createEdgeDock({
   delay = 5000,
   width = 280,
   height = 640,
+  getWidth = () => width,
   getHeight = () => height
 }) {
   let side = null,
@@ -40,6 +41,7 @@ function createEdgeDock({
     timer = null;
   }
   function fit() {
+    const width = getWidth();
     const area = getArea(bounds),
       { left, right } = horizontalLimits(area, width, getInset()),
       h = getHeight();
@@ -113,6 +115,7 @@ function createEdgeDock({
   function finishDrag() {
     const win = live();
     if (!win) return;
+    const width = getWidth();
     bounds = { ...win.getBounds(), width, height: getHeight() };
     const area = fit(),
       { left, right } = horizontalLimits(area, width, getInset());
@@ -134,7 +137,7 @@ function createEdgeDock({
       !stopped &&
       !collapsed &&
       !adjusting &&
-      Math.abs(next.width - width) <= 1 &&
+      Math.abs(next.width - getWidth()) <= 1 &&
       Math.abs(next.height - getHeight()) <= 1
     )
       bounds = { ...next };

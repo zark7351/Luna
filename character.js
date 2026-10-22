@@ -127,13 +127,10 @@
         smile: 'smile',
         shy: 'shy',
         happy: 'happy',
-        angry: 'angry',
-        furious: 'furious',
         pout: 'pout',
         sleepy: 'closed'
       };
       if (!Object.hasOwn(types, name) || stopped) return false;
-      if (['angry', 'furious'].includes(reaction) && !['angry', 'furious'].includes(name)) return true;
       cancel();
       if (pet.classList.contains('sleeping')) return true;
       reaction = types[name];
@@ -148,7 +145,7 @@
             { transform: 'translateY(-1.5%)', offset: 0.85 },
             { transform: 'translateY(0)' }
           ],
-          { duration: ['angry', 'furious', 'pout'].includes(reaction) ? 260 : 520, easing: 'ease-out' }
+          { duration: reaction === 'pout' ? 260 : 520, easing: 'ease-out' }
         );
       timers.push(
         setTimeout(
@@ -156,7 +153,7 @@
             reaction = null;
             draw();
           },
-          ['angry', 'furious'].includes(name) ? 3000 : name === 'reminder' ? 2400 : 1800
+          name === 'reminder' ? 2400 : 1800
         )
       );
       return true;
@@ -179,14 +176,18 @@
     reduced.addEventListener('change', motionChanged);
     window.addEventListener('pagehide', stop);
     // Clicks use the drawn frame's alpha, so the gaps between hair, tail and body pass through.
-    function hitRegion(clientX, clientY) {
+    function hitPoint(clientX, clientY) {
       if (stopped || !loaded.has(pose)) return null;
       const box = canvas.getBoundingClientRect(),
         x = Math.floor(((clientX - box.left) / box.width) * stage.width),
         y = Math.floor(((clientY - box.top) / box.height) * stage.height);
       if (x < 0 || x >= stage.width || y < 0 || y >= stage.height || ctx.getImageData(x, y, 1, 1).data[3] < 32)
         return null;
-      return window.lunaBodyShortcuts.regionAt(x, y, stage.center);
+      return { x, y };
+    }
+    function hitRegion(clientX, clientY) {
+      const point = hitPoint(clientX, clientY);
+      return point ? window.lunaBodyShortcuts.regionAt(point.x, point.y, stage.center) : null;
     }
     return {
       load,
@@ -195,6 +196,7 @@
       draw,
       stop,
       hitRegion,
+      hitTest: (x, y) => !!hitPoint(x, y),
       get expression() {
         return expression;
       },

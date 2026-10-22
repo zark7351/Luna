@@ -7,7 +7,7 @@
       http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; media-src 'self'; frame-src 'self'; connect-src 'none'"
     />
-    <title data-i18n="露娜 · 桌面宠物">露娜 · 桌面宠物</title>
+    <title data-i18n="克劳德 · 桌面宠物">克劳德 · 桌面宠物</title>
     <link rel="stylesheet" href="style.css" />
     <link rel="stylesheet" href="ui-effects.css" />
     <script src="translations.js"></script>
@@ -15,7 +15,14 @@
   </head>
   <body>
     <div id="companion">
-      <div id="bubble" class="interactive" role="group" aria-label="露娜消息" data-i18n-aria-label="露娜消息" hidden>
+      <div
+        id="bubble"
+        class="interactive"
+        role="group"
+        aria-label="克劳德消息"
+        data-i18n-aria-label="克劳德消息"
+        hidden
+      >
         <button id="bubble-body" type="button" data-ui-sound="none">
           <span id="bubble-message" aria-live="polite"></span></button
         ><button
@@ -34,8 +41,8 @@
       <button
         id="pet"
         class="interactive"
-        aria-label="点击身体和露娜互动，按住拖动露娜"
-        data-i18n-aria-label="点击身体和露娜互动，按住拖动露娜"
+        aria-label="点击身体和克劳德互动，按住拖动克劳德"
+        data-i18n-aria-label="点击身体和克劳德互动，按住拖动克劳德"
       ></button>
       <button
         id="pure-flower"
@@ -72,8 +79,8 @@
         class="petbar interactive"
         aria-hidden="true"
         role="group"
-        aria-label="露娜操作"
-        data-i18n-aria-label="露娜操作"
+        aria-label="克劳德操作"
+        data-i18n-aria-label="克劳德操作"
       >
         <span
           id="toolbar-drag"
@@ -132,10 +139,10 @@
         </button>
         <button
           id="edge-expand"
-          title="展开露娜"
-          data-i18n-title="展开露娜"
-          aria-label="展开露娜"
-          data-i18n-aria-label="展开露娜"
+          title="展开克劳德"
+          data-i18n-title="展开克劳德"
+          aria-label="展开克劳德"
+          data-i18n-aria-label="展开克劳德"
         >
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
         </button>
@@ -143,7 +150,7 @@
     </div>
     <dialog id="help" class="interactive" aria-labelledby="help-title">
       <header>
-        <h1 id="help-title"><span data-i18n="和露娜一起">和露娜一起</span></h1>
+        <h1 id="help-title"><span data-i18n="和克劳德一起">和克劳德一起</span></h1>
         <button
           id="help-close"
           title="关闭说明"
@@ -162,23 +169,23 @@
           <dt><span data-i18n="互动与移动">互动与移动</span></dt>
           <dd>
             <span
-              data-i18n="点击脑袋、胸部、手臂、禁区、腿或脚，她会播放对应的动画；连续点击胸部或禁区会生气。普通气泡点击关闭，按住角色可拖动位置；右键打开功能转盘。电脑连续 5 分钟没有键鼠操作，她会自动休息；恢复操作后自动唤醒。"
-              >点击脑袋、胸部、手臂、禁区、腿或脚，她会播放对应的动画；连续点击胸部或禁区会生气。普通气泡点击关闭，按住角色可拖动位置；右键打开功能转盘。电脑连续
+              data-i18n="点击脑袋、胸部或手臂，她会播放对应的动画。普通气泡点击关闭，按住角色可拖动位置；右键打开功能转盘。电脑连续 5 分钟没有键鼠操作，她会自动休息；恢复操作后自动唤醒。"
+              >点击脑袋、胸部或手臂，她会播放对应的动画。普通气泡点击关闭，按住角色可拖动位置；右键打开功能转盘。电脑连续
               5 分钟没有键鼠操作，她会自动休息；恢复操作后自动唤醒。</span
             >
           </dd>
           <dt><span data-i18n="功能转盘">功能转盘</span></dt>
           <dd>
             <span
-              data-i18n="右键点击露娜弹出功能转盘：收藏、截图、录屏、提醒、设置、纯净模式、陪伴互动、隐藏和退出。纯净模式下点击小花打开。方向键可切换，按 Esc 或点空白处关闭。"
-              >右键点击露娜弹出功能转盘：收藏、截图、录屏、提醒、设置、纯净模式、陪伴互动、隐藏和退出。纯净模式下点击小花打开。方向键可切换，按
+              data-i18n="右键点击克劳德弹出功能转盘：收藏、截图、录屏、提醒、设置、纯净模式、陪伴互动、隐藏和退出。纯净模式下点击小花打开。方向键可切换，按 Esc 或点空白处关闭。"
+              >右键点击克劳德弹出功能转盘：收藏、截图、录屏、提醒、设置、纯净模式、陪伴互动、隐藏和退出。纯净模式下点击小花打开。方向键可切换，按
               Esc 或点空白处关闭。</span
             >
           </dd>
           <dt><span data-i18n="拖来就能收藏">拖来就能收藏</span></dt>
           <dd>
-            <span data-i18n="将文件、文字或网页链接拖到露娜身上。收藏夹按类型显示，图片和视频可以预览。"
-              >将文件、文字或网页链接拖到露娜身上。收藏夹按类型显示，图片和视频可以预览。</span
+            <span data-i18n="将文件、文字或网页链接拖到克劳德身上。收藏夹按类型显示，图片和视频可以预览。"
+              >将文件、文字或网页链接拖到克劳德身上。收藏夹按类型显示，图片和视频可以预览。</span
             >
           </dd>
           <dt><span data-i18n="截图收藏">截图收藏</span></dt>
@@ -207,17 +214,17 @@
           <dt><span data-i18n="提醒">提醒</span></dt>
           <dd>
             <span
-              data-i18n="铃铛里填写内容，选择定时或时长倒计时，到点气泡持续显示，点击右侧勾号完成，点击消息打开提醒面板；未完成时每 15 秒响一次，也可在提醒窗口完成或延后 5 分钟；设置中的声音开关控制所有声音。关闭露娜时不会提醒，重启或休眠恢复后会补提示。"
+              data-i18n="铃铛里填写内容，选择定时或时长倒计时，到点气泡持续显示，点击右侧勾号完成，点击消息打开提醒面板；未完成时每 15 秒响一次，也可在提醒窗口完成或延后 5 分钟；设置中的声音开关控制所有声音。关闭克劳德时不会提醒，重启或休眠恢复后会补提示。"
               >铃铛里填写内容，选择定时或时长倒计时，到点气泡持续显示，点击右侧勾号完成，点击消息打开提醒面板；未完成时每
               15 秒响一次，也可在提醒窗口完成或延后 5
-              分钟；设置中的声音开关控制所有声音。关闭露娜时不会提醒，重启或休眠恢复后会补提示。</span
+              分钟；设置中的声音开关控制所有声音。关闭克劳德时不会提醒，重启或休眠恢复后会补提示。</span
             >
           </dd>
           <dt><span data-i18n="设置与隐藏">设置与隐藏</span></dt>
           <dd>
             <span
-              data-i18n="右键托盘图标进入设置，可修改名字、称呼和置顶。向下箭头隐藏露娜，双击系统托盘图标可再次显示。"
-              >右键托盘图标进入设置，可修改名字、称呼和置顶。向下箭头隐藏露娜，双击系统托盘图标可再次显示。</span
+              data-i18n="右键托盘图标进入设置，可修改名字、称呼和置顶。向下箭头隐藏克劳德，双击系统托盘图标可再次显示。"
+              >右键托盘图标进入设置，可修改名字、称呼和置顶。向下箭头隐藏克劳德，双击系统托盘图标可再次显示。</span
             >
           </dd>
         </dl>
@@ -320,7 +327,7 @@
           ><span><span data-i18n="纯净模式">纯净模式</span></span
           ><input type="checkbox" id="pure-mode" role="switch"
         /></label>
-        <label class="check" title="露娜会主动打招呼、关心你" data-i18n-title="露娜会主动打招呼、关心你"
+        <label class="check" title="克劳德会主动打招呼、关心你" data-i18n-title="克劳德会主动打招呼、关心你"
           ><span><span data-i18n="陪伴互动">陪伴互动</span></span
           ><input type="checkbox" id="companion-enabled" role="switch"
         /></label>
@@ -402,10 +409,10 @@
     <script src="weather-ui.js"></script>
     <script src="body-shortcuts.js"></script>
     <script src="shortcut-bubbles.js"></script>
+    <script src="pet-size.js"></script>
     <script src="character-assets.js"></script>
     <script src="character.js"></script>
     <script src="pet-feedback.js"></script>
-    <script src="anger-interaction.js"></script>
     <script src="life.js"></script>
     <script src="wheel.js"></script>
     <script src="renderer.js"></script>

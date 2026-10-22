@@ -6,7 +6,7 @@ async function check({ win, libraryWin, stateFile, trayMenu }) {
     await openSettings();document.querySelector('#language').value='en';document.querySelector('#settings-form').requestSubmit();
     const until=Date.now()+5000;while(!document.querySelector('#settings').hidden&&Date.now()<until)await new Promise(r=>setTimeout(r,30));
     if(document.documentElement.lang!=='en'||document.querySelector('#library-button').title!=='Collection')throw Error('English pet toolbar');
-    if(document.querySelector('[data-region=head]').textContent!=='Head'||document.querySelector('[data-action=settings] span').textContent!=='Settings')throw Error('English body settings');
+    if(!document.querySelector('#help [data-i18n^="点击脑袋"]').textContent.startsWith('Click her head, chest or arms'))throw Error('English interaction help');
     for(const id of ['library','reminder','recording'])if(document.querySelector('#'+id+'-frame').contentDocument.documentElement.lang!=='en')throw Error('English panel '+id);
     await openSettings();if(document.querySelector('#language').value!=='en'||document.querySelector('#settings h1').textContent!=='Settings')throw Error('English settings reopen');
   })()`);

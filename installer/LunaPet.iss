@@ -2,20 +2,20 @@
   #define AppVersion "1.0.0"
 #endif
 #ifndef SourceDir
-  #define SourceDir "..\..\LunaPet-Windows"
+  #define SourceDir "..\..\Claude-Windows"
 #endif
 #ifndef ReleaseDir
-  #define ReleaseDir "..\..\LunaPet-Release"
+  #define ReleaseDir "..\..\Claude-Release"
 #endif
 
 [Setup]
 AppId={code:ReleaseAppId}
-AppName=露娜
+AppName=克劳德
 AppVersion={#AppVersion}
-AppVerName=露娜 {#AppVersion}
-AppPublisher=LunaPet
-DefaultDirName={localappdata}\Programs\LunaPet
-DefaultGroupName=露娜
+AppVerName=克劳德 {#AppVersion}
+AppPublisher=Claude
+DefaultDirName={localappdata}\Programs\Claude
+DefaultGroupName=克劳德
 DisableProgramGroupPage=yes
 DisableDirPage=no
 PrivilegesRequired=lowest
@@ -23,12 +23,12 @@ ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0.17763
 OutputDir={#ReleaseDir}
-OutputBaseFilename=LunaPet-{#AppVersion}-Setup
-SetupIconFile=..\assets\luna.ico
-UninstallDisplayIcon={app}\LunaPet.exe
+OutputBaseFilename=Claude-{#AppVersion}-Setup
+SetupIconFile=..\assets\claude.ico
+UninstallDisplayIcon={app}\Claude.exe
 VersionInfoVersion={#AppVersion}
-VersionInfoProductName=露娜
-VersionInfoDescription=露娜安装程序
+VersionInfoProductName=克劳德
+VersionInfoDescription=克劳德安装程序
 WizardStyle=modern
 Compression=lzma2/normal
 SolidCompression=yes
@@ -51,11 +51,11 @@ Name: "desktopicon"; Description: "创建桌面快捷方式"; GroupDescription: 
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "state.json,state.json.tmp,collection.json,reminders.json,collection-files\*,*.log"
 
 [Icons]
-Name: "{userprograms}\露娜\露娜"; Filename: "{app}\LunaPet.exe"; WorkingDir: "{app}"; AppUserModelID: "LunaPet.Desktop"; Check: not IsTestMode
-Name: "{userdesktop}\露娜"; Filename: "{app}\LunaPet.exe"; WorkingDir: "{app}"; AppUserModelID: "LunaPet.Desktop"; Tasks: desktopicon; Check: not IsTestMode
+Name: "{userprograms}\克劳德\克劳德"; Filename: "{app}\Claude.exe"; WorkingDir: "{app}"; AppUserModelID: "Claude.Companion.Desktop"; Check: not IsTestMode
+Name: "{userdesktop}\克劳德"; Filename: "{app}\Claude.exe"; WorkingDir: "{app}"; AppUserModelID: "Claude.Companion.Desktop"; Tasks: desktopicon; Check: not IsTestMode
 
 [Run]
-Filename: "{app}\LunaPet.exe"; WorkingDir: "{app}"; Description: "启动露娜"; Flags: nowait postinstall skipifsilent; Check: not IsTestMode
+Filename: "{app}\Claude.exe"; WorkingDir: "{app}"; Description: "启动克劳德"; Flags: nowait postinstall skipifsilent; Check: not IsTestMode
 
 [Code]
 function IsTestMode: Boolean;
@@ -66,7 +66,7 @@ end;
 function ReleaseAppId(Param: String): String;
 begin
   if IsTestMode then
-    Result := 'LunaPet-Isolated-Installer-Test'
+    Result := 'Claude-Isolated-Installer-Test'
   else
     Result := '{1BE771C4-C431-4C6B-93C8-22C726B8477A}';
 end;

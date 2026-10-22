@@ -45,6 +45,23 @@ module.exports = async function runDesktopSmoke(live) {
   let smokeStage = 'startup';
   try {
     await new Promise(r => setTimeout(r, 1200));
+    if (process.argv.includes('--appearance-test')) {
+      console.log(JSON.stringify(await require('./appearance-smoke').check({ win, edgeDock, restore, stateFile })));
+      app.exit(0);
+      return;
+    }
+    if (process.argv.includes('--character-test')) {
+      await require('./character-smoke').checkCharacter(win, app.getPath('temp'), '2d-idle');
+      const interaction = await require('./body-shortcut-smoke').check(
+        win,
+        app.getPath('temp'),
+        stateFile,
+        live.systemStats
+      );
+      console.log(JSON.stringify({ character: '2d-idle', interaction }));
+      app.exit(0);
+      return;
+    }
     if (process.argv.includes('--edge-dock-test')) {
       console.log(
         JSON.stringify(
@@ -72,22 +89,7 @@ module.exports = async function runDesktopSmoke(live) {
       live.trayMenu.items.at(-1).click();
       return;
     }
-    if (process.argv.includes('--anger-sequence-test')) {
-      await require('./character-smoke').checkCharacter(win, app.getPath('temp'), 'anger-preview');
-      console.log(
-        JSON.stringify(
-          await require('./anger-smoke')({
-            win,
-            trayMenu: () => live.trayMenu,
-            phase: () => live.angerPhase,
-            restore,
-            output: app.getPath('temp')
-          })
-        )
-      );
-      app.exit(0);
-      return;
-    }
+    const appearance = await require('./appearance-smoke').check({ win, edgeDock, restore, stateFile });
     win.hide();
     live.trayMenu.getMenuItemById('settings').click();
     await new Promise(r => setTimeout(r, 200));
@@ -96,6 +98,7 @@ module.exports = async function runDesktopSmoke(live) {
     const result = await win.webContents.executeJavaScript(
       `(async()=>{const s=await window.pet.call('state');if(!s.ok||'history' in s.value||document.querySelector('#chat-form'))throw Error('chat remains');openSettings();await new Promise(r=>setTimeout(r,200));if(document.querySelector('#settings').hidden)throw Error('settings');document.querySelector('#settings-close').click();document.querySelector('#pet').click();if(!document.querySelector('#pet').classList.contains('happy'))throw Error('expression');return {settings:true,expression:true,bridge:true,noChat:true};})()`
     );
+    result.appearance = appearance;
     const migrated = JSON.parse(fs.readFileSync(stateFile, 'utf8'));
     if (
       Object.hasOwn(migrated, 'key') ||
@@ -250,13 +253,6 @@ module.exports = async function runDesktopSmoke(live) {
     result.helpClose = true;
     result.pureMode = await require('./pure-mode-smoke')({ win, restore, stateFile, output: app.getPath('temp') });
     result.bubbleInteraction = await require('./bubble-smoke').checkOrdinary(win);
-    result.angerSequence = await require('./anger-smoke')({
-      win,
-      trayMenu: () => live.trayMenu,
-      phase: () => live.angerPhase,
-      restore,
-      output: app.getPath('temp')
-    });
     result.bodyShortcuts = await require('./body-shortcut-smoke').check(
       win,
       app.getPath('temp'),
@@ -267,7 +263,7 @@ module.exports = async function runDesktopSmoke(live) {
     result.character = {
       animatedIdle: true,
       transparent: true,
-      centredTorso: true,
+      centredCharacter: true,
       reactionPoses: true,
       noWardrobe: true
     };

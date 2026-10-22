@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self' data:; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'none'"
+    />
+    <title>2D 露娜 · 托腮待机</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #eeedf3;
+        color: #393443;
+        font:
+          14px 'Segoe UI',
+          sans-serif;
+      }
+      main {
+        min-height: 100vh;
+        display: grid;
+        place-content: center;
+        gap: 18px;
+        padding: 24px;
+      }
+      .stage {
+        display: grid;
+        place-items: center;
+        border-radius: 24px;
+        background: repeating-conic-gradient(#e1dfe8 0% 25%, #f1eff5 0% 50%) 0 / 32px 32px;
+      }
+      canvas {
+        display: block;
+        width: min(760px, 90vw);
+        height: auto;
+      }
+      footer {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+      }
+      button,
+      select {
+        border: 1px solid #d3cddf;
+        border-radius: 10px;
+        padding: 8px 13px;
+        color: inherit;
+        background: #fff;
+        font: inherit;
+      }
+      p {
+        margin: 0;
+        text-align: center;
+        color: #756c80;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="stage" id="stage">
+        <canvas id="pet" width="768" height="584" aria-label="2D 露娜眨眼、动耳朵和摇尾巴待机动画"></canvas>
+      </div>
+      <footer>
+        <button id="toggle" type="button">暂停</button>
+        <select id="background" aria-label="预览背景">
+          <option value="grid">格纹背景</option>
+          <option value="light">浅色背景</option>
+          <option value="dark">深色背景</option>
+        </select>
+      </footer>
+      <p>8 秒循环 · 眨眼 / 耳朵轻动 / 缓慢摇尾巴</p>
+    </main>
+    <script src="idle.js"></script>
+  </body>
+</html>

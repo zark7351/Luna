@@ -6,9 +6,9 @@ const { dateText, statsText, weatherText } = require('../shortcut-bubbles');
 test('旧设置默认中文，语言经校验与重启迁移保持，自定义名字不翻译', () => {
   assert.equal(validate({}).language, 'zh-CN');
   assert.equal(validate({ language: 'invalid' }).language, 'zh-CN');
-  const settings = validate({ language: 'en', name: '露娜', nickname: '设置' });
+  const settings = validate({ language: 'en', name: '小克', nickname: '设置' });
   assert.deepEqual(migrateState({ settings }).settings, settings);
-  assert.equal(settings.name, '露娜');
+  assert.equal(settings.name, '小克');
   assert.equal(settings.nickname, '设置');
   assert.equal(translate('<img src=x>', 'en'), '<img src=x>');
 });

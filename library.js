@@ -316,7 +316,7 @@ function render(newIds = new Set(), enter = false) {
             item.kind === 'file'
               ? item.storage === 'reference'
                 ? t('移除这条收藏？不会删除原文件。')
-                : t('删除这条收藏？露娜保存的副本也会删除。')
+                : t('删除这条收藏？克劳德保存的副本也会删除。')
               : t('删除这条收藏？');
           if (!confirm(message)) return;
           try {
@@ -342,7 +342,7 @@ function render(newIds = new Set(), enter = false) {
 }
 async function cleanupOld() {
   const message = t(
-    '清理 30 天前、未置顶的 {count} 条收藏？\n露娜保存的截图、录屏等副本会一起删除；拖进来的原文件不受影响。',
+    '清理 30 天前、未置顶的 {count} 条收藏？\n克劳德保存的截图、录屏等副本会一起删除；拖进来的原文件不受影响。',
     { count: staleCount }
   );
   if (!confirm(message)) return;

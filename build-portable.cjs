@@ -5,7 +5,7 @@ try {
   if (process.platform !== 'win32') throw Error('Please build the Windows portable app on Windows.');
   const source = __dirname;
   const runtime = path.join(source, 'node_modules', 'electron', 'dist');
-  const output = path.resolve(source, '..', 'LunaPet-Windows');
+  const output = path.resolve(source, '..', 'Claude-Windows');
   const appDir = path.join(output, 'resources', 'app');
   const files = [
     'translations.js',
@@ -40,6 +40,8 @@ try {
     'ui-sounds.js',
     'preload.js',
     'core.js',
+    'pet-size.js',
+    'appearance-smoke.js',
     'idle.js',
     'reminders.js',
     'reminder-preload.js',
@@ -65,8 +67,6 @@ try {
     'file-actions.js',
     'link-preview.js',
     'renderer.js',
-    'anger-interaction.js',
-    'anger-smoke.js',
     'character.js',
     'character-assets.js',
     'CHARACTER-ASSETS.md',
@@ -98,7 +98,7 @@ try {
   }
   fs.mkdirSync(output, { recursive: true });
   for (const entry of fs.readdirSync(runtime)) {
-    const targetName = entry === 'electron.exe' ? 'LunaPet.exe' : entry;
+    const targetName = entry === 'electron.exe' ? 'Claude.exe' : entry;
     fs.cpSync(path.join(runtime, entry), path.join(output, targetName), { recursive: true, force: true });
   }
   fs.mkdirSync(appDir, { recursive: true });
@@ -110,8 +110,15 @@ try {
       fs.copyFileSync(path.join(ffmpeg, name), path.join(appDir, 'tools', name));
   fs.copyFileSync(path.join(source, 'native-recording.js'), path.join(appDir, 'native-recording.js'));
   fs.copyFileSync(path.join(source, 'FFMPEG-NOTICE.md'), path.join(appDir, 'tools', 'FFMPEG-NOTICE.md'));
-  // Remove the obsolete online transport from an existing portable output.
-  for (const retired of ['network.js', 'info-ui.js', 'preview.png', 'smoke-result.json'])
+  // Remove retired runtime files from an existing portable output.
+  for (const retired of [
+    'network.js',
+    'info-ui.js',
+    'preview.png',
+    'smoke-result.json',
+    'anger-interaction.js',
+    'anger-smoke.js'
+  ])
     fs.rmSync(path.join(appDir, retired), { force: true });
   for (const name of files) fs.copyFileSync(path.join(source, name), path.join(appDir, name));
   fs.mkdirSync(path.join(appDir, 'installer'), { recursive: true });
@@ -120,32 +127,32 @@ try {
   fs.copyFileSync(path.join(source, 'README.md'), path.join(output, '使用说明.md'));
   const version = require('./package.json').version;
   run(ensureRcedit(), [
-    path.join(output, 'LunaPet.exe'),
+    path.join(output, 'Claude.exe'),
     '--set-icon',
-    path.join(source, 'assets', 'luna.ico'),
+    path.join(source, 'assets', 'claude.ico'),
     '--set-file-version',
     version,
     '--set-product-version',
     version,
     '--set-version-string',
     'ProductName',
-    '露娜',
+    '克劳德',
     '--set-version-string',
     'FileDescription',
-    '露娜 ' + version + ' 桌面宠物',
+    '克劳德 ' + version + ' 桌面宠物',
     '--set-version-string',
     'OriginalFilename',
-    'LunaPet.exe',
+    'Claude.exe',
     '--set-version-string',
     'InternalName',
-    'LunaPet',
+    'Claude',
     '--set-requested-execution-level',
     'asInvoker'
   ]);
-  console.log(`Build complete: ${path.join(output, 'LunaPet.exe')}`);
+  console.log(`Build complete: ${path.join(output, 'Claude.exe')}`);
 } catch (error) {
   console.error(`Build failed: ${error.message}`);
   if (['EBUSY', 'EPERM', 'EACCES'].includes(error.code))
-    console.error('Close the running LunaPet portable app and retry.');
+    console.error('Close the running Claude companion portable app and retry.');
   process.exitCode = 1;
 }

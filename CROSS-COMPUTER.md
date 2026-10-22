@@ -9,6 +9,7 @@
 ```powershell
 git clone https://github.com/zark7351/Luna.git
 cd Luna
+git switch feature-claude
 npm ci
 node node_modules/electron/install.js
 npm test
@@ -19,7 +20,7 @@ Electron 运行时下载依赖网络。如果下载失败，不要从其他来�
 
 对新对话说：
 
-> 这是露娜 Windows 桌面宠物项目。请先读取 AGENTS.md、README.md、HANDOFF.md 和 ROADMAP.md，检查 Git 状态，总结当前实现与待办，再按我的本次要求继续。完成后更新交接文档。
+> 这是 Claude／克劳德（小克）Windows 桌面宠物项目，当前开发分支 feature-claude。请先读取 AGENTS.md、README.md、HANDOFF.md 和 ROADMAP.md，检查 Git 状态，总结当前实现与待办，再按我的本次要求继续。完成后更新交接文档。
 
 ## 每次换机前后
 
@@ -27,6 +28,7 @@ Electron 运行时下载依赖网络。如果下载失败，不要从其他来�
 
 ```powershell
 git status
+git switch feature-claude
 git pull --ff-only
 ```
 
@@ -50,12 +52,12 @@ git push
 node build-portable.cjs
 ```
 
-输出位于仓库同级的 LunaPet-Windows。开发者通过 Git 传源码，运行时和便携 exe 重新生成。角色素材与 package-lock.json 已纳入源码。
+输出位于仓库同级的 `Claude-Windows/Claude.exe`。开发者通过 Git 传源码，运行时和便携 exe 重新生成。角色原图、2D 动画源代码、运行图集与 package-lock.json 已纳入源码；PNG 全帧与 APNG 母版不提交，可按 `design/luna-2d/idle/README.md` 重建。
 
-露娜 1.0 安装包执行 `node build-installer.cjs`，输出到仓库同级 `LunaPet-Release`；使用时无需 Node.js。首次开发构建会下载固定版本并校验 SHA256 的官方 rcedit / Inno Setup 工具到 `.build-tools`，该缓存不随 Git 同步。安装规则与工具来源见 [安装包指南](installer/README.md)。安装版与便携版保持同一用户数据目录，卸载不删除个人数据。
+Claude 1.0 安装包执行 `node build-installer.cjs`，输出到仓库同级 `Claude-Release`；本轮只验证了便携版，安装包尚未重建。使用时无需 Node.js。首次开发构建会下载固定版本并校验 SHA256 的官方 rcedit / Inno Setup 工具到 `.build-tools`，该缓存不随 Git 同步。安装规则与工具来源见 [安装包指南](installer/README.md)。安装版与便携版继续使用兼容旧版的 `LunaPet` 用户数据目录，卸载不删除个人数据。
 
 该 Node.js 入口不受 PowerShell 的 `.ps1` 执行策略影响，无需管理员权限或调整策略。如果 npm.ps1 也被拦截，可使用 `npm.cmd ci`、`npm.cmd test` 和 `npm.cmd start`。
 
 ## 哪些不随 Git 同步
 
-宠物个人设置与位置、node_modules、便携 exe、Codex 本地聊天记录和电脑级工具配置。项目交接只保存开发背景和测试结论。当前版本以本地运行为主，网页卡片预览按用户要求匿名联网；天气恢复为按点击查询，城市可搜索或手动点击 IP 定位，不保存公网 IP、不持续跟踪；天气缓存保存在用户数据目录。日期/时间、CPU/内存/GPU 信息通过配置的身体部位点击后显示气泡，来自本机，系统读数不保存、不上传；不需要 API Key，也不保存聊天记录。
+宠物个人设置与位置、node_modules、便携 exe、Codex 本地聊天记录和电脑级工具配置。项目交接只保存开发背景和测试结论。当前版本以本地运行为主，网页卡片预览按用户要求匿名联网；天气按需查询，城市可搜索或手动点击 IP 定位，不保存公网 IP、不持续跟踪；天气缓存保存在用户数据目录。日期/时间、CPU/内存/GPU 读取代码保留，目前没有身体点击入口；普通点击只做反应，滚轮缩放为 60%–180%。系统读数不保存、不上传；不需要 API Key，也不保存聊天记录。

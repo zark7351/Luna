@@ -1,13 +1,13 @@
-// Q-version Luna is a set of looping poses. Each pose is one WebP atlas of equal-sized transparent frames,
+// Luna is a set of looping poses. Each pose is one WebP atlas of equal-sized transparent frames,
 // exported by design/chibi/build-atlas.py. Poses that have no art yet fall back to idle.
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();
   else root.lunaCharacterAssets = factory();
 })(typeof window === 'object' ? window : globalThis, () => {
-  // Frame size in atlas pixels; the body centre is where the torso sits, the tail extends to the left.
-  const stage = Object.freeze({ width: 270, height: 332, center: 165 });
+  // The 2D leaning portrait keeps its landscape aspect ratio; cropped body parts have no hit region.
+  const stage = Object.freeze({ width: 384, height: 292, center: 228 });
   const poses = {
-    idle: { file: 'chibi/idle.webp', frames: 156, columns: 12, fps: 16, loop: 'loop' }
+    idle: { file: 'luna-2d/idle.webp', frames: 192, columns: 12, fps: 24, loop: 'loop' }
   };
   // Expressions requested by the app map to poses; missing poses play idle with a small hop.
   const expressionPoses = Object.freeze({
@@ -19,9 +19,7 @@
     smile: 'happy',
     wink: 'happy',
     shy: 'shy',
-    angry: 'angry',
-    furious: 'angry',
-    pout: 'angry'
+    pout: 'idle'
   });
   function validatePose(pose) {
     if (

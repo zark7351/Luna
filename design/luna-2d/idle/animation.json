@@ -1,0 +1,24 @@
+{
+  "reference": "../default-pose.png",
+  "source": "base-transparent.png",
+  "closedEyes": "blink-closed-source.png",
+  "width": 768,
+  "height": 584,
+  "fps": 24,
+  "frames": 192,
+  "durationSeconds": 8,
+  "loop": true,
+  "effects": [
+    "eyelid-blink",
+    "ear-twitch",
+    "local-tail-sway"
+  ],
+  "blinkStartSeconds": [
+    1.65,
+    5.1,
+    5.55
+  ],
+  "faceAndHandsFixed": true,
+  "loopSeamIdentical": true,
+  "firstFrameSha256": "707de0eec20cd9737cb686e1e25e2084a7c8388ec04685819ac93ef7175b00cf"
+}

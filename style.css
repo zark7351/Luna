@@ -1,4 +1,5 @@
 :root {
+  --pet-width: 256px;
   color-scheme: light;
   font-family: 'Microsoft YaHei UI', 'Segoe UI', sans-serif;
   color: #4a3830;
@@ -10,8 +11,8 @@
 body {
   position: relative;
   margin: 0;
-  width: 280px;
-  height: 640px;
+  width: 100vw;
+  height: 100vh;
   overflow: hidden;
   background: transparent;
   user-select: none;
@@ -37,9 +38,9 @@ select:focus-visible {
   display: none !important;
 }
 #companion {
-  --feedback-bottom: 274px;
+  --feedback-bottom: calc(495px - var(--pet-width) * 292 / 384);
   position: absolute;
-  left: 20px;
+  left: calc(50% - 120px);
   bottom: 17px;
   width: 240px;
   height: 548px;
@@ -67,13 +68,13 @@ select:focus-visible {
   overflow: hidden;
   pointer-events: auto;
 }
-/* Q-version Luna: a 270 x 332 frame shown at 180 x 221 DIP, torso centred in the 280 DIP window. */
+/* 2D leaning portrait: keep the entire 384 x 292 frame and its transparent animation margins. */
 #pet {
   position: absolute;
   bottom: 43px;
-  left: 10px;
-  width: 180px;
-  height: 221px;
+  left: calc(120px - var(--pet-width) / 2);
+  width: var(--pet-width);
+  height: calc(var(--pet-width) * 292 / 384);
   padding: 0;
   pointer-events: auto;
   transform-origin: 50% 100%;

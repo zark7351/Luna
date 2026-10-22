@@ -3,18 +3,18 @@ const test = require('node:test'),
   fs = require('node:fs'),
   path = require('node:path');
 const { trayBitmap, APP_ID } = require('../app-branding');
-test('托盘是抗锯齿橘色空心圆，圆心与边角透明，Windows BGRA 顺序正确', () => {
+test('托盘使用十四瓣花饰，圆心深棕、边角透明且边缘抗锯齿', () => {
   const data = trayBitmap(),
     pixel = (x, y) => [...data.subarray((y * 32 + x) * 4, (y * 32 + x + 1) * 4)];
-  assert.deepEqual(pixel(16, 16), [0, 0, 0, 0]);
+  assert.deepEqual(pixel(16, 16), [20, 26, 42, 255]);
   assert.deepEqual(pixel(0, 0), [0, 0, 0, 0]);
-  assert.deepEqual(pixel(16, 3), [40, 120, 232, 255]);
+  assert.ok(pixel(16, 3)[3] > 0);
   assert.ok(Array.from(data).some((alpha, index) => index % 4 === 3 && alpha > 0 && alpha < 255));
   assert.throws(() => trayBitmap(3));
-  assert.equal(APP_ID, 'LunaPet.Desktop');
+  assert.equal(APP_ID, 'Claude.Companion.Desktop');
 });
 test('Windows 头像 ICO 有七种有效 PNG 尺寸，版本号与锁文件同步', () => {
-  const data = fs.readFileSync(path.join(__dirname, '..', 'assets', 'luna.ico')),
+  const data = fs.readFileSync(path.join(__dirname, '..', 'assets', 'claude.ico')),
     sizes = [16, 24, 32, 48, 64, 128, 256];
   assert.equal(data.readUInt16LE(2), 1);
   assert.equal(data.readUInt16LE(4), sizes.length);

@@ -19,6 +19,8 @@ const i18n = require('./i18n');
 const t = text => i18n.translate(text, state?.settings.language);
 const fs = require('node:fs');
 const path = require('node:path');
+const petSize = require('./pet-size');
+app.setName('Claude');
 const { APP_ID, appIcon, createTrayIcon } = require('./app-branding');
 if (process.platform === 'win32') app.setAppUserModelId(APP_ID);
 const { pathToFileURL } = require('node:url');
@@ -57,6 +59,12 @@ protocol.registerSchemesAsPrivileged([
 ]);
 const smoke = process.argv.includes('--smoke-test');
 if (smoke) app.setPath('userData', path.join(app.getPath('temp'), 'lunapet-smoke-' + process.pid));
+else {
+  // Keep existing collections and settings across the product rename.
+  const directory = path.join(app.getPath('appData'), 'LunaPet');
+  fs.mkdirSync(directory, { recursive: true });
+  app.setPath('userData', directory);
+}
 let recording,
   win,
   libraryWin,
@@ -112,21 +120,18 @@ function setPureLayout(expanded = false) {
     height = pureExpanded ? WINDOW_HEIGHT : 128,
     bottom = anchor.y + anchor.height;
   win.setBounds({
-    x: Math.round(clampHorizontal(anchor.x, area, WINDOW_WIDTH, pureExpanded ? 0 : TOOLBAR_INSET)),
+    x: Math.round(clampHorizontal(anchor.x, area, windowWidth(), pureExpanded ? 0 : TOOLBAR_INSET)),
     y: Math.round(Math.max(area.y, Math.min(bottom - height, area.y + area.height - height))),
-    width: WINDOW_WIDTH,
+    width: windowWidth(),
     height
   });
   edgeDock?.noteMove(win.getBounds());
   if (!pureExpanded) pureAnchor = win.getBounds();
 }
-let trayMenu,
-  angerPhase = 'normal',
-  absenceTimer = null,
-  angerWatchdog = null;
-const angerLocked = () => ['angry', 'furious', 'absent'].includes(angerPhase);
+const windowWidth = () => (state?.settings.pureMode ? WINDOW_WIDTH : petSize.windowWidth(state?.settings.petScale));
+let trayMenu;
 function openPetPanel(name) {
-  if (quitting || angerLocked() || !liveWindow()) return;
+  if (quitting || !liveWindow()) return;
   restore();
   win.webContents.send('panel-open', name);
 }
@@ -221,11 +226,11 @@ function publicState() {
 }
 function safePosition(x, y) {
   const a = screen.getDisplayNearestPoint({
-    x: Math.round(x + WINDOW_WIDTH / 2),
+    x: Math.round(x + windowWidth() / 2),
     y: Math.round(y + (liveWindow() ? win.getBounds().height : state?.settings.pureMode ? 128 : WINDOW_HEIGHT) / 2)
   }).workArea;
   return [
-    Math.round(clampHorizontal(x, a, WINDOW_WIDTH, petPanelsOpen ? 0 : TOOLBAR_INSET)),
+    Math.round(clampHorizontal(x, a, windowWidth(), petPanelsOpen ? 0 : TOOLBAR_INSET)),
     Math.round(
       clamp(
         y,
@@ -254,15 +259,20 @@ function allowFullscreen(contents, permission) {
         contents.getURL() === pathToFileURL(path.join(__dirname, 'library.html')).href))
   );
 }
+function hideToBackground() {
+  drag = null;
+  for (const current of [win, libraryWin]) if (current && !current.isDestroyed()) current.hide();
+  if (liveWindow()) win.setSkipTaskbar(true);
+}
 function restore() {
-  if (angerLocked() || !liveWindow()) return;
+  if (!liveWindow()) return;
+  win.setSkipTaskbar(false);
   edgeDock?.expand();
   win.setIgnoreMouseEvents(false);
   win.show();
   win.focus();
 }
 async function showLibrary(view) {
-  if (angerLocked()) return;
   const initial =
     view && ['all', 'media', 'files', 'text', 'links'].includes(view.tab)
       ? { tab: view.tab, query: typeof view.query === 'string' ? view.query.slice(0, 300) : '' }
@@ -280,7 +290,7 @@ async function showLibrary(view) {
     minWidth: 560,
     minHeight: 400,
     frame: false,
-    title: '露娜收藏夹',
+    title: '克劳德收藏夹',
     icon: appIcon,
     backgroundColor: '#fffbf9',
     show: false,
@@ -296,7 +306,7 @@ async function showLibrary(view) {
   current.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   current.webContents.on('will-navigate', e => e.preventDefault());
   current.once('ready-to-show', () => {
-    if (!angerLocked() && !current.isDestroyed()) current.show();
+    if (!current.isDestroyed()) current.show();
   });
   current.on('closed', () => {
     if (libraryWin === current) libraryWin = null;
@@ -325,7 +335,7 @@ async function showReminders() {
 function presentReminders() {
   if (quitting || reminderPauses.size) return;
   clearTimeout(reminderAlertTimer);
-  if (angerLocked() || screenshot?.isActive() || recording?.isActive()) {
+  if (screenshot?.isActive() || recording?.isActive()) {
     reminderAlertTimer = setTimeout(presentReminders, 500);
     return;
   }
@@ -346,7 +356,7 @@ else {
         stateFile,
         JSON.stringify({
           settings: {
-            name: '露娜',
+            name: '克劳德',
             nickname: '',
             top: true,
             online: true,
@@ -398,10 +408,10 @@ else {
       : createWeather({ directory: app.getPath('userData'), fetch: (...args) => net.fetch(...args) });
     protocol.handle('luna-media', request => mediaResponse(request, collection));
     const area = screen.getPrimaryDisplay().workArea;
-    const p = state.position || [area.x + area.width - WINDOW_WIDTH - 30, area.y + area.height - WINDOW_HEIGHT - 20];
+    const p = state.position || [area.x + area.width - windowWidth() - 30, area.y + area.height - WINDOW_HEIGHT - 20];
     const [x, y] = safePosition(Number(p[0]) || 0, Number(p[1]) || 0);
     win = new BrowserWindow({
-      width: WINDOW_WIDTH,
+      width: windowWidth(),
       height: state.settings.pureMode ? 128 : WINDOW_HEIGHT,
       x,
       y,
@@ -426,7 +436,7 @@ else {
     win.on('close', event => {
       if (!quitting) {
         event.preventDefault();
-        if (liveWindow()) win.hide();
+        hideToBackground();
       }
     });
     configureAudio(win);
@@ -435,6 +445,7 @@ else {
       getWindow: () => win,
       getArea: bounds => screen.getDisplayMatching(bounds).workArea,
       getInset: () => (petPanelsOpen ? 0 : TOOLBAR_INSET),
+      getWidth: windowWidth,
       getHeight: () => (state.settings.pureMode ? (pureExpanded ? WINDOW_HEIGHT : 128) : WINDOW_HEIGHT),
       onChange: value => {
         if (liveWindow() && !win.webContents.isDestroyed()) {
@@ -447,7 +458,6 @@ else {
         persist();
       },
       canCollapse: () =>
-        !angerLocked() &&
         !quitting &&
         !drag &&
         !petVideoFullscreen &&
@@ -504,7 +514,7 @@ else {
         edgeDock.noteMove(bounds);
         return;
       }
-      if (Math.abs(bounds.width - WINDOW_WIDTH) <= 16 && Math.abs(bounds.height - WINDOW_HEIGHT) <= 16) {
+      if (Math.abs(bounds.width - windowWidth()) <= 16 && Math.abs(bounds.height - WINDOW_HEIGHT) <= 16) {
         edgeDock.noteMove(bounds);
         normalPetBounds = { ...normalPetBounds, x: bounds.x, y: bounds.y };
         state.position = win.getPosition();
@@ -526,7 +536,7 @@ else {
     tray = new Tray(createTrayIcon(nativeImage));
     function syncTray() {
       if (quitting || !tray || tray.isDestroyed()) return;
-      tray.setToolTip(t('露娜 · 桌面伙伴'));
+      tray.setToolTip(t('克劳德 · 桌面伙伴'));
       trayMenu = Menu.buildFromTemplate([
         { id: 'settings', label: t('设置'), click: () => openPetPanel('settings') },
         { id: 'help', label: t('使用说明'), click: () => openPetPanel('help') },
@@ -536,7 +546,7 @@ else {
         {
           label: t('截图收藏（Ctrl+Alt+A）'),
           click: () => {
-            if (!angerLocked() && !recording?.isActive()) screenshot?.start();
+            if (!recording?.isActive()) screenshot?.start();
           }
         },
         { type: 'separator' },
@@ -544,14 +554,12 @@ else {
         {
           label: t('隐藏宠物'),
           click: () => {
-            if (liveWindow()) win.hide();
+            hideToBackground();
           }
         },
         { type: 'separator' },
         { label: t('退出'), click: () => app.quit() }
       ]);
-      for (const item of trayMenu.items)
-        if (item.type !== 'separator' && item.label !== t('退出')) item.enabled = !angerLocked();
       tray.setContextMenu(trayMenu);
     }
     syncTray();
@@ -562,8 +570,6 @@ else {
         const librarySender =
           allowLibrary && libraryWin && !libraryWin.isDestroyed() && e.sender === libraryWin.webContents;
         if (quitting || (!petSender && !librarySender)) return { ok: false, error: '窗口已关闭' };
-        if (angerLocked() && !['anger-mode', 'anger-hide', 'state', 'quit'].includes(name))
-          return { ok: false, error: t('露娜暂时不理你，请稍后再试。') };
         try {
           const value = await fn(...args);
           const sound = operationSound(name, value, args[0]);
@@ -577,49 +583,6 @@ else {
           return { ok: false, error: t(err.message || '操作失败') };
         }
       });
-    handle('anger-mode', phase => {
-      if (!['normal', 'angry', 'furious'].includes(phase) || angerPhase === 'absent')
-        throw Error('Invalid interaction phase');
-      angerPhase = phase;
-      clearTimeout(angerWatchdog);
-      if (phase !== 'normal')
-        angerWatchdog = setTimeout(() => {
-          if (quitting || !liveWindow() || angerPhase === 'absent') return;
-          angerPhase = 'normal';
-          reminderPauses.delete('anger');
-          win.webContents.send('pet-absence', false);
-          syncTray();
-        }, 30000);
-      if (phase === 'normal') reminderPauses.delete('anger');
-      else reminderPauses.add('anger');
-      syncTray();
-      return true;
-    });
-    handle('anger-hide', async () => {
-      if (angerPhase !== 'furious') throw Error('Invalid interaction phase');
-      // Cancel a selection or finish active capture before hiding its controls.
-      screenshot.cancel();
-      await recording.stop();
-      if (!liveWindow() || quitting) return false;
-      clearTimeout(angerWatchdog);
-      angerPhase = 'absent';
-      drag = null;
-      for (const current of [win, libraryWin]) if (current && !current.isDestroyed()) current.hide();
-      syncTray();
-      clearTimeout(absenceTimer);
-      absenceTimer = setTimeout(() => {
-        absenceTimer = null;
-        angerPhase = 'normal';
-        reminderPauses.delete('anger');
-        if (quitting || !liveWindow()) return;
-        edgeDock?.expand();
-        win.setIgnoreMouseEvents(false);
-        win.showInactive();
-        win.webContents.send('pet-absence', false);
-        syncTray();
-      }, 10000);
-      return true;
-    });
     handle('ui-sound', name => playSound(name), true);
     handle('panel-focus', () => {
       if (liveWindow() && win.isVisible()) {
@@ -645,7 +608,7 @@ else {
             screen.getAllDisplays().map(display => ({
               display_id: String(display.id),
               thumbnail: nativeImage
-                .createFromPath(path.join(__dirname, 'assets', 'luna-avatar.png'))
+                .createFromPath(path.join(__dirname, 'assets', 'claude-avatar.png'))
                 .resize({ width: display.bounds.width * 2, height: display.bounds.height * 2 })
             }))
         : desktopCapturer.getSources.bind(desktopCapturer),
@@ -661,7 +624,6 @@ else {
       onEvent: playSound
     });
     recording = createRecording({
-      isBlocked: angerLocked,
       nativeRecorder: require('./native-recording').createNativeRecording({ screen }),
       getHostWindow: () => win,
       onShow: () => openPetPanel('recording'),
@@ -709,7 +671,7 @@ else {
       if (!liveWindow()) throw Error('窗口已关闭');
       const current = win;
       const result = await dialog.showOpenDialog(current, {
-        title: t('选择露娜文件保存目录'),
+        title: t('选择克劳德文件保存目录'),
         defaultPath: state.settings.saveDirectory || app.getPath('documents'),
         properties: ['openDirectory', 'createDirectory']
       });
@@ -725,7 +687,7 @@ else {
       } else if (!captureShortcut && !smoke) {
         try {
           captureShortcut = globalShortcut.register('CommandOrControl+Alt+A', () => {
-            if (!angerLocked() && state.settings.screenshotShortcut && !recording.isActive())
+            if (state.settings.screenshotShortcut && !recording.isActive())
               screenshot.start().catch(() => captureMessage('截图启动失败。', false));
           });
         } catch {
@@ -743,6 +705,36 @@ else {
     handle('reminder-save', input => reminders.save(input), false);
     handle('reminder-action', input => reminders.action(input), false);
     handle('state', () => publicState(), true);
+    handle('pet-scale', value => {
+      if (typeof value !== 'number' || !Number.isFinite(value)) throw Error('Invalid pet scale');
+      if (!liveWindow() || petVideoFullscreen || state.settings.pureMode || drag) return publicState();
+      const next = petSize.normalize(value);
+      if (next === state.settings.petScale) return publicState();
+      edgeDock.expand();
+      const bounds = win.getBounds(),
+        previous = state;
+      state = { ...state, settings: { ...state.settings, petScale: next } };
+      try {
+        persist();
+      } catch (error) {
+        state = previous;
+        throw error;
+      }
+      const width = windowWidth(),
+        area = screen.getDisplayMatching(bounds).workArea;
+      win.setBounds({
+        ...bounds,
+        width,
+        x: Math.round(clampHorizontal(bounds.x + (bounds.width - width) / 2, area, width, TOOLBAR_INSET))
+      });
+      edgeDock.noteMove(win.getBounds());
+      edgeDock.reflow();
+      normalPetBounds = win.getBounds();
+      for (const current of [win, libraryWin])
+        if (current && !current.isDestroyed() && !current.webContents.isDestroyed())
+          current.webContents.send('settings-changed', state.settings);
+      return publicState();
+    });
     handle('life-memory', input => {
       if (input !== undefined) {
         const previous = state;
@@ -775,6 +767,7 @@ else {
       const next = validate({
         ...input,
         language: input?.language ?? state.settings.language,
+        petScale: state.settings.petScale,
         pureMode: input?.pureMode ?? state.settings.pureMode,
         companion: input?.companion ?? state.settings.companion,
         weatherLocation: Object.hasOwn(input || {}, 'weatherLocation')
@@ -809,13 +802,13 @@ else {
           pureExpanded = false;
           const modeArea = screen.getDisplayMatching(bounds).workArea;
           const pos = [
-            clampHorizontal(bounds.x, modeArea, WINDOW_WIDTH, petPanelsOpen ? 0 : TOOLBAR_INSET),
+            clampHorizontal(bounds.x, modeArea, windowWidth(), petPanelsOpen ? 0 : TOOLBAR_INSET),
             Math.max(
               modeArea.y,
               Math.min(bounds.y + bounds.height - WINDOW_HEIGHT, modeArea.y + modeArea.height - WINDOW_HEIGHT)
             )
           ];
-          win.setBounds({ x: pos[0], y: pos[1], width: WINDOW_WIDTH, height: WINDOW_HEIGHT });
+          win.setBounds({ x: pos[0], y: pos[1], width: windowWidth(), height: WINDOW_HEIGHT });
           edgeDock.noteMove(win.getBounds());
           normalPetBounds = win.getBounds();
         }
@@ -835,13 +828,13 @@ else {
       setPureLayout(expanded);
       return true;
     });
-    handle('hide', () => win.hide());
+    handle('hide', hideToBackground);
     handle('quit', () => app.quit());
     handle('library-show', () => openPetPanel('library'));
     handle('library-expand', showLibrary);
     ipcMain.handle('library-window', async (event, action) => {
       const current = libraryWin;
-      if (angerLocked() || quitting || !current || current.isDestroyed() || event.sender !== current.webContents)
+      if (quitting || !current || current.isDestroyed() || event.sender !== current.webContents)
         return { ok: false, error: '窗口已关闭' };
       if (action === 'close') current.close();
       else if (action === 'maximize') current.isMaximized() ? current.unmaximize() : current.maximize();
@@ -1056,7 +1049,6 @@ else {
     ipcMain.on('drag', (e, start) => {
       if (!liveWindow() || e.sender !== win.webContents) return;
       if (start) {
-        if (angerLocked()) return;
         if (petVideoFullscreen || screenshot?.isActive()) return;
         edgeDock.beginDrag();
         drag = { cursor: screen.getCursorScreenPoint(), pos: win.getPosition() };
@@ -1152,9 +1144,6 @@ else {
         restore,
         shortcutStatus,
         showReminders,
-        get angerPhase() {
-          return angerPhase;
-        },
         get captureShortcut() {
           return captureShortcut;
         },
@@ -1186,8 +1175,6 @@ else {
   });
   app.on('before-quit', event => {
     quitting = true;
-    clearTimeout(absenceTimer);
-    clearTimeout(angerWatchdog);
     edgeDock?.stop();
     clearInterval(reminderTimer);
     clearTimeout(systemStatsTimer);

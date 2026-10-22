@@ -5,8 +5,8 @@ try {
   if (process.platform !== 'win32') throw Error('Build the installer on Windows.');
   run(process.execPath, [path.join(__dirname, 'build-portable.cjs')], { timeout: 600000 });
   const version = require('./package.json').version,
-    output = path.resolve(__dirname, '..', 'LunaPet-Release');
-  const source = path.resolve(__dirname, '..', 'LunaPet-Windows');
+    output = path.resolve(__dirname, '..', 'Claude-Release');
+  const source = path.resolve(__dirname, '..', 'Claude-Windows');
   fs.mkdirSync(output, { recursive: true });
   run(
     ensureInno(),
@@ -19,7 +19,7 @@ try {
     ],
     { timeout: 300000 }
   );
-  const installer = path.join(output, 'LunaPet-' + version + '-Setup.exe');
+  const installer = path.join(output, 'Claude-' + version + '-Setup.exe');
   if (!fs.existsSync(installer)) throw Error('Installer was not produced.');
   console.log('Installer complete: ' + installer);
 } catch (error) {

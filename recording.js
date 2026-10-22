@@ -18,8 +18,7 @@ function createRecording({
   getHostWindow,
   onShow,
   smoke = false,
-  nativeRecorder = null,
-  isBlocked = () => false
+  nativeRecorder = null
 }) {
   let window = getHostWindow(),
     session = null,
@@ -35,7 +34,7 @@ function createRecording({
   });
   window.on('closed', () => {
     window = null;
-    if (session) fail('露娜窗口已关闭。').catch(() => {});
+    if (session) fail('克劳德窗口已关闭。').catch(() => {});
   });
   window.webContents.on('render-process-gone', () => {
     if (session) fail('录屏进程中断，请重新录制。').catch(() => {});
@@ -355,8 +354,6 @@ function createRecording({
       if (disposed || !live() || (event.sender !== window.webContents && !(borderSender && borderAllowed)))
         return { ok: false, error: '录屏窗口已关闭。' };
       try {
-        if (isBlocked() && ['recording-start', 'recording-adjust', 'recording-select', 'recording-stop'].includes(name))
-          throw Error('露娜暂时不理你，请稍后再试。');
         return { ok: true, value: await fn(value) };
       } catch (error) {
         return { ok: false, error: error.message || '录屏失败' };

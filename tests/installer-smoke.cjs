@@ -6,7 +6,7 @@ const fs = require('node:fs'),
   crypto = require('node:crypto');
 const { spawn } = require('node:child_process');
 const version = require('../package.json').version;
-const setup = path.resolve(__dirname, '..', '..', 'LunaPet-Release', `LunaPet-${version}-Setup.exe`);
+const setup = path.resolve(__dirname, '..', '..', 'Claude-Release', `Claude-${version}-Setup.exe`);
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'luna-installer-test-')),
   target = path.join(root, 'app');
 const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
@@ -55,15 +55,18 @@ async function check() {
       '/LOG=' + path.join(root, log)
     ]);
   await install('install.log');
-  const exe = path.join(target, 'LunaPet.exe'),
+  const exe = path.join(target, 'Claude.exe'),
     appDir = path.join(target, 'resources', 'app');
   assert.ok(fs.existsSync(exe));
   assert.equal(JSON.parse(fs.readFileSync(path.join(appDir, 'package.json'))).version, version);
-  assert.equal(hash(path.join(appDir, 'assets', 'luna.ico')), hash(path.join(__dirname, '..', 'assets', 'luna.ico')));
+  assert.equal(
+    hash(path.join(appDir, 'assets', 'claude.ico')),
+    hash(path.join(__dirname, '..', 'assets', 'claude.ico'))
+  );
   const originalExe = hash(exe);
   console.log('INSTALL_PASS');
   if (process.argv.includes('--package-only')) {
-    const portable = path.resolve(__dirname, '..', '..', 'LunaPet-Windows');
+    const portable = path.resolve(__dirname, '..', '..', 'Claude-Windows');
     let count = 0;
     function compare(relative = '') {
       for (const entry of fs.readdirSync(path.join(portable, relative), { withFileTypes: true })) {

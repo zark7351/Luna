@@ -1,0 +1,65 @@
+{
+  "frameCount": 192,
+  "size": [
+    768,
+    584
+  ],
+  "sourceFrameAlphaRange": [
+    0,
+    255
+  ],
+  "allFramesHandsFixed": true,
+  "allFramesMouthFixed": true,
+  "outerBorderMaximumAlpha": 0,
+  "loopEndpointExactlyMatches": true,
+  "motionChecks": {
+    "tail": true,
+    "leftEar": true,
+    "rightEar": true,
+    "blink": true
+  },
+  "artifacts": {
+    "idle-transparent.webp": {
+      "size": [
+        768,
+        584
+      ],
+      "frames": 192,
+      "durationMs": 7999,
+      "loop": 0,
+      "bytes": 5874332,
+      "alphaRange": [
+        0,
+        255
+      ]
+    },
+    "idle-transparent-master.apng": {
+      "size": [
+        768,
+        584
+      ],
+      "frames": 192,
+      "durationMs": 8000.0,
+      "loop": 0,
+      "bytes": 23849459,
+      "alphaRange": [
+        0,
+        255
+      ]
+    },
+    "idle-preview.gif": {
+      "size": [
+        512,
+        390
+      ],
+      "frames": 192,
+      "durationMs": 8000,
+      "loop": 0,
+      "bytes": 1422889,
+      "alphaRange": [
+        255,
+        255
+      ]
+    }
+  }
+}

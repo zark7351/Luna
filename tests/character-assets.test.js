@@ -19,9 +19,18 @@ test('每个姿势图集尺寸与帧布局一致，且为透明 WebP', () => {
   assert.ok(assets.poses.idle);
 });
 
+test('默认 2D 托腮待机保留横向比例，以 24fps 顺序播放完整八秒', () => {
+  assert.equal(assets.poses.idle.file, 'luna-2d/idle.webp');
+  assert.equal(assets.stage.width / assets.stage.height, 768 / 584);
+  assert.equal(assets.poses.idle.frames / assets.poses.idle.fps, 8);
+  assert.equal(assets.frameAt(assets.poses.idle, 0), 0);
+  assert.equal(assets.frameAt(assets.poses.idle, 7.99), 191);
+  assert.equal(assets.frameAt(assets.poses.idle, 8), 0);
+});
+
 test('缺少素材的表情回退到待机姿势', () => {
   assert.equal(assets.poseFor('neutral'), 'idle');
-  for (const expression of ['happy', 'shy', 'angry', 'sleeping', 'working', 'missing'])
+  for (const expression of ['happy', 'shy', 'pout', 'sleeping', 'working', 'missing'])
     assert.ok(Object.hasOwn(assets.poses, assets.poseFor(expression)), expression);
 });
 

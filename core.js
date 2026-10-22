@@ -2,8 +2,10 @@ const path = require('node:path');
 const { normalize } = require('./i18n');
 const { location } = require('./weather');
 const { validateMemory } = require('./life');
+const petSize = require('./pet-size');
 const defaults = {
-  name: '露娜',
+  name: '克劳德',
+  petScale: 1,
   language: 'zh-CN',
   nickname: '',
   top: true,
@@ -31,6 +33,7 @@ function validate(input = {}) {
       .slice(0, max);
   }
   s.name ||= defaults.name;
+  s.petScale = petSize.normalize(input.petScale);
   s.language = normalize(input.language);
   s.top = input.top !== false;
   s.pureMode = input.pureMode === true;
@@ -52,6 +55,8 @@ function validate(input = {}) {
 function migrateState(saved = {}) {
   if (!saved || typeof saved !== 'object') saved = {};
   const state = { settings: validate(saved.settings || {}), layoutVersion: 3, life: validateMemory(saved.life) };
+  // Rename the former default while preserving names the user chose and all existing local data.
+  if (['露娜', 'Luna'].includes(state.settings.name)) state.settings.name = defaults.name;
   if (Array.isArray(saved.position) && saved.position.length === 2 && saved.position.every(Number.isFinite)) {
     state.position = [
       saved.position[0] + ([2, 3].includes(saved.layoutVersion) ? 0 : OLD_PET_OFFSET - PET_OFFSET),

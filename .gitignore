@@ -4,6 +4,8 @@ node_modules/
 dist/
 release/
 LunaPet-Windows/
+Claude-Windows/
+Claude-Release/
 *.exe
 *.zip
 

@@ -1,8 +1,7 @@
 const { contextBridge, ipcRenderer, webUtils } = require('electron');
 const allowed = new Set([
   'pure-layout',
-  'anger-mode',
-  'anger-hide',
+  'pet-scale',
   'panel-focus',
   'recording-show',
   'storage-choose',
@@ -69,7 +68,6 @@ contextBridge.exposeInMainWorld('pet', {
   onReminderCount: callback => ipcRenderer.on('reminder-count', (_event, value) => callback(value)),
   onReminderDue: callback => ipcRenderer.on('reminder-due', (_event, value) => callback(value)),
   onIdleChanged: callback => ipcRenderer.on('idle-changed', (_event, value) => callback(value === true)),
-  onAbsence: callback => ipcRenderer.on('pet-absence', (_event, value) => callback(value)),
   onSettingsChanged: callback => ipcRenderer.on('settings-changed', (_event, value) => callback(value)),
   onEdgeDockChanged: callback => ipcRenderer.on('edge-dock-changed', (_event, value) => callback(value)),
   edgeHold: (value, expanded = false) => ipcRenderer.send('edge-hold', value === true, expanded === true),

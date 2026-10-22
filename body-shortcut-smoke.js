@@ -6,7 +6,8 @@ async function point(win, region) {
   return win.webContents.executeJavaScript(`(async()=>{
   const canvas=document.querySelector('#pet canvas.character-face'),stage=window.lunaCharacterAssets.stage,c=stage.center;
   const data=canvas.getContext('2d').getImageData(0,0,stage.width,stage.height).data,box=canvas.getBoundingClientRect();
-  const target={head:[c,95],chest:[c,185],arms:[112,240],forbidden:[c,262],legs:[c,295],feet:[c-14,322]}['${region}'],edge=['forbidden','feet'].includes('${region}')?1:3;
+  const target={head:[210,135],chest:[c,218],arms:[175,214]}['${region}'],edge=3;
+  if(!target)throw Error('body region not visible in half-body pose: ${region}');
   const solid=(x,y)=>{for(let dy=-edge;dy<=edge;dy++)for(let dx=-edge;dx<=edge;dx++){const px=x+dx,py=y+dy;if(px<0||py<0||px>=stage.width||py>=stage.height||data[(py*stage.width+px)*4+3]<200)return false;}return true;};
   let nearest=null,best=Infinity;
   for(let y=Math.max(0,target[1]-45);y<Math.min(stage.height,target[1]+45);y++)for(let x=Math.max(0,target[0]-60);x<Math.min(stage.width,target[0]+60);x++){
@@ -34,16 +35,16 @@ async function check(win, output, stateFile, stats) {
       await sleep(50);
     }
   };
-  await read(
-    `(()=>{closeSheets();document.querySelector('#settings').hidden=true;showMessage('');bodyReactions.reset();})()`
-  );
-  for (const region of ['head', 'chest', 'arms', 'forbidden', 'legs', 'feet']) await point(win, region);
+  await read(`(()=>{closeSheets();document.querySelector('#settings').hidden=true;showMessage('');})()`);
+  for (const region of ['head', 'chest', 'arms']) await point(win, region);
   if (
     !(await read(
-      `(()=>{const box=document.querySelector('#pet canvas').getBoundingClientRect(),stage=window.lunaCharacterAssets.stage;return window.lunaCharacter.hitRegion(box.left+stage.center/stage.width*box.width,box.top+292/stage.height*box.height)!=='forbidden';})()`
+      `(()=>{const canvas=document.querySelector('#pet canvas'),box=canvas.getBoundingClientRect(),stage=window.lunaCharacterAssets.stage;
+      const sample=(x,y)=>window.lunaCharacter.hitRegion(box.left+x/stage.width*box.width,box.top+y/stage.height*box.height);
+      return sample(228,262)==='arms'&&sample(66,210)===null&&canvas.getContext('2d').getImageData(66,210,1,1).data[3]>32;})()`
     ))
   )
-    throw Error('lower skirt still triggers forbidden region');
+    throw Error('half-body arms or tail hit regions');
   if (
     !(await read(
       `(()=>{const r=document.querySelector('#pet').getBoundingClientRect();return window.lunaCharacter.hitRegion(r.left+1,r.top+1)===null;})()`
@@ -55,12 +56,8 @@ async function check(win, output, stateFile, stats) {
   for (const [region, expression] of [
     ['head', 'happy'],
     ['arms', 'wink'],
-    ['legs', 'smile'],
-    ['feet', 'pout'],
-    ['chest', 'shy'],
-    ['forbidden', 'shy']
+    ['chest', 'shy']
   ]) {
-    await read(`bodyReactions.reset();void 0`);
     await click(win, region);
     if (
       !(await read(
@@ -80,7 +77,6 @@ async function check(win, output, stateFile, stats) {
     )
       throw Error('body click opened a tool window: ' + region);
   }
-  await read(`bodyReactions.reset();void 0`);
   const dragPoint = await point(win, 'head');
   await until(() => read(idle), 'reaction did not return to idle before drag');
   win.webContents.sendInputEvent({ type: 'mouseMove', ...dragPoint });
@@ -145,37 +141,38 @@ async function check(win, output, stateFile, stats) {
   await read(`showMessage('');infoBubbles.start('weather');void 0`);
   await until(() => read(`feedback.getMessage().includes('杭州')`), 'weather bubble');
   await require('./bubble-smoke').click(win, 'bubble-body');
-  // Three chest or forbidden clicks within ten seconds still make her angry, and later clicks do not cut it short.
-  await read(
-    `window.smokeBodyReactionMethods={click:bodyReactions.click,reset:bodyReactions.reset};Object.assign(bodyReactions,window.lunaBodyShortcuts.createReactions({}));showMessage('');void 0;`
-  );
-  await click(win, 'chest');
-  await click(win, 'chest');
-  if (!(await read(`window.lunaCharacter.expression==='shy'`))) throw Error('second sensitive click');
-  await click(win, 'chest');
-  if (!(await read(`window.lunaCharacter.expression==='angry'&&feedback.getMessage().includes('一直戳')`)))
-    throw Error('third sensitive click did not trigger');
-  fs.writeFileSync(path.join(output, 'luna-body-angry-preview.png'), (await win.webContents.capturePage()).toPNG());
-  await read(`Object.assign(bodyReactions,window.lunaBodyShortcuts.createReactions({}));void 0;`);
-  await click(win, 'chest');
-  await click(win, 'chest');
+  // Repeated clicks must leave the pet visible and all normal controls available.
+  await read(`showMessage('');void 0`);
+  for (let i = 0; i < 12; i++) {
+    await click(win, 'chest');
+    if (
+      !win.isVisible() ||
+      !(await read(
+        `window.lunaCharacter.expression==='shy'&&!document.body.inert&&document.querySelector('#bubble').hidden`
+      ))
+    )
+      throw Error('repeated click interrupted normal interaction');
+  }
   await click(win, 'head');
+  if (!(await read(`window.lunaCharacter.expression==='happy'`))) throw Error('head reaction after repeated clicks');
   if (
     !(await read(
-      `window.lunaCharacter.expression==='angry'&&feedback.getMessage().includes('一直戳')&&!infoBubbles.active`
+      `(async()=>{const state=await window.pet.call('state');await openSettings();return state.ok&&!document.querySelector('#settings').hidden;})()`
     ))
   )
-    throw Error('continuous clicks interrupted angry expression or dialogue');
-  await sleep(2100);
-  await until(() => read(idle), 'angry reaction did not restore', 1800);
-  await read(
-    `angerInteraction.returned();Object.assign(bodyReactions,window.smokeBodyReactionMethods);delete window.smokeBodyReactionMethods;bodyReactions.reset();showMessage('');void 0;`
-  );
+    throw Error('settings blocked after repeated clicks');
+  await read(`document.querySelector('#settings-close').click();void 0`);
+  await read(`feedback.updateReminder({id:'repeat-click-test',title:'提醒测试',remaining:1});void 0`);
+  for (let i = 0; i < 6; i++) await click(win, 'chest');
+  if (!win.isVisible() || !(await read(`feedback.getReminder()?.id==='repeat-click-test'&&!document.body.inert`)))
+    throw Error('repeated clicks suppressed reminder');
+  await read(`feedback.updateReminder(null);showMessage('');void 0`);
+  await until(() => read(idle), 'ordinary reaction did not return to idle');
   await read(
     `(()=>{if(wheel.items?.some?.(item=>['datetime','weather','stats'].includes(item.id))||document.querySelector('[data-wheel=datetime],[data-wheel=weather],[data-wheel=stats]'))throw Error('information entries remain');showMessage('');})()`
   );
   return {
-    chibiFrame: true,
+    halfBodyFrame: true,
     alphaHitRegions: true,
     animationOnly: true,
     dragDoesNotActivate: true,
@@ -183,8 +180,8 @@ async function check(win, output, stateFile, stats) {
     dynamicFiveSeconds: true,
     dateAndWeekday: true,
     weatherCitySearch: true,
-    repeatedAngry: true,
-    angrySurvivesClicks: true,
+    repeatedClicksStayNormal: true,
+    settingsAndRemindersAvailable: true,
     restored: true,
     noInformationEntries: true
   };
