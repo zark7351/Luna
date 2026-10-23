@@ -16,7 +16,7 @@
     closed: 'idle',
     sleeping: 'sleep',
     working: 'work',
-    happy: 'happy',
+    happy: 'idle',
     smile: 'idle',
     wink: 'happy',
     shy: 'shy',
@@ -32,6 +32,33 @@
     fadeIn: 180,
     fadeOut: 420
   };
+  // Only painted eyes and mouth are composited; pose, nose, hair and alpha stay untouched.
+  const toStage = ([x, y, w, h]) => [
+    ((x + 52) * 384) / 1552,
+    ((y + 48) * 292) / 1182,
+    (w * 384) / 1552,
+    (h * 292) / 1182
+  ];
+  const happy = {
+    file: 'luna-2d/happy-source.png',
+    sourceSize: [1448, 1086],
+    patches: [
+      { source: [580, 505, 188, 112], target: toStage([580, 505, 188, 112]) },
+      { source: [787, 415, 180, 118], target: toStage([787, 415, 180, 118]) },
+      {
+        source: [723, 543, 170, 130],
+        target: toStage([723, 543, 170, 130]),
+        mask: { angle: -0.43, radius: [75, 28], inner: 0.8 }
+      }
+    ],
+    duration: 2200,
+    fadeIn: 140,
+    fadeOut: 360
+  };
+  function happyOpacity(elapsed, reduced = false) {
+    if (elapsed < 0 || elapsed >= happy.duration) return 0;
+    return reduced ? 1 : Math.min(1, elapsed / happy.fadeIn, (happy.duration - elapsed) / happy.fadeOut);
+  }
   function smileOpacity(elapsed, reduced = false) {
     if (elapsed < 0 || elapsed >= smile.duration) return 0;
     return reduced ? 1 : Math.min(1, elapsed / smile.fadeIn, (smile.duration - elapsed) / smile.fadeOut);
@@ -75,5 +102,17 @@
     return Object.freeze(value);
   }
   Object.values(poses).forEach(validatePose);
-  return freeze({ stage, poses, smile, smileOpacity, expressionPoses, validatePose, validateImage, poseFor, frameAt });
+  return freeze({
+    stage,
+    poses,
+    smile,
+    smileOpacity,
+    happy,
+    happyOpacity,
+    expressionPoses,
+    validatePose,
+    validateImage,
+    poseFor,
+    frameAt
+  });
 });

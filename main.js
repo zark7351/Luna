@@ -1190,7 +1190,10 @@ else {
       getWindow: () => win,
       readIdleSeconds: () => (smoke ? smokeIdleSeconds : powerMonitor.getSystemIdleTime()),
       now: () => (smoke ? new Date(smokeIdleNow) : new Date()),
-      canSleep: () => !reminders.list().some(item => item.status === 'fired')
+      canSleep: () => !reminders.list().some(item => item.status === 'fired'),
+      onReturn: seconds => {
+        if (liveWindow() && !win.webContents.isDestroyed()) win.webContents.send('user-returned', seconds);
+      }
     });
     win.webContents.on('did-finish-load', () => {
       if (liveWindow()) idle.check(true);

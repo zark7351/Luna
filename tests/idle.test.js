@@ -2,7 +2,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { EventEmitter } = require('node:events');
 const { startIdleMonitor, sleepWindow } = require('../idle');
-function fixture() {
+function fixture(onReturn = () => {}) {
   const powerMonitor = new EventEmitter(),
     messages = [];
   let seconds = 0,
@@ -21,6 +21,7 @@ function fixture() {
     readIdleSeconds: () => seconds,
     now: () => new Date(time),
     canSleep: () => allowed,
+    onReturn,
     schedule: (fn, delay) => {
       assert.equal(delay, 2000);
       tick = fn;
@@ -186,5 +187,47 @@ test('invalid idle readings do not change rest state', () => {
     f.monitor.check();
   }
   assert.deepEqual(f.messages, []);
+  f.monitor.stop();
+});
+
+test('返回检测独立于睡眠时段，只报告一次五分钟以上的闲置结束', () => {
+  const returned = [];
+  const f = fixture(seconds => returned.push(seconds));
+  f.idle(299);
+  f.tick();
+  f.idle(0);
+  f.tick();
+  assert.deepEqual(returned, []);
+  f.idle(600);
+  f.tick();
+  f.idle(NaN);
+  f.tick();
+  f.idle(0);
+  f.tick();
+  f.tick();
+  assert.deepEqual(returned, [600]);
+  assert.equal(f.monitor.isSleeping(), false);
+  f.idle(900);
+  f.tick();
+  f.monitor.stop();
+  f.idle(0);
+  f.tick();
+  assert.deepEqual(returned, [600]);
+});
+
+test('锁屏与系统休眠重叠时，在两者都结束后记录一次返回，不改变白天睡眠规则', () => {
+  const returned = [],
+    f = fixture(seconds => returned.push(seconds));
+  f.powerMonitor.emit('lock-screen');
+  f.advance(120);
+  f.powerMonitor.emit('suspend');
+  f.advance(600);
+  f.powerMonitor.emit('resume');
+  assert.deepEqual(returned, []);
+  f.powerMonitor.emit('unlock-screen');
+  assert.deepEqual(returned, [720]);
+  f.tick();
+  assert.deepEqual(returned, [720]);
+  assert.equal(f.monitor.isSleeping(), false);
   f.monitor.stop();
 });

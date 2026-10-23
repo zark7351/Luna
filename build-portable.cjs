@@ -86,6 +86,7 @@ try {
     'CHARACTER-ASSETS.md',
     'character-smoke.js',
     'smile-smoke.js',
+    'happy-smoke.js',
     'reminder-input-smoke.js',
     'bubble-smoke.js',
     'pet-feedback.js',

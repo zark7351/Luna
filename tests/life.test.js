@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { createLife, validateMemory, blinkPlan, dayKey, isLateNight } = require('../life');
+const { createLife, createHappyReactions, validateMemory, blinkPlan, dayKey, isLateNight } = require('../life');
 
 const MINUTE = 60000;
 // 2026-10-14 is a Wednesday, 2026-10-16 a Friday.
@@ -275,4 +275,46 @@ test('blinking slows down when she is sleepy', () => {
   assert.equal(afterLunch.double, false);
   const tired = blinkPlan({ date: new Date(2026, 9, 14, 10, 0), random: () => 0.9, workedMs: 3 * 60 * MINUTE });
   assert.equal(tired.duration, 220);
+});
+
+test('开心笑用于部分每日问候，不增加问候次数或主动发言', () => {
+  for (const random of [() => 0, () => 0.95]) {
+    const f = setup({ memory: { firstSeen: '2026-10-01', lastGreeting: '2026-10-13' }, random });
+    f.life.start();
+    assert.equal(f.life.tick(), true);
+    assert.equal(f.said[0].expression, random() >= 0.7 ? 'happy' : 'smile');
+    assert.equal(f.life.tick(), false);
+    assert.equal(f.life.memory().proactive, 1);
+  }
+});
+
+test('返回后的开心笑只留给两分钟内的第一次点击，不因短暂移动反复触发', () => {
+  let time = 1000;
+  const reactions = createHappyReactions({ now: () => time, random: () => 0.9 });
+  reactions.returned(299);
+  assert.equal(reactions.click('arms'), null);
+  reactions.returned(300);
+  assert.equal(reactions.click('arms'), 'happy');
+  assert.equal(reactions.click('head'), null);
+  reactions.returned(600);
+  time += 120000;
+  assert.equal(reactions.click('arms'), null);
+  reactions.returned(600);
+  reactions.clear();
+  assert.equal(reactions.click('arms'), null);
+  reactions.returned(600);
+  assert.equal(reactions.click('arms', false), null);
+  assert.equal(reactions.click('arms'), null);
+});
+
+test('偶尔摸头使用开心笑，有三十秒间隔，其他部位仍使用各自反应', () => {
+  let time = 0;
+  const reactions = createHappyReactions({ now: () => time, random: () => 0.1 });
+  assert.equal(reactions.click('tail'), null);
+  assert.equal(reactions.click('arms'), null);
+  assert.equal(reactions.click('head'), 'happy');
+  time = 29999;
+  assert.equal(reactions.click('head'), null);
+  time = 30000;
+  assert.equal(reactions.click('head'), 'happy');
 });

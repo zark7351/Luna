@@ -79,3 +79,19 @@ test('微笑短暂显现并平滑收回，减少动态效果时不渐变，始�
   const bytes = fs.readFileSync(path.join(__dirname, '..', 'assets', assets.smile.file));
   assert.deepEqual([bytes.readUInt32BE(16), bytes.readUInt32BE(20)], assets.smile.sourceSize);
 });
+
+test('露齿开心笑只配置眼睛与嘴部贴片，短暂出现并复用待机', () => {
+  assert.equal(assets.poseFor('happy'), 'idle');
+  assert.equal(assets.happy.patches.length, 3);
+  assert.equal(assets.happyOpacity(0), 0);
+  assert.equal(assets.happyOpacity(70), 0.5);
+  assert.equal(assets.happyOpacity(2020), 0.5);
+  assert.equal(assets.happyOpacity(2200), 0);
+  assert.equal(assets.happyOpacity(0, true), 1);
+  const bytes = fs.readFileSync(path.join(__dirname, '..', 'assets', assets.happy.file));
+  assert.deepEqual([bytes.readUInt32BE(16), bytes.readUInt32BE(20)], assets.happy.sourceSize);
+  for (const patch of assets.happy.patches) {
+    const [x, y, w, h] = patch.source;
+    assert.ok(x >= 0 && y >= 0 && x + w <= assets.happy.sourceSize[0] && y + h <= assets.happy.sourceSize[1]);
+  }
+});

@@ -21,6 +21,7 @@
       reaction = null,
       reactionStart = 0,
       smilePatch = null,
+      happyPatches = [],
       timers = [],
       frame = null,
       stopped = false;
@@ -34,28 +35,45 @@
         await asset.decode();
         return asset;
       });
+    function makePatch(image, bounds, feather = {}) {
+      const [, , w, h] = bounds;
+      const patch = document.createElement('canvas');
+      patch.width = w;
+      patch.height = h;
+      const paint = patch.getContext('2d');
+      paint.drawImage(image, ...bounds, 0, 0, w, h);
+      paint.globalCompositeOperation = 'destination-in';
+      paint.translate(w / 2, h / 2);
+      paint.rotate(feather.angle || 0);
+      paint.scale(...(feather.radius || [w / 2, h / 2]));
+      const mask = paint.createRadialGradient(0, 0, feather.inner ?? 0.64, 0, 0, 1);
+      mask.addColorStop(0, '#fff');
+      mask.addColorStop(1, 'transparent');
+      paint.fillStyle = mask;
+      paint.fillRect(-1, -1, 2, 2);
+      return patch;
+    }
+    async function loadHappy() {
+      try {
+        const image = await loadImage(assets.happy.file);
+        if (stopped) return;
+        if (image.naturalWidth !== assets.happy.sourceSize[0] || image.naturalHeight !== assets.happy.sourceSize[1])
+          throw Error('Happy source size mismatch');
+        happyPatches = assets.happy.patches.map(patch => ({
+          image: makePatch(image, patch.source, patch.mask),
+          target: patch.target
+        }));
+      } catch (error) {
+        console.warn('开心笑素材加载失败', error.message);
+      }
+    }
     async function loadSmile() {
       try {
         const image = await loadImage(assets.smile.file);
         if (stopped) return;
         const [width, height] = assets.smile.sourceSize;
         if (image.naturalWidth !== width || image.naturalHeight !== height) throw Error('Smile source size mismatch');
-        const [, , w, h] = assets.smile.crop;
-        const patch = document.createElement('canvas');
-        patch.width = w;
-        patch.height = h;
-        const paint = patch.getContext('2d');
-        paint.drawImage(image, ...assets.smile.crop, 0, 0, w, h);
-        // Feather only the surrounding skin; keep the entire painted mouth opaque.
-        paint.globalCompositeOperation = 'destination-in';
-        paint.translate(w / 2, h / 2);
-        paint.scale(w / 2, h / 2);
-        const mask = paint.createRadialGradient(0, 0, 0.64, 0, 0, 1);
-        mask.addColorStop(0, '#fff');
-        mask.addColorStop(1, 'transparent');
-        paint.fillStyle = mask;
-        paint.fillRect(-1, -1, 2, 2);
-        smilePatch = patch;
+        smilePatch = makePatch(image, assets.smile.crop);
       } catch (error) {
         console.warn('微笑素材加载失败', error.message);
       }
@@ -81,7 +99,8 @@
     }
     function currentExpression() {
       if (pet.classList.contains('sleeping')) return 'sleeping';
-      return reaction || (pet.classList.contains('happy') ? 'happy' : 'neutral');
+      // The CSS interaction class also marks arms/chest clicks; it is not a painted happy expression.
+      return reaction || 'neutral';
     }
     function draw(time = performance.now()) {
       if (stopped) return;
@@ -129,6 +148,18 @@
         ctx.drawImage(smilePatch, ...assets.smile.target);
         ctx.restore();
       }
+      if (expression === 'happy') {
+        const patches = happyPatches.length
+          ? happyPatches
+          : smilePatch
+            ? [{ image: smilePatch, target: assets.smile.target }]
+            : [];
+        ctx.save();
+        ctx.globalCompositeOperation = 'source-atop';
+        ctx.globalAlpha = assets.happyOpacity(time - reactionStart, reduced.matches);
+        for (const patch of patches) ctx.drawImage(patch.image, ...patch.target);
+        ctx.restore();
+      }
       canvas.dataset.motion = appendages.active.join(' ');
     }
     function loop(time) {
@@ -151,7 +182,7 @@
     async function load() {
       if (stopped) return false;
       try {
-        await Promise.all([getImage('idle'), getImage('sleep').catch(() => {}), loadSmile()]);
+        await Promise.all([getImage('idle'), getImage('sleep').catch(() => {}), loadSmile(), loadHappy()]);
         if (stopped) return false;
         draw();
         start();
@@ -174,7 +205,7 @@
         recording: 'wink',
         'reminder-save': 'wink',
         reminder: 'neutral',
-        complete: 'smile',
+        complete: 'happy',
         wink: 'wink',
         smile: 'smile',
         shy: 'shy',
@@ -184,7 +215,8 @@
       };
       if (!Object.hasOwn(types, name) || stopped) return false;
       if (reaction === 'smile' && types[name] === 'smile') return true;
-      cancel(types[name] === 'smile');
+      if (reaction === 'happy' && ['happy', 'smile'].includes(types[name])) return true;
+      cancel(['smile', 'happy'].includes(types[name]));
       if (pet.classList.contains('sleeping')) return true;
       reaction = types[name];
       reactionStart = performance.now();
@@ -196,7 +228,13 @@
             reaction = null;
             draw();
           },
-          reaction === 'smile' ? assets.smile.duration : name === 'reminder' ? 2400 : 1800
+          reaction === 'happy'
+            ? assets.happy.duration
+            : reaction === 'smile'
+              ? assets.smile.duration
+              : name === 'reminder'
+                ? 2400
+                : 1800
         )
       );
       return true;

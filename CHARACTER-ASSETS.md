@@ -18,6 +18,13 @@
 - 淡入 180 ms、淡出 420 ms，不重置待机时钟、不整体位移，不打断正在播放的耳尾局部动作。减少动态效果时直接显示静态微笑，再回到中立表情；可选微笑图加载失败仍显示待机，停止后迟到的加载不恢复动画。
 - `electron . --smoke-test --smile-test` 使用独立临时资料，检查真实收藏/提醒 IPC、脑袋点击、欢迎回来、无气泡陪伴、提醒优先、重复触发时长、减少动态效果及嘴部外像素与 alpha。截图输出到系统临时目录，非用户数据目录。
 
+## 狡黠露齿笑
+
+- `design/luna-2d/expressions/happy-preview-v4.png` 为内置 image_gen 生成的最终原图（1448×1086 RGBA），提示词见同目录 `happy-prompt-v4.txt`。原样副本为 `assets/luna-2d/happy-source.png`。
+- `character-assets.js` 的 `happy` 仅登记三处眼睛/嘴部 source/target，映射与默认待机相同；嘴部使用倾斜 -0.43 弧度、半径 75×28 的椭圆遮罩，避免改变鼻子。`character.js` 使用 source-atop 保留原 alpha；原待机时钟、耳尾不重置，约 2200 ms 后恢复（140/360 ms 淡入/淡出）。缺图时回退浅笑，减少动态效果时静态显示。
+- 完成提醒、返回首击、偶尔摸头和部分每日问候使用；详细频率见 README。`idle.js` 发出 `user-returned`，仅作为两分钟内的点击反馈，不因普通键鼠活动唤醒睡眠，不新增网络、存储或输入监听。
+- `electron . --smoke-test --happy-test` 检查三处像素变化、身体/alpha 固定、真实点击与四种场景、提醒优先、减少动态效果和生命周期。也接入完整桌面检查。
+
 ## 制作与打包
 
 原画、透明基础图、闭眼关键帧、动画导出代码与预览见 `design/luna-2d/idle/README.md`。先导出 768×584、192 张透明 PNG，再在仓库根目录打包：

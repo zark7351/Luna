@@ -17,6 +17,7 @@ function startIdleMonitor({
   getWindow,
   now = () => new Date(),
   canSleep = () => true,
+  onReturn = () => {},
   threshold = IDLE_SECONDS,
   interval = 2000,
   schedule = setInterval,
@@ -25,7 +26,10 @@ function startIdleMonitor({
   let sleeping = false,
     windowKey = null,
     wokeAt = null,
+    awaySeconds = 0,
     stopped = false;
+  const powerAway = new Set();
+  let powerAwayAt = null;
   function publish(next, force = false) {
     const changed = next !== sleeping;
     sleeping = next;
@@ -40,6 +44,18 @@ function startIdleMonitor({
       time = date.getTime(),
       key = sleepWindow(date);
     if (!Number.isFinite(time)) return;
+    let idleSeconds;
+    try {
+      idleSeconds = readIdleSeconds();
+    } catch {}
+    if (Number.isFinite(idleSeconds) && idleSeconds >= 0) {
+      if (!powerAway.size && awaySeconds >= threshold && idleSeconds < threshold) {
+        const elapsed = awaySeconds;
+        awaySeconds = 0;
+        onReturn(elapsed);
+      }
+      awaySeconds = Math.max(awaySeconds, idleSeconds);
+    }
     const entered = key !== windowKey;
     windowKey = key;
     if (!key) {
@@ -62,19 +78,32 @@ function startIdleMonitor({
       publish(true, force);
       return;
     }
-    let idleSeconds;
-    try {
-      idleSeconds = readIdleSeconds();
-    } catch {}
     // A reminder/click can wake without resetting the operating system's idle clock.
     const sinceWake = wokeAt === null ? 0 : Math.max(0, (time - wokeAt) / 1000);
     const idle = Number.isFinite(idleSeconds) && idleSeconds >= 0 ? Math.min(idleSeconds, sinceWake) : 0;
     publish(idle >= threshold, force);
   }
   // Locking outside the sleep windows does not put her to bed.
-  const events = ['lock-screen', 'unlock-screen', 'suspend', 'resume'];
-  const onPower = () => check();
-  for (const event of events) powerMonitor.on(event, onPower);
+  const powerChange = (kind, active) => () => {
+    if (active) {
+      if (!powerAway.size) powerAwayAt = now().getTime();
+      powerAway.add(kind);
+    } else {
+      powerAway.delete(kind);
+      if (!powerAway.size && powerAwayAt !== null) {
+        awaySeconds = Math.max(awaySeconds, Math.max(0, (now().getTime() - powerAwayAt) / 1000));
+        powerAwayAt = null;
+      }
+    }
+    check();
+  };
+  const handlers = {
+    'lock-screen': powerChange('lock', true),
+    'unlock-screen': powerChange('lock', false),
+    suspend: powerChange('suspend', true),
+    resume: powerChange('suspend', false)
+  };
+  for (const [event, handler] of Object.entries(handlers)) powerMonitor.on(event, handler);
   const timer = schedule(() => check(), interval);
   return {
     check,
@@ -84,7 +113,7 @@ function startIdleMonitor({
       if (stopped) return;
       stopped = true;
       cancel(timer);
-      for (const event of events) powerMonitor.removeListener(event, onPower);
+      for (const [event, handler] of Object.entries(handlers)) powerMonitor.removeListener(event, handler);
     }
   };
 }

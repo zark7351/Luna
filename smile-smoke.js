@@ -74,8 +74,8 @@ async function check(live, output) {
   })()`);
   await read(`api('reminder-complete',${JSON.stringify(id)})`);
   await new Promise(r => setTimeout(r, 150));
-  if (!(await read(`!feedback.getReminder()&&window.lunaCharacter.expression==='smile'`)))
-    throw Error('completion smile missing');
+  if (!(await read(`!feedback.getReminder()&&window.lunaCharacter.expression==='happy'`)))
+    throw Error('completion happy smile missing');
 
   win.webContents.debugger.attach('1.3');
   try {

@@ -19,6 +19,37 @@
   const MILESTONES = [7, 30, 50, 100, 200, 300, 365, 500, 1000];
   const COUNTERS = ['collect', 'capture', 'recording', 'complete'];
 
+  // A returned user gets one special click; ordinary head pats only rarely use the bigger grin.
+  // This is transient animation state, not persistent tracking or a new proactive message.
+  function createHappyReactions({ now = Date.now, random = Math.random } = {}) {
+    let returnUntil = 0,
+      lastHappy = -Infinity;
+    return {
+      returned(seconds) {
+        if (Number.isFinite(seconds) && seconds >= 300) returnUntil = now() + 2 * MINUTE;
+      },
+      click(region, enabled = true) {
+        const time = now();
+        if (!enabled) {
+          returnUntil = 0;
+          return null;
+        }
+        if (returnUntil > time) {
+          returnUntil = 0;
+          lastHappy = time;
+          return 'happy';
+        }
+        returnUntil = 0;
+        if (region !== 'head' || time - lastHappy < 30000 || random() >= 0.15) return null;
+        lastHappy = time;
+        return 'happy';
+      },
+      clear() {
+        returnUntil = 0;
+      }
+    };
+  }
+
   const line = (text, expression = 'smile') => ({ text, expression });
   const lines = {
     firstMeeting: line('我是{name}。以后这里，就留个位置给我吧。'),
@@ -209,7 +240,9 @@
       pendingGreeting = false;
       if (first) {
         persist();
-        return render(lines.firstMeeting);
+        const result = render(lines.firstMeeting);
+        if (random() >= 0.7) result.expression = 'happy';
+        return result;
       }
       const item = pick(lines.greeting[period(date)]);
       remember(item);
@@ -221,7 +254,7 @@
       else if (lines.weekday[date.getDay()] && period(date) !== 'late')
         extra.push(translate(lines.weekday[date.getDay()]));
       persist();
-      return { text: [base.text, ...extra].join('\n'), expression: base.expression };
+      return { text: [base.text, ...extra].join('\n'), expression: random() >= 0.7 ? 'happy' : base.expression };
     }
     function speak(result, proactive = true) {
       if (!result || !say(result.text, result.expression)) return false;
@@ -360,5 +393,15 @@
     };
   }
 
-  return { createLife, validateMemory, blinkPlan, dayKey, period, isLateNight, isSleepyTime, lines };
+  return {
+    createLife,
+    createHappyReactions,
+    validateMemory,
+    blinkPlan,
+    dayKey,
+    period,
+    isLateNight,
+    isSleepyTime,
+    lines
+  };
 });

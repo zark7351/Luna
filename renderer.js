@@ -23,6 +23,7 @@ const hotkeysUI = window.createHotkeysUI({ root: $('hotkeys-settings'), call: ap
 window.pet.onHotkeysChanged(value => hotkeysUI.status(value));
 function applySettings(value) {
   settings = value;
+  if (value.companion === false || value.pureMode) happyReactions.clear();
   document.documentElement.style.setProperty('--pet-width', 256 * value.petScale + 'px');
   document.body.classList.toggle('pure-mode', value.pureMode);
   lastPureLayout = undefined;
@@ -113,6 +114,19 @@ let life = null,
   lifeTimer = null,
   lifeSaveTimer = null,
   lifePaused = false;
+const happyReactions = window.lunaLife.createHappyReactions({ random: () => Math.random() });
+window.pet.onUserReturned(seconds => {
+  if (
+    settings?.companion === false ||
+    lifePaused ||
+    settings?.pureMode ||
+    edgeState.collapsed ||
+    document.visibilityState !== 'visible' ||
+    document.body.inert
+  )
+    return;
+  happyReactions.returned(seconds);
+});
 function panelsOpen() {
   return $('help').open || ['settings', 'library-sheet', 'recording-sheet', 'reminder-sheet'].some(id => !$(id).hidden);
 }
@@ -138,6 +152,12 @@ function playSmile(text) {
   if (viewStopped || sleeping || settings?.pureMode || feedback.getReminder()) return false;
   if (text) showMessage(text);
   window.lunaCharacter.react('smile');
+  return true;
+}
+function playHappy(text) {
+  if (viewStopped || sleeping || settings?.pureMode || feedback.getReminder()) return false;
+  if (text) showMessage(text);
+  window.lunaCharacter.react('happy');
   return true;
 }
 function lifeSay(text, expression) {
@@ -187,7 +207,7 @@ $('bubble-complete').onclick = async event => {
   $('bubble-complete').disabled = true;
   try {
     await api('reminder-complete', reminder.id);
-    playSmile(t('办好了？嗯，做得不错。'));
+    playHappy(t('办好了？嗯，做得不错。'));
   } catch (error) {
     $('bubble-complete').title = error.message;
   } finally {
@@ -337,7 +357,7 @@ window.pet.onEffect(name => {
   if (feedback.getReminder()) return;
   window.lunaEffects.burst(name);
   if (name === 'collect') playSmile(t('嗯，替你收好了。慢慢看。'));
-  if (name === 'complete') playSmile(t('办好了？嗯，做得不错。'));
+  if (name === 'complete') playHappy(t('办好了？嗯，做得不错。'));
   const buttons = {
     collect: 'library-button',
     capture: 'screenshot-button',
@@ -375,6 +395,7 @@ $('library-button').onclick = () => openSheet('library');
 function rest(value) {
   if (sleeping === value) return;
   sleeping = value;
+  if (sleeping) happyReactions.clear();
   clearTimeout(happyTimer);
   window.lunaCharacter.cancel();
   $('pet').classList.toggle('sleeping', sleeping);
@@ -565,6 +586,17 @@ function reactToBody(region) {
   if (viewStopped || !region) return;
   if (sleeping) {
     wakePet();
+    if (happyReactions.click(region, settings?.companion !== false && !lifePaused) === 'happy') playHappy();
+    return;
+  }
+  if (
+    !feedback.getReminder() &&
+    !settings?.pureMode &&
+    happyReactions.click(region, settings?.companion !== false && !lifePaused) === 'happy'
+  ) {
+    wakePet();
+    cancelInfo();
+    playHappy();
     return;
   }
   if (Object.hasOwn(window.claudeAppendages.durations, region)) {

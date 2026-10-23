@@ -90,6 +90,11 @@ module.exports = async function runDesktopSmoke(live) {
       app.exit(0);
       return;
     }
+    if (process.argv.includes('--happy-test')) {
+      console.log(JSON.stringify(await require('./happy-smoke').check(live, app.getPath('temp'))));
+      app.exit(0);
+      return;
+    }
     if (process.argv.includes('--appendage-test')) {
       console.log(JSON.stringify(await require('./appendage-smoke').check(win, app.getPath('temp'))));
       app.exit(0);
@@ -327,6 +332,7 @@ module.exports = async function runDesktopSmoke(live) {
     if (!Number.isFinite(measuredIdle) || measuredIdle < 0) throw Error('system idle API');
     result.systemIdleAPI = true;
     result.scheduledSleep = await require('./sleep-smoke').check(live, app.getPath('temp'));
+    result.happyExpression = await require('./happy-smoke').check(live, app.getPath('temp'));
     await win.webContents.executeJavaScript(
       `(async()=>{openSettings();await new Promise(r=>setTimeout(r,100));const panel=document.querySelector('#settings');panel.scrollTop=panel.scrollHeight;await new Promise(r=>setTimeout(r,80));if(document.querySelector('#settings-form .primary').getBoundingClientRect().bottom>document.body.clientHeight)throw Error('settings footer inaccessible');panel.scrollTop=0;const buttons=[...document.querySelectorAll('#settings header button,#settings .settings-actions button,#settings .storage-row button,#settings .weather-search-row button')];if(buttons.some(button=>button.textContent.trim()||!button.querySelector('svg')||!button.title||!button.getAttribute('aria-label'))||document.querySelector('#settings [data-provider]')||document.querySelector('#top').getAttribute('role')!=='switch')throw Error('settings icon actions');})()`
     );

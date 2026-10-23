@@ -72,6 +72,10 @@ contextBridge.exposeInMainWorld('pet', {
   onReminderCount: callback => ipcRenderer.on('reminder-count', (_event, value) => callback(value)),
   onReminderDue: callback => ipcRenderer.on('reminder-due', (_event, value) => callback(value)),
   onIdleChanged: callback => ipcRenderer.on('idle-changed', (_event, value) => callback(value === true)),
+  onUserReturned: callback =>
+    ipcRenderer.on('user-returned', (_event, seconds) => {
+      if (Number.isFinite(seconds) && seconds >= 300) callback(seconds);
+    }),
   onSettingsChanged: callback => ipcRenderer.on('settings-changed', (_event, value) => callback(value)),
   onEdgeDockChanged: callback => ipcRenderer.on('edge-dock-changed', (_event, value) => callback(value)),
   edgeHold: (value, expanded = false) => ipcRenderer.send('edge-hold', value === true, expanded === true),
