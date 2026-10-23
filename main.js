@@ -282,7 +282,7 @@ function showFocusedWindow(current) {
 }
 function restore() {
   if (!liveWindow()) return;
-  win.setSkipTaskbar(false);
+  win.setSkipTaskbar(true);
   edgeDock?.expand();
   win.setIgnoreMouseEvents(false);
   showFocusedWindow(win);
@@ -434,7 +434,7 @@ else {
       hasShadow: false,
       alwaysOnTop: state.settings.top,
       show: false,
-      skipTaskbar: false,
+      skipTaskbar: true,
       backgroundColor: '#00000000',
       webPreferences: {
         preload: path.join(__dirname, 'preload.js'),
