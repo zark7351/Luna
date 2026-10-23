@@ -3,6 +3,20 @@ const assert = require('node:assert/strict'),
   path = require('node:path');
 async function check({ recording, display, temp, collection }) {
   const before = collection.list().length;
+  const action = () =>
+    recording.getWindow().webContents.executeJavaScript(`(()=>{
+    const d=document.querySelector('#recording-frame').contentDocument,b=d.querySelector('#select');
+    return {action:b.dataset.action,title:b.title,disabled:b.disabled,
+      region:d.defaultView.getComputedStyle(b.querySelector('.select-region-icon')).display!=='none',
+      record:d.defaultView.getComputedStyle(b.querySelector('.start-recording-icon')).display!=='none'};
+  })()`);
+  assert.deepEqual(await action(), {
+    action: 'select',
+    title: '框选录屏范围',
+    disabled: false,
+    region: true,
+    record: false
+  });
   await recording.select(
     { format: 'mp4', fps: 30 },
     { rect: { x: 100, y: 100, width: 320, height: 180 }, bounds: display.bounds, sourceId: 'test', adjust: true }
@@ -15,6 +29,13 @@ async function check({ recording, display, temp, collection }) {
   assert.equal(collection.list().length, before);
   await new Promise(resolve => setTimeout(resolve, 150));
   assert.equal((await read()).phase, 'adjusting');
+  assert.deepEqual(await action(), {
+    action: 'record',
+    title: '开始录制',
+    disabled: false,
+    region: false,
+    record: true
+  });
   const bitmap = (await border.webContents.capturePage({ x: 140, y: 145, width: 30, height: 20 })).toBitmap();
   for (let index = 3; index < bitmap.length; index += 4) assert.equal(bitmap[index], 0);
   assert.equal(await js("document.querySelector('#toolbar').dataset.inside"), 'false');
@@ -54,7 +75,16 @@ async function check({ recording, display, temp, collection }) {
   while (recording.isActive() && Date.now() < cancelled) await new Promise(resolve => setTimeout(resolve, 20));
   assert.equal(recording.isActive(), false);
   assert.equal(collection.list().length, before);
+  await new Promise(resolve => setTimeout(resolve, 100));
+  assert.deepEqual(await action(), {
+    action: 'select',
+    title: '框选录屏范围',
+    disabled: false,
+    region: true,
+    record: false
+  });
   return {
+    selectThenRecordIcons: true,
     waitsForStart: true,
     resize: true,
     move: true,

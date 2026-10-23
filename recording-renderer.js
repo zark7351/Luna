@@ -27,11 +27,13 @@ const cleanup = () => {
   input = output = video = null;
 };
 function renderStatus(state) {
-  $('status').textContent = t(state.message || '');
+  $('status').textContent = t(state.message || (state.phase === 'idle' ? '先框选区域，再开始录制' : ''));
   const busy = state.phase !== 'idle';
   $('select').disabled = busy && state.phase !== 'adjusting';
   $('select').dataset.phase = state.phase;
-  $('select').title = t(state.phase === 'adjusting' ? '开始录制' : '框选录屏范围');
+  const selecting = ['idle', 'choosing'].includes(state.phase);
+  $('select').dataset.action = selecting ? 'select' : 'record';
+  $('select').title = t(selecting ? '框选录屏范围' : '开始录制');
   $('select').setAttribute('aria-label', $('select').title);
   $('stop').disabled = !['adjusting', 'preparing', 'recording'].includes(state.phase);
   document.body.classList.toggle('recording', state.phase === 'recording');

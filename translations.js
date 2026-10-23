@@ -223,8 +223,8 @@
   复制与定位: 'Copy & locate',
   '收藏卡片的复制图标可复制内容，文件夹图标可定位文件。本地文件只保存路径，移动或删除原文件会使收藏失效。':
     'Use card buttons to copy content or show files in Explorer. Local files are stored as references; moving or deleting originals breaks them.',
-  '圆点打开录屏面板，框选后可拖动边角调整或拖尺寸文字移动，点击边框圆点开始，方块停止并收藏 MP4。录制画面，不录声音；设置可选择帧率（默认 60 FPS）及新文件保存位置，已有文件保留原位置。':
-    'Open recording with the dot, select and resize the frame or drag its size label to move it. Start with the frame dot and stop with its square to save MP4. Video only, without audio. Set frame rate (60 FPS by default) and save folder in Settings; existing files stay where they are.',
+  '打开录屏面板后，先点击框选区域图标；框选后可拖动边角调整或拖尺寸文字移动，再点击圆点开始，方块停止并收藏 MP4。录制画面，不录声音；设置可选择帧率（默认 60 FPS）及新文件保存位置，已有文件保留原位置。':
+    'Open the recording panel and click the region selection icon first. Resize the frame or drag its size label to move it, then click the dot to start. The square stops and saves MP4. Video only, without audio. Set frame rate (60 FPS by default) and save folder in Settings; existing files stay where they are.',
   '铃铛里填写内容，选择定时或时长倒计时，到点气泡持续显示，点击右侧勾号完成，点击消息打开提醒面板；未完成时每 15 秒响一次，也可在提醒窗口完成或延后 5 分钟；设置中的声音开关控制所有声音。关闭克劳德时不会提醒，重启或休眠恢复后会补提示。':
     'Add a scheduled reminder or countdown with the bell. Due reminders stay in a bubble: the check completes one; the message opens the panel. A sound repeats every 15 seconds until handled. Snooze for five minutes, or mute sounds in Settings. Claude must be running; missed reminders appear on restart or resume.',
   设置与隐藏: 'Settings & hiding',
@@ -303,7 +303,7 @@
   收起录屏: 'Close recording',
   框选并开始录制: 'Select region and start recording',
   停止并收藏视频: 'Stop and save video',
-  '点击圆点，框选开始': 'Click the dot, then select a region',
+  '先框选区域，再开始录制': 'Select a region first, then start recording',
   'claudex 截图': 'claudex Screenshot',
   '拖动框选 · 松开收藏': 'Drag to select · Release to save',
   'Esc / 右键取消': 'Esc / Right-click to cancel',

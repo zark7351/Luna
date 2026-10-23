@@ -36,7 +36,10 @@
         aria-label="框选录屏范围"
         data-i18n-aria-label="框选录屏范围"
       >
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="6.5" fill="currentColor" stroke="none" /></svg></button
+        <svg class="select-region-icon" data-icon="frame" viewBox="0 0 24 24" aria-hidden="true"></svg>
+        <svg class="start-recording-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="6.5" fill="currentColor" stroke="none" />
+        </svg></button
       ><button
         id="stop"
         disabled
@@ -48,7 +51,7 @@
         <svg data-icon="stop" viewBox="0 0 24 24"><path d="M6 6h12v12H6Z" /></svg>
       </button>
     </div>
-    <p id="status" role="status"><span data-i18n="点击圆点，框选开始">点击圆点，框选开始</span></p>
+    <p id="status" role="status"><span data-i18n="先框选区域，再开始录制">先框选区域，再开始录制</span></p>
     <script src="ui-effects.js"></script>
     <script src="recording-options.js"></script>
     <script src="recording-renderer.js"></script>

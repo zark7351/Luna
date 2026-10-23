@@ -45,6 +45,21 @@ module.exports = async function runDesktopSmoke(live) {
   let smokeStage = 'startup';
   try {
     await new Promise(r => setTimeout(r, 1200));
+    if (process.argv.includes('--recording-frame-test')) {
+      await recording.show();
+      console.log(
+        JSON.stringify(
+          await require('./recording-frame-smoke').check({
+            recording,
+            display: screen.getPrimaryDisplay(),
+            temp: app.getPath('temp'),
+            collection
+          })
+        )
+      );
+      app.exit(0);
+      return;
+    }
     if (process.argv.includes('--hotkeys-test')) {
       console.log(JSON.stringify(await require('./hotkeys-smoke').check(live)));
       app.exit(0);
