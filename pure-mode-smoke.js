@@ -144,6 +144,28 @@ module.exports = async ({ win, restore, stateFile, output }) => {
       ))
     )
       throw Error('clean flower layout/input');
+    // Sample actual rendered frames: a snapped transform has no intermediate angles.
+    win.webContents.sendInputEvent({ type: 'mouseMove', x: 1, y: 1 });
+    await sleep(300);
+    const hoverPoint = await flowerPoint();
+    const flowerBounds = await read("document.querySelector('#pure-flower').getBoundingClientRect().toJSON()");
+    for (const entering of [true, false]) {
+      await read(`window.smokeFlowerSample = new Promise(resolve=>{
+        const values=[],start=performance.now(),svg=document.querySelector('#pure-flower svg');
+        const frame=now=>{const m=new DOMMatrixReadOnly(getComputedStyle(svg).transform);
+          values.push(Math.atan2(m.b,m.a)*180/Math.PI);
+          if(now-start<360)requestAnimationFrame(frame);else resolve(values);};requestAnimationFrame(frame);
+      });void 0;`);
+      win.webContents.sendInputEvent({ type: 'mouseMove', ...(entering ? hoverPoint : { x: 1, y: 1 }) });
+      const angles = await read('window.smokeFlowerSample');
+      const reduced = await read("matchMedia('(prefers-reduced-motion: reduce)').matches");
+      if (!reduced && new Set(angles.filter(a => a > 0.1 && a < 17.9).map(a => a.toFixed(2))).size < 3)
+        throw Error('flower hover snapped ' + JSON.stringify({ entering, angles }));
+      if (Math.abs(angles.at(-1) - (entering ? 18 : 0)) > 0.1) throw Error('flower hover did not settle');
+      const after = await read("document.querySelector('#pure-flower').getBoundingClientRect().toJSON()");
+      if (['x', 'y', 'width', 'height'].some(k => Math.abs(after[k] - flowerBounds[k]) > 0.1))
+        throw Error('flower hover changed collision bounds');
+    }
     fs.writeFileSync(path.join(output, 'luna-pure-mode-preview.png'), (await win.webContents.capturePage()).toPNG());
     await flowerWheel('hide');
     await wait(() => !win.isVisible() && !win.isDestroyed(), 'pure flower hide');
@@ -269,6 +291,7 @@ module.exports = async ({ win, restore, stateFile, output }) => {
       closeToTray: true,
       restore: true,
       flowerOnly: true,
+      smoothFlowerHover: true,
       flowerWheel: true,
       settingsEntry: true,
       characterHidden: true,

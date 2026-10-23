@@ -823,7 +823,6 @@ body.pure-mode #pure-flower {
   pointer-events: auto;
   touch-action: none;
   filter: drop-shadow(0 2px 5px rgba(120, 52, 20, 0.28));
-  transition: transform 0.18s ease-out;
 }
 body.pure-mode #pure-flower:hover,
 body.pure-mode #pure-flower:focus-visible {
@@ -832,7 +831,8 @@ body.pure-mode #pure-flower:focus-visible {
 body.pure-mode #pure-flower:active {
   transform: none;
 }
-body.pure-mode #pure-flower:hover svg {
+body.pure-mode #pure-flower:hover svg,
+body.pure-mode #pure-flower:focus-visible svg {
   transform: rotate(18deg);
 }
 body.pure-mode.flower-wheel #pure-flower {
@@ -842,6 +842,14 @@ body.pure-mode.flower-wheel #pure-flower {
 #pure-flower svg {
   width: 100%;
   height: 100%;
+  transform: rotate(0deg);
+  transform-origin: 50% 50%;
+  transition: transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  #pure-flower svg {
+    transition: none;
+  }
 }
 #pure-flower .flower-petals,
 #edge-expand .flower-petals {
