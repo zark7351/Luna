@@ -28,16 +28,19 @@
 - 角色对话已全面润色为温柔、慵懒、松弛且略带大小姐气质：日常问候/欢迎回来/休息关心/拖动/闲聊，以及收藏、截图录屏、完成提醒和设置反馈的中英文同步。删去“冲呀”“真棒”、委屈式等待与括号舞台说明，新增 3 条闲聊候选，静默微笑保留。主动间隔/每日上限、提醒优先、错误与部分失败反馈均不变，用户的名字、称呼和提醒内容不改写。`docs/CLAUDE-DIALOGUE.md` 列出 68 项场景含英文与占位符；修改台词时同步此清单。
 
 - GPT 娘仅保留未确认的预览：`design/gpt-2d/preview-v3.png` 为少女版、银白/淡紫龙族特征、半眯眼狡黠微笑，画风向克劳德的大色块平涂靠拢；用户两张参考图、完整提示词与继续说明保存在同目录。原图 1448×1086 RGBA，alpha 0–255，内置 image_gen 生成后原样保存。用户最新要求先提交推送，新形象以后再说；不继续生成、不接入、不制作动画或切换功能，当前应用仍使用克劳德。
-- 克劳德睡姿已由用户选定本次两张调整图中的第二张，保存为 `design/luna-2d/poses/sleep/sleep-approved.png`：头进一步放低、向画面左侧倒，脸颊直接贴在左侧胳膊袖面上，闭眼安静睡着。内置 image_gen 以前版 v1 为编辑输入，实际提示词为同目录 `prompt-v2.txt`；v1 保留参考。此图已确认，但尚未制作动画或接入应用，默认待机及休息半速播放不变。
+- 克劳德睡姿已由用户选定本次两张调整图中的第二张，保存为 `design/luna-2d/poses/sleep/sleep-approved.png`：头进一步放低、向画面左侧倒，脸颊直接贴在左侧胳膊袖面上，闭眼安静睡着。内置 image_gen 以前版 v1 为编辑输入，实际提示词为同目录 `prompt-v2.txt`；v1 保留参考。已接入 `assets/luna-2d/sleep.webp`（384×292/帧、144 帧、24 FPS、6 秒循环，约 3.45 MiB），后背/头发轻呼吸、耳尖偶尔微抖；脸、贴臂接触点与前臂逐帧固定，alpha 与留白保留。`sleep.js`/`export.cjs` 可重建，`verify.py` 验证脸颊/手臂 RGB 和 alpha 完全固定、边缘透明及局部动作。睡眠期间跳过默认耳尾变形，非透明处点击只唤醒；缺图回退半速待机，减少动态效果停首帧，迟到加载不复活停止的角色。
+
+- 睡眠策略改为本机时间 **22:00–次日 07:00、12:30–14:00** 到点入睡，时段内启动同样入睡；点击唤醒，之后仅在时段内、距唤醒和系统闲置均满 5 分钟时再睡。普通键鼠不唤醒，结束时段自动醒。锁屏/休眠恢复只检查时段；到点提醒和拖入收藏保留唤醒，未完成提醒阻止再睡。`idle.js` 是权威状态，受限 `pet-wake` IPC 同步点击/提醒唤醒，中英帮助已更新。
 
 ## 本轮验证与分发
 
-- 本轮基于 `feature-claude` 的 `72f3a21`，微调睡姿并保存用户选择的第二张为确认稿。图像检查：1448×1086 RGBA、alpha 0–255、四角全透明；SHA256 `fff02ff4a7707947a7c4c319a1d960a366e5d93865ce7cd9cd0a41c0c7176311`，保留工具原始文件。未修改运行代码、不重建程序、不重跑代码检查；下述程序验证为 `09cc31f` 基线。最终提交号与同步情况以 Git 为准。
-- `npm test`：132/132 通过；`npm run format` 已通过（本机用 `npm exec --yes --package=prettier@3.9.9 -- npm run format`）。
-- 源码完整 `--smoke-test`、便携版 `--smoke-test --appearance-test` 均退出 0，覆盖新名称标题、中英切换、输入焦点、首次打开大收藏夹、截图录屏、缩放、贴边、后台与托盘恢复。EXE 产品名和原始文件名已检查为 claude maid / claude maid.exe。
-- `node build-installer.cjs` 构建成功，`node tests/installer-smoke.cjs --package-only` 隔离安装、旧 Claude.exe/claudex.exe 清理、225 个分发文件一致性和卸载通过；不创建真实快捷方式、不访问真实用户数据。本轮未运行完整安装版桌面/重装保留数据专项，也未升级真实安装目录。
+- 本轮基于 `feature-claude` 的 `ce73a75`，接入确认睡姿与定时睡眠。原图 SHA256 `fff02ff4a7707947a7c4c319a1d960a366e5d93865ce7cd9cd0a41c0c7176311` 未变；导出 144 帧、t=0/6 PNG 一致，全部帧透明边框与固定脸颊/前臂 RGB/alpha 检查通过。
+- `npm test`：136/136 通过；`npm run format` 已通过（本机用 `npm exec --yes --package=prettier@3.9.9 -- npm run format`）。
+- 源码 `--smoke-test --sleep-test` 通过：12:30/14:00/22:00/07:00 边界、跨午夜、真实点击身体/耳/尾只唤醒、180% 缩放命中、闲置 5 分钟再睡、鼠标移动不唤醒、提醒优先、减少动态效果、缺图回退与迟到加载。使用临时用户目录和注入时钟，不修改 Windows 时间。
+- 本轮源码完整 `--smoke-test` 退出 0，覆盖新睡眠专项、中英切换、输入焦点、首次打开大收藏夹、截图录屏、提醒、缩放、贴边、后台与托盘恢复。首次全检发现睡眠专项遗留已完成的测试提醒影响后续排序断言，已在 finally 删除该测试条目并恢复测试时钟，全检重跑通过。
+- `node build-installer.cjs` 已重建便携版和安装包；便携版 `--smoke-test --sleep-test` 退出 0。`node tests/installer-smoke.cjs --package-only` 隔离安装、227 个分发文件一致性及卸载通过。不访问真实用户数据或创建真实快捷方式；本轮未运行完整安装版桌面/重装保留数据专项，未升级真实安装目录。
 - 鼠标捕获跨出原生窗口、多屏混合 DPI 与运行中切换显示器仍需人工体验；真实全局快捷键在其他软件前台触发仍未人工全面验收。
-- 已关闭本项目旧便携进程，使用新入口 `claude maid-Windows/claude maid.exe` 启动。原 `claudex-Windows` 为旧构建输出，不作为新版入口；未递归删除旧包。多屏混合 DPI、长期录屏与第三方客户端拖放仍未全面验收。
+- 已关闭本项目旧便携进程并启动本轮新版，使用入口 `claude maid-Windows/claude maid.exe` 启动。原 `claudex-Windows` 为旧构建输出，不作为新版入口；未递归删除旧包。多屏混合 DPI、长期录屏与第三方客户端拖放仍未全面验收。
 
 ## 代码结构与继续开发
 
@@ -47,7 +50,8 @@
 - `screenshot-smoke.js` 为截图窗口/冻结画面/任务栏像素和底部裁剪专项（`--smoke-test --screenshot-test`）；仅该专项启用真实屏幕源，其余 smoke 保留原先的合成截图数据，个人桌面底图不落盘。
 - `compact-layout.js`：精简花朵碰撞与转盘/面板的临时几何；`edge-dock.js` 通过动态水平/垂直留白和半花高度共用贴边逻辑；`pure-mode-smoke.js` 覆盖真实窗口和四角场景。
 - `hotkeys.js`：前后端共享默认值、校验、迁移与显示；`hotkey-manager.js`：注册、占用回滚、暂停/恢复及清理；`hotkeys-ui.js`：设置输入区；`hotkeys-smoke.js`：快捷键专项（`--smoke-test --hotkeys-test`）。不新增网络或键盘常驻监听。
-- `character.js`/`character-assets.js`：透明图集播放器、姿势表与局部微笑映射/时序，缺失姿势回退待机，休息时减速，减少动态效果时停第一帧。`body-shortcuts.js`：画面部位多边形和无状态普通反应；`pet-size.js`：共享缩放限制，`edge-dock.js` 接受动态窗口宽度；`appendage-motion.js`：局部动作与命中反求，`appendage-smoke.js`：实际点击及逐像素检查。
+- `character.js`/`character-assets.js`：透明图集播放器、姿势表与局部微笑映射/时序，缺失姿势回退待机，睡眠播放独立轻呼吸图集，缺图才减速，减少动态效果时停第一帧。`body-shortcuts.js`：画面部位多边形和无状态普通反应；`pet-size.js`：共享缩放限制，`edge-dock.js` 接受动态窗口宽度；`appendage-motion.js`：局部动作与命中反求，`appendage-smoke.js`：实际点击及逐像素检查。
+- `idle.js`：本地定时睡眠、点击唤醒与闲置再睡；注入时钟/空闲读数/提醒条件用于隔离验证。`sleep-smoke.js`（`--smoke-test --sleep-test`）也接入完整桌面检查。
 - `renderer.js`、`pet-feedback.js`、`shortcut-bubbles.js`：界面、反馈和信息读取；`life.js`：本地陪伴决策，时钟和随机数可注入，smoke 暂停真实主动发言以免干扰断言。
 - `collection.js`/`library.*`：收藏与预览；`screenshot*`、`recording*`/`native-recording.js`、`reminder*`：独立工具窗口；`core.js`：状态迁移和校验；其他模块见 README。
 - 只使用本次授权的功能范围；ROADMAP 的候选项不代表已经授权开发。新增姿势遵循 [素材规范](CHARACTER-ASSETS.md)，不自行更换人物形象。
@@ -72,6 +76,6 @@
 
 ## 明确的下一步
 
-1. 克劳德睡姿原图已确认，后续制作以 `design/luna-2d/poses/sleep/sleep-approved.png` 为准；动画和运行接入按用户后续明确指示进行。继续观察删除后输入与首次打开大收藏夹，GPT 娘继续暂停。
+1. 体验新睡姿的轻呼吸幅度与到点入睡/点击唤醒/闲置再睡；时间按本机 22:00–07:00、12:30–14:00。继续观察删除后输入与首次打开大收藏夹，GPT 娘继续暂停；其他姿势等待明确授权。
 2. 体验精简模式花心转盘、边缘/四角避让和两侧半花按钮，若报告漂移，记录工作区、DPI、花心与窗口坐标；不要用专项通过代替完整通过。
 3. 安装包、其他姿势、日期/天气/占用动画及结构整理等方向，等待用户选择后再做。

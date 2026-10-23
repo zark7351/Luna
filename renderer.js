@@ -350,7 +350,7 @@ window.pet.onEffect(name => {
 window.pet.onReminderDue(value => {
   infoBubbles.cancel();
   if (value) {
-    rest(false);
+    wakePet();
     window.lunaCharacter.cancel();
     if (feedback.getReminder()?.id !== value.id) window.lunaEffects.burst('reminder');
   } else {
@@ -388,6 +388,10 @@ function rest(value) {
   } else if (showMessage(line.text, 5200) && !sleeping) window.lunaCharacter.react(line.expression);
 }
 window.pet.onIdleChanged(rest);
+function wakePet() {
+  rest(false);
+  api('pet-wake').catch(() => {});
+}
 function openHelp() {
   hotkeysUI.close();
   closeSheets();
@@ -559,11 +563,15 @@ function cancelInfo() {
 // Clicking a body part only plays its reaction animation.
 function reactToBody(region) {
   if (viewStopped || !region) return;
+  if (sleeping) {
+    wakePet();
+    return;
+  }
   if (Object.hasOwn(window.claudeAppendages.durations, region)) {
     window.lunaCharacter.react(region);
     return;
   }
-  rest(false);
+  wakePet();
   cancelInfo();
   if (feedback.getReminder()) return;
   const reaction = bodyReactions.click(region);
@@ -799,7 +807,7 @@ document.addEventListener('drop', async e => {
   e.preventDefault();
   dropDepth = 0;
   $('companion').classList.remove('drop-ready');
-  rest(false);
+  wakePet();
   showMessage(t('稍等，替你收好……'), 0);
   try {
     // FileList itself cannot be passed through Electron's context bridge.

@@ -27,6 +27,7 @@ preview.png
 smoke-result.json
 *.log
 coverage/
+design/luna-2d/poses/sleep/frames/
 
 # Local editor and OS files
 .DS_Store

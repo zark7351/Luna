@@ -217,8 +217,8 @@
   关闭说明: 'Close help',
   '桌面上的小伙伴，帮你收好临时内容。': 'Your desktop companion, keeping things handy.',
   互动与移动: 'Interact & move',
-  '点击脑袋、胸部或手臂，她会播放对应的动画。点耳朵会快速轻抖，点尾巴会轻甩一下，再缓缓回落。普通气泡点击关闭，按住角色可拖动位置；右键打开功能转盘。电脑连续 5 分钟没有键鼠操作，她会自动休息；恢复操作后自动唤醒。':
-    'Click her head, chest or arms and she plays a matching animation. Tap an ear for a quick twitch or her tail for a gentle swish and settle. Click ordinary bubbles to dismiss; hold Claude to drag; right-click for the quick wheel. After five idle minutes, she rests and wakes when you return.',
+  '点击脑袋、胸部或手臂，她会播放对应的动画。点耳朵会快速轻抖，点尾巴会轻甩一下，再缓缓回落。普通气泡点击关闭，按住角色可拖动位置；右键打开功能转盘。每天 22:00–次日 07:00、12:30–14:00 到点入睡；点击人物唤醒，睡眠时段内闲置 5 分钟后再睡。到点提醒也会唤醒，普通键鼠操作不会吵醒她。':
+    'Click her head, chest or arms for a reaction, an ear for a quick twitch, or her tail for a gentle swish. Click ordinary bubbles to dismiss; hold Claude to drag; right-click for tools. She sleeps daily from 22:00 to 07:00 and 12:30 to 14:00. Click her to wake; five idle minutes put her back to sleep within those hours. Due reminders also wake her; ordinary keyboard and mouse activity does not.',
   拖来就能收藏: 'Drop to save',
   '将文件、文字或网页链接拖到克劳德身上。收藏夹按类型显示，图片和视频可以预览。':
     'Drop files, text, or links onto Claude. Browse by category; preview images and videos.',

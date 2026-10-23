@@ -1,0 +1,16 @@
+{
+  "frames": 144,
+  "fps": 24,
+  "durationSeconds": 6,
+  "size": [
+    768,
+    584
+  ],
+  "fixedFaceCheekArms": true,
+  "fixedRegionMaximumRgbDelta": 0,
+  "transparentBorder": true,
+  "motion": {
+    "breathing": true,
+    "ear": true
+  }
+}

@@ -30,6 +30,9 @@ test('默认 2D 托腮待机保留横向比例，以 24fps 顺序播放完整八
 
 test('缺少素材的表情回退到待机姿势', () => {
   assert.equal(assets.poseFor('neutral'), 'idle');
+  assert.equal(assets.poseFor('sleeping'), 'sleep');
+  assert.equal(assets.poses.sleep.frames / assets.poses.sleep.fps, 6);
+  assert.equal(assets.frameAt(assets.poses.sleep, 6), 0);
   for (const expression of ['happy', 'shy', 'pout', 'sleeping', 'working', 'missing'])
     assert.ok(Object.hasOwn(assets.poses, assets.poseFor(expression)), expression);
 });

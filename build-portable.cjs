@@ -53,6 +53,7 @@ try {
     'pet-size.js',
     'appearance-smoke.js',
     'idle.js',
+    'sleep-smoke.js',
     'reminders.js',
     'reminder-preload.js',
     'reminder.html',

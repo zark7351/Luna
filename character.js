@@ -12,7 +12,8 @@
     pet.append(canvas);
     const ctx = canvas.getContext('2d', { willReadFrequently: true }),
       images = new Map(),
-      loaded = new Map();
+      loaded = new Map(),
+      failed = new Set();
     const appendages = window.claudeAppendages.createRenderer(canvas);
     let expression = 'neutral',
       pose = 'idle',
@@ -66,11 +67,12 @@
           .then(() => loadImage(definition.file))
           .then(image => {
             assets.validateImage(definition, image);
-            loaded.set(name, image);
+            if (!stopped) loaded.set(name, image);
             return image;
           });
         images.set(name, loading);
         loading.catch(error => {
+          failed.add(name);
           console.warn('角色素材加载失败', error.message);
           if (images.get(name) === loading) images.delete(name);
         });
@@ -82,9 +84,11 @@
       return reaction || (pet.classList.contains('happy') ? 'happy' : 'neutral');
     }
     function draw(time = performance.now()) {
+      if (stopped) return;
       expression = currentExpression();
       canvas.dataset.expression = expression;
-      const wanted = assets.poseFor(expression);
+      const requested = assets.poseFor(expression),
+        wanted = failed.has(requested) ? 'idle' : requested;
       if (wanted !== pose) {
         pose = wanted;
         poseStart = time;
@@ -101,7 +105,7 @@
         return;
       }
       const definition = assets.poses[pose],
-        // Sleeping reuses idle at half speed until a sleep pose exists.
+        // If optional sleep art fails, retain a slower visible idle instead of a blank character.
         speed = expression === 'sleeping' && pose === 'idle' ? 0.5 : 1,
         index = reduced.matches ? 0 : assets.frameAt(definition, ((time - poseStart) / 1000) * speed);
       canvas.dataset.frame = index;
@@ -117,7 +121,7 @@
         stage.width,
         stage.height
       );
-      appendages.draw(ctx, time);
+      if (pose === 'idle') appendages.draw(ctx, time);
       if (expression === 'smile' && smilePatch) {
         ctx.save();
         ctx.globalCompositeOperation = 'source-atop';
@@ -147,7 +151,7 @@
     async function load() {
       if (stopped) return false;
       try {
-        await Promise.all([getImage('idle'), loadSmile()]);
+        await Promise.all([getImage('idle'), getImage('sleep').catch(() => {}), loadSmile()]);
         if (stopped) return false;
         draw();
         start();
@@ -158,7 +162,8 @@
     }
     function react(name) {
       if (Object.hasOwn(window.claudeAppendages.durations, name)) {
-        if (stopped || reduced.matches || !loaded.has('idle')) return false;
+        if (stopped || reduced.matches || pose !== 'idle' || pet.classList.contains('sleeping') || !loaded.has('idle'))
+          return false;
         const started = appendages.play(name);
         draw();
         return started;
@@ -227,6 +232,7 @@
     function hitRegion(clientX, clientY) {
       const point = hitPoint(clientX, clientY);
       if (!point) return null;
+      if (pet.classList.contains('sleeping')) return 'wake';
       const [x, y] = appendages.sourcePoint(point.x, point.y);
       return window.lunaBodyShortcuts.regionAt(x, y, stage.center);
     }

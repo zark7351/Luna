@@ -7,7 +7,8 @@
   // The 2D leaning portrait keeps its landscape aspect ratio; cropped body parts have no hit region.
   const stage = Object.freeze({ width: 384, height: 292, center: 228 });
   const poses = {
-    idle: { file: 'luna-2d/idle.webp', frames: 192, columns: 12, fps: 24, loop: 'loop' }
+    idle: { file: 'luna-2d/idle.webp', frames: 192, columns: 12, fps: 24, loop: 'loop' },
+    sleep: { file: 'luna-2d/sleep.webp', frames: 144, columns: 12, fps: 24, loop: 'loop' }
   };
   // Expressions requested by the app map to poses; missing poses keep idle.
   const expressionPoses = Object.freeze({

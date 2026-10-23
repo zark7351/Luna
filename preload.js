@@ -1,5 +1,6 @@
 const { contextBridge, ipcRenderer, webUtils } = require('electron');
 const allowed = new Set([
+  'pet-wake',
   'pure-layout',
   'pet-scale',
   'panel-focus',

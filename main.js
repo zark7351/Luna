@@ -104,6 +104,7 @@ function playEffect(name) {
       current.webContents.send('ui-effect', name);
 }
 let smokeIdleSeconds = 0;
+let smokeIdleNow = new Date(2026, 9, 23, 10).getTime();
 let smokeReminderNow = Date.now(),
   quitting = false,
   quitSettled = false;
@@ -398,7 +399,10 @@ else {
       isPaused: () => quitting || reminderPauses.size > 0 || screenshot?.isActive() || recording?.isActive(),
       send: value => {
         if (!liveWindow()) return false;
-        if (value) edgeDock?.expand();
+        if (value) {
+          edgeDock?.expand();
+          idle?.wake();
+        }
         win.webContents.send('reminder-due', value);
         if (value) win.showInactive();
         return true;
@@ -602,6 +606,10 @@ else {
         }
       });
     handle('ui-sound', name => playSound(name), true);
+    handle('pet-wake', () => {
+      idle?.wake();
+      return idle?.isSleeping() || false;
+    });
     ipcMain.handle('panel-focus', event => {
       const current = [win, libraryWin].find(
         window =>
@@ -1180,7 +1188,9 @@ else {
     idle = startIdleMonitor({
       powerMonitor,
       getWindow: () => win,
-      readIdleSeconds: () => (smoke ? smokeIdleSeconds : powerMonitor.getSystemIdleTime())
+      readIdleSeconds: () => (smoke ? smokeIdleSeconds : powerMonitor.getSystemIdleTime()),
+      now: () => (smoke ? new Date(smokeIdleNow) : new Date()),
+      canSleep: () => !reminders.list().some(item => item.status === 'fired')
     });
     win.webContents.on('did-finish-load', () => {
       if (liveWindow()) idle.check(true);
@@ -1274,6 +1284,12 @@ else {
         },
         set smokeIdleSeconds(value) {
           smokeIdleSeconds = value;
+        },
+        get smokeIdleNow() {
+          return smokeIdleNow;
+        },
+        set smokeIdleNow(value) {
+          smokeIdleNow = value;
         },
         get smokeReminderNow() {
           return smokeReminderNow;
