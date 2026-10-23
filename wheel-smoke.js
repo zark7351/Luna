@@ -81,7 +81,7 @@ async function check({ win, output }) {
     open();await new Promise(r=>setTimeout(r,450));
     document.querySelector('[data-wheel=companion]').click();
     await wait(()=>settings.companion===false,'companion off');
-    await wait(()=>document.querySelector('#bubble-message').textContent==='好，那我安静陪着你。','off message');
+    await wait(()=>document.querySelector('#bubble-message').textContent==='那就安静待着吧。我在这里。','off message');
     open();await new Promise(r=>setTimeout(r,450));
     const offShown=document.querySelector('[data-wheel=companion]').classList.contains('off');
     document.querySelector('[data-wheel=companion]').click();

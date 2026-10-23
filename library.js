@@ -464,11 +464,7 @@ window.pet.onScreenshotMessage(value => {
   $('status').textContent = value.message;
 });
 function shortcutHint(status) {
-  $('screenshot-button').title = status.enabled
-    ? status.available
-      ? t('截图收藏 · Ctrl+Alt+A')
-      : t('截图收藏 · 快捷键被占用，请点击图标')
-    : t('截图收藏 · 快捷键已关闭');
+  $('screenshot-button').title = window.claudexHotkeys.screenshotHint(status, t);
 }
 window.pet.onScreenshotShortcutChanged(shortcutHint);
 api('screenshot-shortcut')

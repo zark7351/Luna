@@ -45,6 +45,11 @@ module.exports = async function runDesktopSmoke(live) {
   let smokeStage = 'startup';
   try {
     await new Promise(r => setTimeout(r, 1200));
+    if (process.argv.includes('--hotkeys-test')) {
+      console.log(JSON.stringify(await require('./hotkeys-smoke').check(live)));
+      app.exit(0);
+      return;
+    }
     if (process.argv.includes('--smile-test')) {
       console.log(JSON.stringify(await require('./smile-smoke').check(live, app.getPath('temp'))));
       app.exit(0);
@@ -734,7 +739,7 @@ module.exports = async function runDesktopSmoke(live) {
       mediaPreview: true
     };
     await win.webContents.executeJavaScript(
-      `(async()=>{openSettings();await new Promise(r=>setTimeout(r,120));const toggle=document.querySelector('#screenshot-shortcut');if(!toggle.checked)throw Error('shortcut default');toggle.checked=false;document.querySelector('#settings-form').requestSubmit();await new Promise(r=>setTimeout(r,150));const state=await window.pet.call('state');if(state.value.settings.screenshotShortcut!==false||!document.querySelector('#screenshot-button').title.includes('已关闭'))throw Error('shortcut disable UI');})()`
+      `(async()=>{await openSettings();if(!document.querySelector('#hotkey-screenshot').value)throw Error('shortcut default');document.querySelector('#hotkey-screenshot').parentElement.querySelector('button').click();document.querySelector('#settings-form').requestSubmit();await new Promise(r=>setTimeout(r,150));const state=await window.pet.call('state');if(state.value.settings.screenshotShortcut!==false||!document.querySelector('#screenshot-button').title.includes('已关闭'))throw Error('shortcut disable UI');})()`
     );
     if (
       JSON.parse(fs.readFileSync(stateFile, 'utf8')).settings.screenshotShortcut !== false ||
@@ -750,7 +755,7 @@ module.exports = async function runDesktopSmoke(live) {
     )
       throw Error('library shortcut status');
     await win.webContents.executeJavaScript(
-      `(async()=>{openSettings();await new Promise(r=>setTimeout(r,120));if(document.querySelector('#screenshot-shortcut').checked)throw Error('shortcut reopened preference');document.querySelector('#screenshot-shortcut').checked=true;document.querySelector('#settings-form').requestSubmit();await new Promise(r=>setTimeout(r,150));})()`
+      `(async()=>{await openSettings();if(document.querySelector('#hotkey-screenshot').value)throw Error('shortcut reopened preference');document.querySelector('.hotkeys-heading button').click();document.querySelector('#settings-form').requestSubmit();await new Promise(r=>setTimeout(r,150));})()`
     );
     if (!shortcutStatus().enabled || !JSON.parse(fs.readFileSync(stateFile, 'utf8')).settings.screenshotShortcut)
       throw Error('shortcut reenable');

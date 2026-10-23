@@ -18,6 +18,8 @@ const api = async (name, payload) => {
   if (!r.ok) throw Error(t(r.error));
   return r.value;
 };
+const hotkeysUI = window.createHotkeysUI({ root: $('hotkeys-settings'), call: api, t });
+window.pet.onHotkeysChanged(value => hotkeysUI.status(value));
 function applySettings(value) {
   settings = value;
   document.documentElement.style.setProperty('--pet-width', 256 * value.petScale + 'px');
@@ -281,11 +283,7 @@ window.pet.onScreenshotMessage(value => {
   showMessage(value.message);
 });
 function shortcutHint(status) {
-  $('screenshot-button').title = status.enabled
-    ? status.available
-      ? t('截图收藏 · Ctrl+Alt+A')
-      : t('截图收藏 · 快捷键被占用，请点击图标')
-    : t('截图收藏 · 快捷键已关闭');
+  $('screenshot-button').title = window.claudexHotkeys.screenshotHint(status, t);
 }
 window.pet.onScreenshotShortcutChanged(shortcutHint);
 api('screenshot-shortcut')
@@ -390,6 +388,7 @@ function rest(value) {
 }
 window.pet.onIdleChanged(rest);
 function openHelp() {
+  hotkeysUI.close();
   closeSheets();
   $('settings').hidden = true;
   if (!$('help').open) {
@@ -419,7 +418,7 @@ async function openSettings() {
     $('top').checked = settings.top;
     $('pure-mode').checked = settings.pureMode;
     $('companion-enabled').checked = settings.companion !== false;
-    $('screenshot-shortcut').checked = settings.screenshotShortcut;
+    hotkeysUI.fill(settings.hotkeys, await api('hotkeys-status'));
     $('sound-enabled').checked = settings.soundEnabled;
     window.lunaWeather.fill(settings.weatherLocation);
     $('record-frame-rate').value = String(settings.recordFrameRate);
@@ -437,6 +436,7 @@ function closeSheets() {
   for (const name of ['library', 'recording', 'reminder']) $(name + '-sheet').hidden = true;
 }
 function openSheet(name) {
+  hotkeysUI.close();
   cancelInfo();
   if ($('help').open) $('help').close();
   $('settings').hidden = true;
@@ -471,6 +471,7 @@ window.pet.onPanel(name => {
 });
 $('toolbar-settings').onclick = openSettings;
 $('settings-close').onclick = () => {
+  hotkeysUI.close();
   $('settings').hidden = true;
   window.uiSound('close');
 };
@@ -483,13 +484,13 @@ $('settings-form').onsubmit = async e => {
     top: $('top').checked,
     pureMode: $('pure-mode').checked,
     companion: $('companion-enabled').checked,
-    screenshotShortcut: $('screenshot-shortcut').checked,
     soundEnabled: $('sound-enabled').checked,
     weatherLocation: window.lunaWeather.getLocation(),
     saveDirectory: $('save-directory').value,
     recordFrameRate: Number($('record-frame-rate').value)
   };
   try {
+    input.hotkeys = await hotkeysUI.read();
     const state = await api('settings', input);
     applySettings(state.settings);
     document.title = t('claudex · 桌面宠物');
@@ -900,6 +901,7 @@ $('pet').addEventListener('contextmenu', event => {
 })();
 
 window.addEventListener('luna-language-changed', () => {
+  hotkeysUI.render();
   wheel.refresh();
   cancelInfo();
   feedback.show('');

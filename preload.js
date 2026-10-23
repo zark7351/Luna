@@ -11,6 +11,8 @@ const allowed = new Set([
   'reminder-complete',
   'screenshot-start',
   'screenshot-shortcut',
+  'hotkeys-status',
+  'hotkeys-capture',
   'state',
   'life-memory',
   'settings',
@@ -61,6 +63,7 @@ contextBridge.exposeInMainWorld('pet', {
   onCollectionUpdated: callback => ipcRenderer.on('collection-updated', () => callback()),
   onScreenshotShortcutChanged: callback =>
     ipcRenderer.on('screenshot-shortcut-changed', (_event, value) => callback(value)),
+  onHotkeysChanged: callback => ipcRenderer.on('hotkeys-changed', (_event, value) => callback(value)),
   onScreenshotMessage: callback => ipcRenderer.on('screenshot-message', (_event, value) => callback(value)),
   onPanel: callback => ipcRenderer.on('panel-open', (_event, name) => callback(name)),
   onSound: callback => ipcRenderer.on('sound-play', (_event, name) => callback(name)),

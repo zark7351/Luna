@@ -3,6 +3,23 @@
   if (typeof module === 'object' && module.exports) module.exports = factory();
   else root.lunaTranslations = factory();
 })(globalThis, () => ({
+  快捷键: 'Keyboard shortcuts',
+  恢复默认快捷键: 'Reset shortcuts',
+  未绑定: 'Unassigned',
+  清除快捷键: 'Clear shortcut',
+  '保存后生效，留空表示禁用。': 'Save to apply. Leave blank to disable.',
+  '点击输入框后按组合键。保存后生效，留空表示禁用。':
+    'Click a field and press a shortcut. Save to apply; leave blank to disable.',
+  '按下组合键，Tab 结束录入，Esc 取消。': 'Press a shortcut. Tab to finish; Esc to cancel.',
+  '快捷键格式无效。': 'Invalid shortcut.',
+  '请使用 Ctrl、Alt 或 Win 组合键，或 F1–F24。': 'Use Ctrl, Alt or Win with a key, or F1–F24.',
+  '这个组合键由系统使用，请换一个。': 'This shortcut is reserved by Windows. Choose another.',
+  '快捷键重复，请为每个功能设置不同的组合键。': 'Choose a different shortcut for each action.',
+  '快捷键被占用或不受系统支持，请换一个组合键。': 'This shortcut is unavailable or unsupported. Choose another.',
+  '请先结束快捷键录入，再保存。': 'Finish recording the shortcut before saving.',
+  '该快捷键未注册，请换一个组合键。': 'This shortcut is unavailable. Choose another.',
+  '点击框选图标，拖动框选后松开鼠标，截图自动收藏到图片与视频。Esc 或右键取消；每次在一块屏幕内框选。默认快捷键 Ctrl + Alt + A，可在设置的快捷键区修改或清除。':
+    'Click the capture icon, drag an area and release to save it to Images & videos. Esc or right-click cancels; select within one display. The default shortcut is Ctrl + Alt + A; change or clear it in Settings → Keyboard shortcuts.',
   展开克劳德: 'Expand Claude',
   隐藏到托盘: 'Hide to tray',
   打开提醒: 'Open reminders',

@@ -343,6 +343,72 @@ input::placeholder {
   display: flex;
   gap: 8px;
 }
+#hotkeys-settings {
+  padding: 12px;
+  margin: 10px 0;
+  border: 1px solid #f2e5de;
+  border-radius: 15px;
+  background: #ffffffb0;
+  color: #a47f6c;
+}
+.hotkeys-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  font-size: 11px;
+}
+.hotkeys-heading button {
+  color: #a47f6c;
+  font-size: 10px;
+  padding: 4px;
+}
+.hotkey-row {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr) 22px;
+  align-items: center;
+  gap: 5px;
+  margin-top: 7px;
+}
+.hotkey-row label {
+  margin: 0;
+  color: inherit;
+}
+.hotkey-row input {
+  width: 100%;
+  min-width: 0;
+  padding: 7px 5px;
+  border: 1px solid #eedcd3;
+  border-radius: 7px;
+  background: #fdf7f4;
+  color: #745c4f;
+  font-size: 10px;
+  cursor: pointer;
+}
+.hotkey-row input:focus-visible {
+  outline: 2px solid #eb8d60;
+  outline-offset: 1px;
+}
+.hotkey-row button {
+  padding: 3px;
+  color: #b39586;
+  font-size: 17px;
+}
+.hotkey-note {
+  grid-column: 1 / -1;
+  color: #b66b48;
+  font-size: 10px;
+  line-height: 1.5;
+}
+.hotkey-note:empty {
+  display: none;
+}
+.hotkeys-hint {
+  font-size: 10px;
+  line-height: 1.6;
+  margin: 9px 0 0;
+}
 .settings-actions button {
   display: grid;
   place-items: center;

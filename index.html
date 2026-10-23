@@ -191,9 +191,9 @@
           <dt><span data-i18n="截图收藏">截图收藏</span></dt>
           <dd>
             <span
-              data-i18n="点击框选图标或按 Ctrl + Alt + A，拖动框选后松开鼠标，截图自动收藏到图片与视频。Esc 或右键取消；每次在一块屏幕内框选。设置里可关闭快捷键。"
-              >点击框选图标或按 Ctrl + Alt + A，拖动框选后松开鼠标，截图自动收藏到图片与视频。Esc
-              或右键取消；每次在一块屏幕内框选。设置里可关闭快捷键。</span
+              data-i18n="点击框选图标，拖动框选后松开鼠标，截图自动收藏到图片与视频。Esc 或右键取消；每次在一块屏幕内框选。默认快捷键 Ctrl + Alt + A，可在设置的快捷键区修改或清除。"
+              >点击框选图标，拖动框选后松开鼠标，截图自动收藏到图片与视频。Esc
+              或右键取消；每次在一块屏幕内框选。默认快捷键 Ctrl + Alt + A，可在设置的快捷键区修改或清除。</span
             >
           </dd>
           <dt><span data-i18n="复制与定位">复制与定位</span></dt>
@@ -335,15 +335,7 @@
           ><span><span data-i18n="置顶">置顶</span></span
           ><input type="checkbox" id="top" role="switch"
         /></label>
-        <label class="check" title="Ctrl + Alt + A"
-          ><span><span data-i18n="快捷键截图">快捷键截图</span></span
-          ><input
-            type="checkbox"
-            id="screenshot-shortcut"
-            role="switch"
-            aria-label="快捷键截图 Ctrl+Alt+A"
-            data-i18n-aria-label="快捷键截图 Ctrl+Alt+A"
-        /></label>
+        <section id="hotkeys-settings" aria-label="快捷键" data-i18n-aria-label="快捷键"></section>
         <label class="check"
           ><span><span data-i18n="声音">声音</span></span
           ><input type="checkbox" id="sound-enabled" role="switch" aria-label="声音" data-i18n-aria-label="声音"
@@ -416,6 +408,8 @@
     <script src="pet-feedback.js"></script>
     <script src="life.js"></script>
     <script src="wheel.js"></script>
+    <script src="hotkeys.js"></script>
+    <script src="hotkeys-ui.js"></script>
     <script src="renderer.js"></script>
   </body>
 </html>

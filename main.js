@@ -20,6 +20,8 @@ const t = text => i18n.translate(text, state?.settings.language);
 const fs = require('node:fs');
 const path = require('node:path');
 const petSize = require('./pet-size');
+const hotkeys = require('./hotkeys');
+const { createHotkeyManager } = require('./hotkey-manager');
 const { APP_NAME, APP_ID, appIcon, createTrayIcon } = require('./app-branding');
 app.setName(APP_NAME);
 if (process.platform === 'win32') app.setAppUserModelId(APP_ID);
@@ -66,6 +68,7 @@ else {
   app.setPath('userData', directory);
 }
 let recording,
+  hotkeyManager,
   win,
   libraryWin,
   tray,
@@ -544,7 +547,9 @@ else {
         { label: t('区域录屏'), click: () => recording?.show().catch(() => {}) },
         { label: t('提醒'), click: () => showReminders().catch(() => {}) },
         {
-          label: t('截图收藏（Ctrl+Alt+A）'),
+          label:
+            t('截图收藏') +
+            (state.settings.hotkeys.screenshot ? `（${hotkeys.display(state.settings.hotkeys.screenshot)}）` : ''),
           click: () => {
             if (!recording?.isActive()) screenshot?.start();
           }
@@ -580,7 +585,7 @@ else {
         } catch (err) {
           const sound = operationSound(name, null, args[0], true);
           if (sound) playSound(sound);
-          return { ok: false, error: t(err.message || '操作失败') };
+          return { ok: false, error: t(err.message || '操作失败') + (err.shortcut ? ` ${err.shortcut}` : '') };
         }
       });
     handle('ui-sound', name => playSound(name), true);
@@ -678,27 +683,74 @@ else {
       if (current.isDestroyed()) throw Error('窗口已关闭');
       return result.canceled ? null : result.filePaths[0];
     });
-    let captureShortcut = false;
-    const shortcutStatus = () => ({ enabled: state.settings.screenshotShortcut, available: captureShortcut });
-    function syncCaptureShortcut() {
-      if (!state.settings.screenshotShortcut) {
-        if (captureShortcut) globalShortcut.unregister('CommandOrControl+Alt+A');
-        captureShortcut = false;
-      } else if (!captureShortcut && !smoke) {
-        try {
-          captureShortcut = globalShortcut.register('CommandOrControl+Alt+A', () => {
-            if (state.settings.screenshotShortcut && !recording.isActive())
-              screenshot.start().catch(() => captureMessage('截图启动失败。', false));
-          });
-        } catch {
-          captureShortcut = false;
+    // Isolated smoke runs must never take over the user's real shortcuts.
+    const smokeKeys = new Map();
+    const hotkeyRegistry = smoke
+      ? {
+          register(key, callback) {
+            if (smokeKeys.has(key)) return false;
+            smokeKeys.set(key, callback);
+            return true;
+          },
+          unregister(key) {
+            smokeKeys.delete(key);
+          },
+          isRegistered(key) {
+            return smokeKeys.has(key);
+          },
+          fire(key) {
+            smokeKeys.get(key)?.();
+          }
         }
+      : globalShortcut;
+    hotkeyManager = createHotkeyManager(hotkeyRegistry, async action => {
+      if (quitting || !liveWindow()) return;
+      try {
+        if (action === 'screenshot') {
+          if (!recording.isActive()) await screenshot.start();
+        } else if (action === 'recording') {
+          if (recording.isActive()) await recording.stop();
+          else {
+            await recording.show();
+            await recording.select({ format: 'mp4', fps: state.settings.recordFrameRate });
+          }
+        } else if (action === 'library') openPetPanel('library');
+        else if (action === 'reminder') await showReminders();
+        else if (action === 'pureMode') await changeSettings({ pureMode: !state.settings.pureMode });
+      } catch (error) {
+        captureMessage(error.message || '操作失败', false);
       }
+    });
+    hotkeyManager.start(state.settings.hotkeys);
+    const shortcutStatus = () => ({
+      ...hotkeyManager.status().bindings.screenshot,
+      suspended: hotkeyManager.status().suspended
+    });
+    function syncCaptureShortcut() {
       for (const window of [win, libraryWin])
-        if (window && !window.isDestroyed()) window.webContents.send('screenshot-shortcut-changed', shortcutStatus());
+        if (window && !window.isDestroyed() && !window.webContents.isDestroyed()) {
+          window.webContents.send('screenshot-shortcut-changed', shortcutStatus());
+          window.webContents.send('hotkeys-changed', hotkeyManager.status());
+        }
     }
     syncCaptureShortcut();
     handle('screenshot-shortcut', shortcutStatus, true);
+    handle('hotkeys-status', () => hotkeyManager.status());
+    handle('hotkeys-capture', active => {
+      if (active === true && (smoke || (liveWindow() && win.isFocused()))) hotkeyManager.suspend();
+      else hotkeyManager.resume();
+      syncCaptureShortcut();
+      return hotkeyManager.status();
+    });
+    const resumeHotkeys = () => {
+      if (!quitting) {
+        hotkeyManager.resume();
+        syncCaptureShortcut();
+      }
+    };
+    win.on('blur', resumeHotkeys);
+    win.on('hide', resumeHotkeys);
+    win.webContents.on('render-process-gone', resumeHotkeys);
     handle('reminder-show', () => showReminders());
     handle('reminder-list', () => reminders.list(), false);
     handle('reminder-complete', id => reminders.action({ id, action: 'complete' }, true));
@@ -763,9 +815,21 @@ else {
     handle('weather-search', query => weather.search(query));
     handle('weather-locate', () => weather.locate());
     handle('edge-expand', () => edgeDock.expand());
-    handle('settings', async input => {
+    async function applySettingsChange(input) {
+      const nextHotkeys =
+        input?.hotkeys !== undefined
+          ? hotkeys.validate(input.hotkeys)
+          : {
+              ...state.settings.hotkeys,
+              ...(input?.screenshotShortcut === false ? { screenshot: '' } : {}),
+              ...(input?.screenshotShortcut === true && !state.settings.hotkeys.screenshot
+                ? { screenshot: hotkeys.defaults.screenshot }
+                : {})
+            };
       const next = validate({
+        ...state.settings,
         ...input,
+        hotkeys: nextHotkeys,
         language: input?.language ?? state.settings.language,
         petScale: state.settings.petScale,
         pureMode: input?.pureMode ?? state.settings.pureMode,
@@ -783,14 +847,21 @@ else {
           await fs.promises.access(next.saveDirectory, fs.constants.W_OK);
         }
       }
+      if (quitting || !liveWindow()) throw Error('窗口已关闭');
+      const shortcutChange =
+        input?.hotkeys || JSON.stringify(next.hotkeys) !== JSON.stringify(state.settings.hotkeys)
+          ? hotkeyManager.prepare(next.hotkeys)
+          : null;
       const previous = state;
       state = { ...state, settings: next };
       try {
         persist();
       } catch (e) {
         state = previous;
+        shortcutChange?.rollback();
         throw e;
       }
+      shortcutChange?.commit();
       if (liveWindow() && next.pureMode !== previous.settings.pureMode) {
         edgeDock.beginDrag();
         const bounds = win.getBounds();
@@ -823,7 +894,14 @@ else {
       for (const current of [win, libraryWin]) if (current && !current.isDestroyed()) configureAudio(current);
       syncCaptureShortcut();
       return publicState();
-    });
+    }
+    let settingsQueue = Promise.resolve();
+    function changeSettings(input) {
+      const result = settingsQueue.then(() => applySettingsChange(input));
+      settingsQueue = result.catch(() => {});
+      return result;
+    }
+    handle('settings', changeSettings);
     handle('pure-layout', expanded => {
       setPureLayout(expanded);
       return true;
@@ -1143,9 +1221,11 @@ else {
         presentReminders,
         restore,
         shortcutStatus,
+        hotkeyManager,
+        hotkeyRegistry,
         showReminders,
         get captureShortcut() {
-          return captureShortcut;
+          return shortcutStatus().available;
         },
         get libraryWin() {
           return libraryWin;
@@ -1183,7 +1263,7 @@ else {
     clearTimeout(reminderAlertTimer);
     reminders?.stop();
     screenshot?.stop();
-    globalShortcut.unregisterAll();
+    hotkeyManager?.stop();
     if (stateFile && state) persist();
     if ((reminders || recording) && !quitSettled) {
       event.preventDefault();

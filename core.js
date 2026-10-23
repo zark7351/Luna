@@ -3,6 +3,7 @@ const { normalize } = require('./i18n');
 const { location } = require('./weather');
 const { validateMemory } = require('./life');
 const petSize = require('./pet-size');
+const hotkeys = require('./hotkeys');
 const defaults = {
   name: '克劳德',
   petScale: 1,
@@ -12,6 +13,7 @@ const defaults = {
   pureMode: false,
   companion: true,
   screenshotShortcut: true,
+  hotkeys: hotkeys.defaults,
   soundEnabled: true,
   weatherLocation: null,
   saveDirectory: '',
@@ -38,7 +40,8 @@ function validate(input = {}) {
   s.top = input.top !== false;
   s.pureMode = input.pureMode === true;
   s.companion = input.companion !== false;
-  s.screenshotShortcut = input.screenshotShortcut !== false;
+  s.hotkeys = hotkeys.migrate(input.hotkeys, input.screenshotShortcut);
+  s.screenshotShortcut = !!s.hotkeys.screenshot;
   s.soundEnabled = input.soundEnabled !== false;
   s.weatherLocation = location(input.weatherLocation);
   s.saveDirectory =
