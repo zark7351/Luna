@@ -34,7 +34,7 @@ function createRecording({
   });
   window.on('closed', () => {
     window = null;
-    if (session) fail('claudex 窗口已关闭。').catch(() => {});
+    if (session) fail('claude maid 窗口已关闭。').catch(() => {});
   });
   window.webContents.on('render-process-gone', () => {
     if (session) fail('录屏进程中断，请重新录制。').catch(() => {});

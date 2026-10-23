@@ -2,20 +2,20 @@
   #define AppVersion "1.0.0"
 #endif
 #ifndef SourceDir
-  #define SourceDir "..\..\claudex-Windows"
+  #define SourceDir "..\..\claude maid-Windows"
 #endif
 #ifndef ReleaseDir
-  #define ReleaseDir "..\..\claudex-Release"
+  #define ReleaseDir "..\..\claude maid-Release"
 #endif
 
 [Setup]
 AppId={code:ReleaseAppId}
-AppName=claudex
+AppName=claude maid
 AppVersion={#AppVersion}
-AppVerName=claudex {#AppVersion}
-AppPublisher=claudex
-DefaultDirName={localappdata}\Programs\claudex
-DefaultGroupName=claudex
+AppVerName=claude maid {#AppVersion}
+AppPublisher=claude maid
+DefaultDirName={localappdata}\Programs\claude maid
+DefaultGroupName=claude maid
 DisableProgramGroupPage=yes
 DisableDirPage=no
 PrivilegesRequired=lowest
@@ -23,12 +23,12 @@ ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0.17763
 OutputDir={#ReleaseDir}
-OutputBaseFilename=claudex-{#AppVersion}-Setup
+OutputBaseFilename=claude maid-{#AppVersion}-Setup
 SetupIconFile=..\assets\claude.ico
-UninstallDisplayIcon={app}\claudex.exe
+UninstallDisplayIcon={app}\claude maid.exe
 VersionInfoVersion={#AppVersion}
-VersionInfoProductName=claudex
-VersionInfoDescription=claudex 安装程序
+VersionInfoProductName=claude maid
+VersionInfoDescription=claude maid 安装程序
 WizardStyle=modern
 Compression=lzma2/normal
 SolidCompression=yes
@@ -54,16 +54,20 @@ Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs 
 ; Keep the release AppId so existing installations and uninstall records are upgraded.
 [InstallDelete]
 Type: files; Name: "{app}\Claude.exe"
+Type: files; Name: "{app}\claudex.exe"
+Type: files; Name: "{userdesktop}\claudex.lnk"; Check: not IsTestMode
+Type: files; Name: "{userprograms}\claudex\claudex.lnk"; Check: not IsTestMode
+Type: dirifempty; Name: "{userprograms}\claudex"; Check: not IsTestMode
 Type: files; Name: "{userdesktop}\克劳德.lnk"; Check: not IsTestMode
 Type: files; Name: "{userprograms}\克劳德\克劳德.lnk"; Check: not IsTestMode
 Type: dirifempty; Name: "{userprograms}\克劳德"; Check: not IsTestMode
 
 [Icons]
-Name: "{userprograms}\claudex\claudex"; Filename: "{app}\claudex.exe"; WorkingDir: "{app}"; AppUserModelID: "claudex.Companion.Desktop"; Check: not IsTestMode
-Name: "{userdesktop}\claudex"; Filename: "{app}\claudex.exe"; WorkingDir: "{app}"; AppUserModelID: "claudex.Companion.Desktop"; Tasks: desktopicon; Check: not IsTestMode
+Name: "{userprograms}\claude maid\claude maid"; Filename: "{app}\claude maid.exe"; WorkingDir: "{app}"; AppUserModelID: "claudex.Companion.Desktop"; Check: not IsTestMode
+Name: "{userdesktop}\claude maid"; Filename: "{app}\claude maid.exe"; WorkingDir: "{app}"; AppUserModelID: "claudex.Companion.Desktop"; Tasks: desktopicon; Check: not IsTestMode
 
 [Run]
-Filename: "{app}\claudex.exe"; WorkingDir: "{app}"; Description: "启动 claudex"; Flags: nowait postinstall skipifsilent; Check: not IsTestMode
+Filename: "{app}\claude maid.exe"; WorkingDir: "{app}"; Description: "启动 claude maid"; Flags: nowait postinstall skipifsilent; Check: not IsTestMode
 
 [Code]
 function IsTestMode: Boolean;

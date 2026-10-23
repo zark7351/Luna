@@ -20,7 +20,7 @@ Electron 运行时下载依赖网络。如果下载失败，不要从其他来�
 
 对新对话说：
 
-> 这是 claudex Windows 桌面宠物项目，当前角色为克劳德（小克），当前开发分支 feature-claude。请先读取 AGENTS.md、README.md、HANDOFF.md 和 ROADMAP.md，检查 Git 状态，总结当前实现与待办，再按我的本次要求继续。完成后更新交接文档。
+> 这是 claude maid Windows 桌面宠物项目，当前角色为克劳德（小克），当前开发分支 feature-claude。请先读取 AGENTS.md、README.md、HANDOFF.md 和 ROADMAP.md，检查 Git 状态，总结当前实现与待办，再按我的本次要求继续。完成后更新交接文档。
 
 ## 每次换机前后
 
@@ -52,9 +52,9 @@ git push
 node build-portable.cjs
 ```
 
-输出位于仓库同级的 `claudex-Windows/claudex.exe`。开发者通过 Git 传源码，运行时和便携 exe 重新生成。角色原图、2D 动画源代码、运行图集与 package-lock.json 已纳入源码；PNG 全帧与 APNG 母版不提交，可按 `design/luna-2d/idle/README.md` 重建。
+输出位于仓库同级的 `claude maid-Windows/claude maid.exe`。开发者通过 Git 传源码，运行时和便携 exe 重新生成。角色原图、2D 动画源代码、运行图集与 package-lock.json 已纳入源码；PNG 全帧与 APNG 母版不提交，可按 `design/luna-2d/idle/README.md` 重建。
 
-claudex 1.0 安装包执行 `node build-installer.cjs`，输出到仓库同级 `claudex-Release`；本轮只验证了便携版，安装包尚未重建。使用时无需 Node.js。首次开发构建会下载固定版本并校验 SHA256 的官方 rcedit / Inno Setup 工具到 `.build-tools`，该缓存不随 Git 同步。安装规则与工具来源见 [安装包指南](installer/README.md)。安装版与便携版继续使用兼容旧版的 `LunaPet` 用户数据目录，卸载不删除个人数据。
+claude maid 1.0 安装包执行 `node build-installer.cjs`，输出到仓库同级 `claude maid-Release`；本轮已构建便携版及安装包，并验证隔离安装/卸载与分发文件一致性。使用时无需 Node.js。首次开发构建会下载固定版本并校验 SHA256 的官方 rcedit / Inno Setup 工具到 `.build-tools`，该缓存不随 Git 同步。安装规则与工具来源见 [安装包指南](installer/README.md)。安装版与便携版继续使用兼容旧版的 `LunaPet` 用户数据目录，卸载不删除个人数据。
 
 该 Node.js 入口不受 PowerShell 的 `.ps1` 执行策略影响，无需管理员权限或调整策略。如果 npm.ps1 也被拦截，可使用 `npm.cmd ci`、`npm.cmd test` 和 `npm.cmd start`。
 

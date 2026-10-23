@@ -145,7 +145,7 @@
       return button && wheel.contains(button) ? buttons.indexOf(button) : -1;
     }
     function refresh() {
-      wheel.setAttribute('aria-label', translate('claudex 功能'));
+      wheel.setAttribute('aria-label', translate('claude maid 功能'));
       items.forEach((item, index) => {
         const off = item.off?.() === true;
         buttons[index].classList.toggle('off', off);

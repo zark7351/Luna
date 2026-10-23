@@ -14,15 +14,15 @@ test('托盘使用十四瓣花饰，圆心深棕、边角透明且边缘抗锯�
   assert.equal(APP_ID, 'claudex.Companion.Desktop');
 });
 
-test('软件品牌为 claudex，角色名和安装升级身份保持独立', () => {
-  assert.equal(APP_NAME, 'claudex');
-  assert.equal(EXE_NAME, 'claudex.exe');
-  assert.equal(PORTABLE_DIR, 'claudex-Windows');
-  assert.equal(RELEASE_DIR, 'claudex-Release');
+test('软件品牌为 claude maid，角色名和安装升级身份保持独立', () => {
+  assert.equal(APP_NAME, 'claude maid');
+  assert.equal(EXE_NAME, 'claude maid.exe');
+  assert.equal(PORTABLE_DIR, 'claude maid-Windows');
+  assert.equal(RELEASE_DIR, 'claude maid-Release');
   const pkg = require('../package.json'),
     lock = require('../package-lock.json');
   assert.equal(pkg.productName, APP_NAME);
-  assert.equal(pkg.name, APP_NAME);
+  assert.equal(pkg.name, 'claude-maid');
   assert.equal(lock.name, pkg.name);
   assert.equal(lock.packages[''].name, pkg.name);
   assert.equal(require('../core').defaults.name, '克劳德');

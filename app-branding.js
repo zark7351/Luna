@@ -1,5 +1,5 @@
 const path = require('node:path');
-const APP_NAME = 'claudex';
+const APP_NAME = 'claude maid';
 const APP_ID = 'claudex.Companion.Desktop';
 const EXE_NAME = APP_NAME + '.exe';
 const PORTABLE_DIR = APP_NAME + '-Windows';
