@@ -434,7 +434,14 @@ async function openSettings() {
   }
 }
 function closeSheets() {
-  for (const name of ['library', 'recording', 'reminder']) $(name + '-sheet').hidden = true;
+  for (const name of ['library', 'recording', 'reminder']) hideSheet(name);
+}
+function hideSheet(name) {
+  // Cancel any unfinished local confirmation before hiding its frame.
+  $(name + '-frame')
+    .contentDocument?.querySelectorAll('dialog[open]')
+    .forEach(dialog => dialog.close('cancel'));
+  $(name + '-sheet').hidden = true;
 }
 function openSheet(name) {
   hotkeysUI.close();
@@ -450,7 +457,7 @@ function openSheet(name) {
   if (['library', 'reminder'].includes(name)) $(name + '-frame').contentWindow.refresh?.();
 }
 function closeSheet(name) {
-  $(name + '-sheet').hidden = true;
+  hideSheet(name);
   window.uiSound('close');
 }
 function hoverSheet() {

@@ -152,7 +152,7 @@ function render() {
       })
     );
     const remove = iconButton(t('删除'), 'trash', async () => {
-      if (confirm(t('删除这条提醒？'))) await operate(item, 'delete');
+      if (await window.lunaConfirm.ask(t('删除这条提醒？'))) await operate(item, 'delete');
     });
     remove.className = 'danger';
     actions.append(remove);

@@ -1,0 +1,41 @@
+#confirm-action {
+  width: min(360px, calc(100% - 24px));
+  max-height: calc(100% - 24px);
+  padding: 18px;
+  border: 1px solid #ecd5c7;
+  border-radius: 14px;
+  background: #fffaf7;
+  color: inherit;
+  box-shadow: 0 8px 32px #34221a33;
+}
+#confirm-action::backdrop {
+  background: #30221a33;
+}
+#confirm-action form {
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+#confirm-message {
+  margin: 0 0 16px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.confirm-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.confirm-buttons button {
+  padding: 7px 16px;
+  border-radius: 8px;
+  background: #f7e9df;
+}
+.confirm-buttons .danger {
+  background: #f9dccb;
+  color: #a83f24;
+}

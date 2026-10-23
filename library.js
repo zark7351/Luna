@@ -318,7 +318,7 @@ function render(newIds = new Set(), enter = false) {
                 ? t('移除这条收藏？不会删除原文件。')
                 : t('删除这条收藏？克劳德保存的副本也会删除。')
               : t('删除这条收藏？');
-          if (!confirm(message)) return;
+          if (!(await window.lunaConfirm.ask(message))) return;
           try {
             await api('collection-delete', item.id);
             await refresh();
@@ -345,7 +345,7 @@ async function cleanupOld() {
     '清理 30 天前、未置顶的 {count} 条收藏？\n克劳德保存的截图、录屏等副本会一起删除；拖进来的原文件不受影响。',
     { count: staleCount }
   );
-  if (!confirm(message)) return;
+  if (!(await window.lunaConfirm.ask(message))) return;
   try {
     const removed = await api('collection-cleanup', { dryRun: false });
     $('status').textContent = t('已清理 {count} 条收藏。', { count: removed });

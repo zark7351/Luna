@@ -270,13 +270,22 @@ function hideToBackground() {
   for (const current of [win, libraryWin]) if (current && !current.isDestroyed()) current.hide();
   if (liveWindow()) win.setSkipTaskbar(true);
 }
+function showFocusedWindow(current) {
+  if (quitting || !current || current.isDestroyed() || current.webContents.isDestroyed()) return;
+  if (current.isMinimized()) current.restore();
+  current.show();
+  // An inherited Windows STARTF_USESHOWWINDOW/SW_HIDE flag can hide the first
+  // ShowWindow call. Finish the same action instead of requiring another click.
+  if (!current.isVisible()) current.show();
+  if (!current.isFocused()) current.focus();
+  if (!current.webContents.isFocused()) current.webContents.focus();
+}
 function restore() {
   if (!liveWindow()) return;
   win.setSkipTaskbar(false);
   edgeDock?.expand();
   win.setIgnoreMouseEvents(false);
-  win.show();
-  win.focus();
+  showFocusedWindow(win);
 }
 async function showLibrary(view) {
   const initial =
@@ -284,8 +293,7 @@ async function showLibrary(view) {
       ? { tab: view.tab, query: typeof view.query === 'string' ? view.query.slice(0, 300) : '' }
       : null;
   if (libraryWin && !libraryWin.isDestroyed()) {
-    libraryWin.show();
-    libraryWin.focus();
+    showFocusedWindow(libraryWin);
     if (initial) libraryWin.webContents.send('library-view', initial);
     playSound('open');
     return;
@@ -311,16 +319,14 @@ async function showLibrary(view) {
   const current = libraryWin;
   current.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   current.webContents.on('will-navigate', e => e.preventDefault());
-  current.once('ready-to-show', () => {
-    if (!current.isDestroyed()) current.show();
-  });
   current.on('closed', () => {
     if (libraryWin === current) libraryWin = null;
     playSound('close');
   });
   await current.loadFile('library.html');
-  if (!current.isDestroyed()) {
+  if (!quitting && !current.isDestroyed() && libraryWin === current) {
     if (initial) current.webContents.send('library-view', initial);
+    showFocusedWindow(current);
     playSound('open');
   }
   if (!smoke)
@@ -497,7 +503,7 @@ else {
         (['display-capture', 'media'].includes(permission) && recording?.canCapture(contents) === true)
     );
     win.once('ready-to-show', () => {
-      if (liveWindow()) win.show();
+      if (liveWindow()) showFocusedWindow(win);
     });
     win.webContents.on('enter-html-full-screen', () => {
       petVideoFullscreen = true;
@@ -596,13 +602,20 @@ else {
         }
       });
     handle('ui-sound', name => playSound(name), true);
-    handle('panel-focus', () => {
-      if (liveWindow() && win.isVisible()) {
-        win.setIgnoreMouseEvents(false);
-        win.focus();
-        return true;
-      }
-      return false;
+    ipcMain.handle('panel-focus', event => {
+      const current = [win, libraryWin].find(
+        window =>
+          window &&
+          !window.isDestroyed() &&
+          !window.webContents.isDestroyed() &&
+          window.webContents === event.sender &&
+          window.isVisible()
+      );
+      if (quitting || !current) return { ok: false, error: '窗口已关闭' };
+      current.setIgnoreMouseEvents(false);
+      if (!current.isFocused()) current.focus();
+      if (!current.webContents.isFocused()) current.webContents.focus();
+      return { ok: true, value: true };
     });
     const captureMessage = (message, saved) => {
       for (const window of [win, libraryWin])
