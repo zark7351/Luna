@@ -36,6 +36,13 @@ async function check({ recording, display, temp, collection }) {
     region: false,
     record: true
   });
+  const panel = code => recording.getWindow().webContents.executeJavaScript(code);
+  const statusText = () =>
+    panel("document.querySelector('#recording-frame').contentDocument.querySelector('#status').textContent");
+  const selectionMessage = await statusText();
+  await recording.show();
+  await new Promise(resolve => setTimeout(resolve, 100));
+  assert.equal(await statusText(), selectionMessage, 'reopening an active selection must preserve its status');
   const bitmap = (await border.webContents.capturePage({ x: 140, y: 145, width: 30, height: 20 })).toBitmap();
   for (let index = 3; index < bitmap.length; index += 4) assert.equal(bitmap[index], 0);
   assert.equal(await js("document.querySelector('#toolbar').dataset.inside"), 'false');
@@ -83,7 +90,20 @@ async function check({ recording, display, temp, collection }) {
     region: true,
     record: false
   });
+  assert.equal(await statusText(), '已取消录屏。');
+  await panel(`(async()=>{
+    document.querySelector('#recording-frame').contentDocument.querySelector('#close-recording').click();
+    const end=Date.now()+3000;
+    while(!document.querySelector('#recording-sheet').hidden){if(Date.now()>end)throw Error('recording close timeout');await new Promise(r=>setTimeout(r,20));}
+  })()`);
+  await recording.show();
+  await new Promise(resolve => setTimeout(resolve, 100));
+  assert.equal(await statusText(), '先框选区域，再开始录制');
+  assert.equal((await action()).action, 'select');
+  assert.equal(recording.isActive(), false);
   return {
+    reopenClearsCancelledMessage: true,
+    activeSelectionPreserved: true,
     selectThenRecordIcons: true,
     waitsForStart: true,
     resize: true,

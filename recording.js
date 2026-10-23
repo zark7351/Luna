@@ -147,6 +147,7 @@ function createRecording({
   async function show() {
     if (disposed || !live()) return;
     onShow();
+    if (!session) publish('');
   }
   async function begin(selected, options, { test = false } = {}) {
     const current = session;

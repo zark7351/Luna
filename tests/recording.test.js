@@ -242,24 +242,34 @@ test('启动过程中关闭会清理晚到的文件句柄，不发送开始消�
     smoke: true
   });
   await host.show();
+  assert.equal(sent.at(-1)[0], 'recording-status');
+  assert.equal(sent.at(-1)[1].phase, 'idle');
+  assert.equal(sent.at(-1)[1].message, '');
   assert.equal((await handlers.get('recording-chunk')({ sender: {} }, new ArrayBuffer(1))).ok, false);
   const selecting = host.select(
     { fps: 30, format: 'mp4' },
     { rect: { x: 0, y: 0, width: 100, height: 100 }, bounds: { x: 0, y: 0, width: 100, height: 100 }, sourceId: 'test' }
   );
+  const activeMessages = sent.length;
+  await host.show();
+  assert.equal(sent.length, activeMessages, 'opening an active session must not clear its status');
   const stopped = host.stop();
   release({ abort: async () => aborted++ });
   await selecting;
   await stopped;
   assert.equal(aborted, 1);
   assert.equal(host.isActive(), false);
+  await host.show();
+  assert.equal(sent.at(-1)[1].phase, 'idle');
+  assert.equal(sent.at(-1)[1].message, '', 'reopening after cancellation must clear the previous message');
   assert.equal(
     sent.some(([name]) => name === 'recording-start'),
     false
   );
   await host.dispose();
   assert.equal(petWindow.isDestroyed(), false);
-  assert.equal(shows, 1);
+  await host.show();
+  assert.equal(shows, 3);
   assert.equal(handlers.size, 0);
   assert.equal(powerMonitor.listenerCount('suspend'), 0);
 });
