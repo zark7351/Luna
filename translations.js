@@ -3,6 +3,9 @@
   if (typeof module === 'object' && module.exports) module.exports = factory();
   else root.lunaTranslations = factory();
 })(globalThis, () => ({
+  松开取消: 'Release to cancel',
+  '也可在人物或小花上按住右键，拖到功能后松开执行；拖回中心或盘外松开取消。':
+    'You can also hold right-click on Claude or the flower, drag to an action, and release to select it. Release in the center or outside the wheel to cancel.',
   快捷键: 'Keyboard shortcuts',
   恢复默认快捷键: 'Reset shortcuts',
   未绑定: 'Unassigned',

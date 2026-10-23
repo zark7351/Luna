@@ -110,7 +110,40 @@
       closeTimer = null,
       settleTimer = null,
       runTimer = null,
-      returnFocus = null;
+      returnFocus = null,
+      gesture = null,
+      suppressRightUp = false,
+      suppressContextUntil = 0;
+    function releaseCapture(pointerId) {
+      if (host.hasPointerCapture(pointerId)) host.releasePointerCapture(pointerId);
+    }
+    function cancelGesture() {
+      if (!gesture) return;
+      const current = gesture;
+      gesture = null;
+      current.cancelled = true;
+      suppressRightUp = true;
+      releaseCapture(current.pointerId);
+    }
+    function beginGesture(event) {
+      cancelGesture();
+      suppressRightUp = false;
+      gesture = {
+        pointerId: event.pointerId,
+        x: event.clientX + window.screenX,
+        y: event.clientY + window.screenY,
+        started: performance.now(),
+        moved: false,
+        cancelled: false
+      };
+      host.setPointerCapture(event.pointerId);
+      event.preventDefault();
+      return gesture;
+    }
+    function hit(clientX, clientY) {
+      const button = document.elementFromPoint(clientX, clientY)?.closest('.wheel-item');
+      return button && wheel.contains(button) ? buttons.indexOf(button) : -1;
+    }
     function refresh() {
       wheel.setAttribute('aria-label', translate('claudex 功能'));
       items.forEach((item, index) => {
@@ -137,6 +170,13 @@
       if (!open || index === active) return;
       buttons[active]?.classList.remove('active');
       active = index;
+      if (index < 0) {
+        centerIcon.style.opacity = '0';
+        centerLabel.textContent = translate('松开取消');
+        centerState.textContent = '';
+        return;
+      }
+      centerIcon.style.opacity = '';
       buttons[index].classList.add('active');
       paintCenter(items[index]);
     }
@@ -151,6 +191,7 @@
       returnFocus = document.activeElement;
       wheel.hidden = false;
       wheel.classList.remove('closing', 'opening');
+      wheel.classList.toggle('gesture-dragging', gesture?.moved === true);
       void wheel.offsetWidth;
       wheel.classList.add('opening');
       settleTimer = setTimeout(() => wheel.classList.remove('opening'), 520);
@@ -163,6 +204,7 @@
       onToggle(true);
     }
     function close({ silent = false } = {}) {
+      cancelGesture();
       if (!open) return;
       open = false;
       clearTimeout(settleTimer);
@@ -186,6 +228,72 @@
       // Let the closing animation clear the screen first; screenshots must not capture the menu.
       runTimer = setTimeout(() => items[index].run(), reduced.matches ? 0 : 180);
     }
+    document.addEventListener(
+      'pointermove',
+      event => {
+        if (!gesture || event.pointerId !== gesture.pointerId) return;
+        if (!(event.buttons & 2)) {
+          close({ silent: true });
+          return;
+        }
+        if (Math.hypot(event.clientX + window.screenX - gesture.x, event.clientY + window.screenY - gesture.y) > 6)
+          gesture.moved = true;
+        if (open && gesture.moved) {
+          wheel.classList.add('gesture-dragging');
+          setActive(hit(event.clientX, event.clientY));
+        }
+      },
+      true
+    );
+    document.addEventListener(
+      'pointerup',
+      event => {
+        if (event.button !== 2) return;
+        if (suppressRightUp) {
+          suppressRightUp = false;
+          suppressContextUntil = performance.now() + 500;
+          event.preventDefault();
+          event.stopPropagation();
+          return;
+        }
+        if (!gesture || event.pointerId !== gesture.pointerId) return;
+        const current = gesture;
+        gesture = null;
+        releaseCapture(current.pointerId);
+        suppressContextUntil = performance.now() + 500;
+        event.preventDefault();
+        event.stopPropagation();
+        const moved =
+          current.moved ||
+          Math.hypot(event.clientX + window.screenX - current.x, event.clientY + window.screenY - current.y) > 6;
+        if (!moved && performance.now() - current.started < 300) return;
+        current.cancelled = true;
+        const index = moved && open ? hit(event.clientX, event.clientY) : -1;
+        if (index >= 0) choose(index);
+        else close();
+      },
+      true
+    );
+    document.addEventListener(
+      'contextmenu',
+      event => {
+        if (gesture || suppressRightUp || performance.now() < suppressContextUntil) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      },
+      true
+    );
+    document.addEventListener(
+      'pointercancel',
+      event => {
+        if (gesture?.pointerId === event.pointerId) close({ silent: true });
+      },
+      true
+    );
+    host.addEventListener('lostpointercapture', event => {
+      if (gesture?.pointerId === event.pointerId) close({ silent: true });
+    });
     wheel.addEventListener('keydown', event => {
       const moves = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
       if (event.key === 'Escape') {
@@ -206,6 +314,10 @@
     document.addEventListener(
       'pointerdown',
       event => {
+        if (open && event.button === 2 && wheel.contains(event.target)) {
+          beginGesture(event);
+          return;
+        }
         if (!open || event.target.closest('.wheel-item')) return;
         close();
         if (event.button !== 0) return;
@@ -225,6 +337,10 @@
       show,
       close,
       refresh,
+      beginGesture,
+      get isGesturing() {
+        return !!gesture;
+      },
       get isOpen() {
         return open;
       },

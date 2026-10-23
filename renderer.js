@@ -197,6 +197,7 @@ $('bubble-complete').onclick = async event => {
 };
 let controlsTimer = null;
 function overControls(x, y) {
+  if (wheel?.isGesturing) return true;
   if (!Number.isFinite(x) || !Number.isFinite(y)) return false;
   const pet = $('pet').getBoundingClientRect(),
     bar = document.querySelector('.petbar').getBoundingClientRect();
@@ -675,10 +676,11 @@ document.addEventListener(
 // Drag the compact-mode flower like the toolbar grip; a stationary click replaces it with the centered wheel.
 const flower = $('pure-flower');
 $('edge-expand').replaceChildren(flower.querySelector('svg').cloneNode(true));
-async function openFlowerWheel() {
+async function openFlowerWheel(event = null) {
   if (viewStopped || document.body.inert || panelsOpen() || wheel.isOpen || flowerWheelOpening || !settings?.pureMode)
     return;
   cancelInfo();
+  const gesture = event ? wheel.beginGesture(event) : null;
   flowerWheelOpening = true;
   lastPureLayout = 'wheel';
   document.body.classList.add('flower-wheel');
@@ -691,7 +693,8 @@ async function openFlowerWheel() {
     )
       await new Promise(resolve => setTimeout(resolve, 16));
     await new Promise(resolve => requestAnimationFrame(resolve));
-    if (!viewStopped && settings?.pureMode && layout && !panelsOpen()) wheel.show(layout.center.x, layout.center.y);
+    if (!viewStopped && settings?.pureMode && layout && !panelsOpen() && !gesture?.cancelled)
+      wheel.show(layout.center.x, layout.center.y);
   } catch (error) {
     showMessage(error.message);
   } finally {
@@ -731,6 +734,9 @@ flower.onclick = event => {
 flower.addEventListener('contextmenu', event => {
   event.preventDefault();
   openFlowerWheel();
+});
+flower.addEventListener('pointerdown', event => {
+  if (event.button === 2 && !(event.buttons & 1)) openFlowerWheel(event);
 });
 let dropDepth = 0;
 let beforeDropText = '';
@@ -877,6 +883,23 @@ $('pet').addEventListener('contextmenu', event => {
   endDrag();
   cancelInfo();
   wheel.show(event.clientX, event.clientY);
+});
+$('pet').addEventListener('pointerdown', event => {
+  if (
+    event.button !== 2 ||
+    event.buttons & 1 ||
+    viewStopped ||
+    document.body.inert ||
+    settings?.pureMode ||
+    panelsOpen()
+  )
+    return;
+  endDrag();
+  cancelInfo();
+  ignore = false;
+  window.pet.passthrough(false);
+  wheel.show(event.clientX, event.clientY);
+  wheel.beginGesture(event);
 });
 (async () => {
   try {

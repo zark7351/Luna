@@ -45,6 +45,11 @@ module.exports = async function runDesktopSmoke(live) {
   let smokeStage = 'startup';
   try {
     await new Promise(r => setTimeout(r, 1200));
+    if (process.argv.includes('--wheel-gesture-test')) {
+      console.log(JSON.stringify(await require('./wheel-gesture-smoke').check(live)));
+      app.exit(0);
+      return;
+    }
     if (process.argv.includes('--recording-frame-test')) {
       await recording.show();
       console.log(
@@ -1278,6 +1283,7 @@ module.exports = async function runDesktopSmoke(live) {
     result.companion = await require('./life-smoke').check({ win, stateFile });
     smokeStage = 'wheel';
     result.wheel = await require('./wheel-smoke').check({ win, output: app.getPath('temp') });
+    result.wheelGesture = await require('./wheel-gesture-smoke').check(live);
     smokeStage = 'language';
     result.language = await require('./language-smoke').check({
       win,
