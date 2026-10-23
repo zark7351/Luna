@@ -1,6 +1,7 @@
 const fs = require('node:fs'),
   path = require('node:path');
-const { WINDOW_WIDTH, TOOLBAR_INSET, TOOLBAR_WIDTH } = require('./core');
+const { WINDOW_WIDTH } = require('./core');
+const compact = require('./compact-layout');
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 module.exports = async ({ win, restore, stateFile, output }) => {
   const read = code => win.webContents.executeJavaScript(code);
@@ -57,9 +58,12 @@ module.exports = async ({ win, restore, stateFile, output }) => {
       "(()=>{const b=document.querySelector('#pure-flower').getBoundingClientRect();return {x:Math.round(b.x+b.width/2),y:Math.round(b.y+b.height/2)};})()"
     );
   };
-  // Clean mode has only the hair flower: a left click grows the window and opens the wheel above it.
+  // Compact mode replaces the flower with a wheel centered on its screen position.
   const flowerWheel = async item => {
     const p = await flowerPoint();
+    const origin = win.getBounds();
+    const workArea = require('electron').screen.getDisplayMatching(origin).workArea;
+    const expected = compact.expand(origin, workArea, true);
     win.webContents.sendInputEvent({ type: 'mouseMove', ...p });
     await sleep(150);
     win.webContents.sendInputEvent({ type: 'mouseDown', button: 'left', clickCount: 1, ...p });
@@ -81,13 +85,32 @@ module.exports = async ({ win, restore, stateFile, output }) => {
     const placement = await read(
       "(()=>{const w=document.querySelector('#wheel').getBoundingClientRect(),f=document.querySelector('#pure-flower').getBoundingClientRect();return {w:w.toJSON(),f:f.toJSON(),h:innerHeight};})()"
     );
-    const { w, f, h } = placement;
-    const above = w.bottom <= f.top + 8 && f.top - w.bottom < 40,
-      below = w.top >= f.bottom - 8 && w.top - f.bottom < 40;
-    if (w.top < 0 || w.bottom > h || !(above || below))
+    const { w, h } = placement;
+    const bounds = win.getBounds();
+    const flowerHidden = await read("getComputedStyle(document.querySelector('#pure-flower')).visibility==='hidden'");
+    if (
+      w.top < 0 ||
+      w.bottom > h ||
+      !flowerHidden ||
+      Math.abs(bounds.x + w.x + w.width / 2 - expected.bounds.x - expected.center.x) > 1 ||
+      Math.abs(bounds.y + w.y + w.height / 2 - expected.bounds.y - expected.center.y) > 1
+    )
       throw Error('flower wheel placement ' + JSON.stringify({ ...placement, bounds: win.getBounds() }));
     if (item === 'settings')
       fs.writeFileSync(path.join(output, 'luna-pure-wheel.png'), (await win.webContents.capturePage()).toPNG());
+    if (!item) {
+      win.webContents.sendInputEvent({ type: 'keyDown', keyCode: 'Escape' });
+      win.webContents.sendInputEvent({ type: 'keyUp', keyCode: 'Escape' });
+      await wait(
+        () =>
+          read("!wheel.isOpen&&getComputedStyle(document.querySelector('#pure-flower')).visibility==='visible'") &&
+          win.getBounds().height === 128,
+        'dismiss restores flower'
+      );
+      if (Math.abs(win.getBounds().x - origin.x) > 1 || Math.abs(win.getBounds().y - origin.y) > 1)
+        throw Error('dismiss moved flower');
+      return;
+    }
     if (!(await clickSector(win, item))) throw Error('flower wheel sector ' + item);
     await sleep(350);
   };
@@ -135,10 +158,11 @@ module.exports = async ({ win, restore, stateFile, output }) => {
     await wait(() => win.getBounds().height === 128, 'panel close did not compact');
     const beforeEdges = win.getBounds(),
       area = require('electron').screen.getDisplayMatching(beforeEdges).workArea;
+    await flowerWheel(null);
     for (const side of ['left', 'right']) {
       restore();
       await wait(() => win.getBounds().height === 128, 'pure edge restore');
-      const edgeX = side === 'left' ? area.x - TOOLBAR_INSET : area.x + area.width - WINDOW_WIDTH + TOOLBAR_INSET;
+      const edgeX = side === 'left' ? area.x - compact.inset : area.x + area.width - WINDOW_WIDTH + compact.inset;
       win.setBounds({ ...beforeEdges, x: edgeX });
       await wait(() => Math.abs(win.getBounds().x - edgeX) <= 1, 'pure edge position');
       const { ipcMain } = require('electron');
@@ -185,13 +209,22 @@ module.exports = async ({ win, restore, stateFile, output }) => {
     }
     restore();
     await wait(() => win.getBounds().height === 128, 'pure final expansion');
-    // At the top of the screen the window grows downward and the wheel opens below the flower.
-    win.setBounds({ ...beforeEdges, y: area.y });
-    await wait(() => win.getBounds().y === area.y, 'pure top position');
-    await flowerWheel('library');
-    await wait(() => read("!document.querySelector('#library-sheet').hidden"), 'top library');
-    await read("closeSheet('library');void 0");
-    await wait(() => win.getBounds().height === 128, 'top panel close');
+    // All corners: the flower can touch the actual work-area edge; opening adjusts only the temporary wheel.
+    for (const x of [area.x - compact.inset, area.x + area.width - WINDOW_WIDTH + compact.inset]) {
+      for (const y of [
+        area.y - compact.verticalInsets.top,
+        area.y + area.height - 128 + compact.verticalInsets.bottom
+      ]) {
+        win.setBounds({ ...beforeEdges, x, y });
+        await sleep(100);
+        await flowerWheel('library');
+        await wait(() => read("!document.querySelector('#library-sheet').hidden"), 'corner library');
+        await read("closeSheet('library');void 0");
+        await wait(() => win.getBounds().height === 128, 'corner panel close');
+        if (Math.abs(win.getBounds().x - x) > 1 || Math.abs(win.getBounds().y - y) > 1)
+          throw Error('corner anchor drift');
+      }
+    }
     win.setBounds(beforeEdges);
     await wait(() => Math.abs(win.getBounds().x - beforeEdges.x) <= 1, 'pure original position');
     require('electron').ipcMain.emit('drag', { sender: win.webContents }, true);
@@ -245,7 +278,11 @@ module.exports = async ({ win, restore, stateFile, output }) => {
       flowerEdges: true,
       edgePanelsFit: true,
       sideHide: true,
-      arrowExpandsCompact: true,
+      halfFlowerExpandsCompact: true,
+      centeredWheel: true,
+      hiddenFlower: true,
+      fourCorners: true,
+      dismissRestoresAnchor: true,
       autoRecollapse: true,
       flowerDrag: true,
       wheelLeavesCleanMode: true,

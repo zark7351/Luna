@@ -11,6 +11,8 @@ function createEdgeDock({
   getWindow,
   getArea,
   getInset = () => 0,
+  getVerticalInsets = () => ({ top: 0, bottom: 0 }),
+  getHandleY = bounds => bounds.y + bounds.height - 60,
   onChange = () => {},
   onPosition = () => {},
   canCollapse = () => true,
@@ -44,10 +46,11 @@ function createEdgeDock({
     const width = getWidth();
     const area = getArea(bounds),
       { left, right } = horizontalLimits(area, width, getInset()),
-      h = getHeight();
+      h = getHeight(),
+      vertical = getVerticalInsets();
     bounds = {
       x: side === 'left' ? left : side === 'right' ? right : clampHorizontal(bounds.x, area, width, getInset()),
-      y: Math.max(area.y, Math.min(bounds.y, area.y + Math.max(0, area.height - h))),
+      y: Math.max(area.y - vertical.top, Math.min(bounds.y, area.y + Math.max(0, area.height - h + vertical.bottom))),
       width,
       height: h
     };
@@ -88,7 +91,7 @@ function createEdgeDock({
     collapsed = true;
     apply({
       x: side === 'left' ? area.x : area.x + area.width - 36,
-      y: Math.max(area.y, Math.min(bounds.y + bounds.height - 60, area.y + area.height - 44)),
+      y: Math.max(area.y, Math.min(getHandleY(bounds), area.y + area.height - 44)),
       width: 36,
       height: 44
     });

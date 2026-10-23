@@ -2,7 +2,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { createEdgeDock, clampHorizontal } = require('../edge-dock');
 const { TOOLBAR_INSET, TOOLBAR_WIDTH } = require('../core');
-function fixture(area = { x: 0, y: 0, width: 1920, height: 1080 }, inset = 0, height = 640) {
+function fixture(area = { x: 0, y: 0, width: 1920, height: 1080 }, inset = 0, height = 640, geometry = {}) {
   let bounds = { x: 300, y: 100, width: 280, height },
     destroyed = false,
     visible = true,
@@ -22,6 +22,7 @@ function fixture(area = { x: 0, y: 0, width: 1920, height: 1080 }, inset = 0, he
     isVisible: () => visible
   };
   const dock = createEdgeDock({
+    ...geometry,
     getWindow: () => win,
     getArea: () => area,
     getInset: () => inset,
@@ -79,6 +80,25 @@ test('左右边缘收起只保留小按钮，展开保持完整原位置并定�
     assert.equal(f.dock.read().collapsed, false);
     f.jobs.at(-1)();
     assert.equal(f.dock.read().collapsed, true);
+  }
+});
+
+test('compact docking uses flower bounds and puts the half-flower at the same height', () => {
+  const layout = require('../compact-layout');
+  const area = { x: 0, y: 0, width: 1920, height: 1080 };
+  for (const side of ['left', 'right']) {
+    const f = fixture(area, layout.inset, layout.height, {
+      getVerticalInsets: () => layout.verticalInsets,
+      getHandleY: bounds => bounds.y + layout.flowerY - 22
+    });
+    const x = side === 'left' ? -layout.inset : area.width - 280 + layout.inset;
+    f.move(x, -layout.verticalInsets.top);
+    f.dock.finishDrag();
+    assert.equal(f.dock.read().side, side);
+    assert.equal(f.bounds().y, 6);
+    f.dock.expand();
+    assert.equal(f.bounds().x, x);
+    assert.equal(f.bounds().y + layout.flowerY - 28, area.y);
   }
 });
 test('拖离边缘清除收起计时，旧回调不能收起新位置；普通位置不收起', () => {
@@ -170,7 +190,7 @@ test('白条可见边缘决定拖动限制及贴边，透明窗口边缘不提�
   }
 });
 
-test('纯净工具条收起/展开保留紧凑高度，面板期间使用展开高度', () => {
+test('精简工具条收起/展开保留紧凑高度，面板期间使用展开高度', () => {
   for (const side of ['left', 'right']) {
     const f = fixture(undefined, TOOLBAR_INSET, 128),
       x = side === 'left' ? -TOOLBAR_INSET : 1920 - 280 + TOOLBAR_INSET;

@@ -805,7 +805,7 @@ body.pure-mode #companion {
 body.pure-mode #pet {
   display: none;
 }
-/* Clean mode shows only the flower from her hair; it opens the wheel and drags the window. */
+/* Compact mode shows only the flower from her hair; it opens the wheel and drags the window. */
 #pure-flower {
   display: none;
 }
@@ -827,27 +827,38 @@ body.pure-mode #pure-flower {
 }
 body.pure-mode #pure-flower:hover,
 body.pure-mode #pure-flower:focus-visible {
-  transform: rotate(18deg) scale(1.06);
+  transform: none;
 }
 body.pure-mode #pure-flower:active {
-  transform: rotate(18deg) scale(0.96);
+  transform: none;
+}
+body.pure-mode #pure-flower:hover svg {
+  transform: rotate(18deg);
+}
+body.pure-mode.flower-wheel #pure-flower {
+  visibility: hidden;
+  pointer-events: none;
 }
 #pure-flower svg {
   width: 100%;
   height: 100%;
 }
-#pure-flower .flower-petals {
+#pure-flower .flower-petals,
+#edge-expand .flower-petals {
   fill: #fffdfa;
   stroke: #d9c9c0;
   stroke-width: 0.9;
 }
-#pure-flower .flower-ring {
+#pure-flower .flower-ring,
+#edge-expand .flower-ring {
   fill: #d49a3a;
 }
-#pure-flower .flower-center {
+#pure-flower .flower-center,
+#edge-expand .flower-center {
   fill: #2a1a14;
 }
-#pure-flower .flower-shine {
+#pure-flower .flower-shine,
+#edge-expand .flower-shine {
   fill: #ffffff55;
 }
 body.pure-mode .petbar {
@@ -912,6 +923,43 @@ body[data-edge-collapsed='left'] #edge-expand:hover,
 body[data-edge-collapsed='right'] #edge-expand:hover {
   background: transparent;
   box-shadow: none;
+}
+/* Clip the same hair flower at the screen edge, without a rectangular tab behind it. */
+body[data-edge-collapsed='left'] .petbar,
+body[data-edge-collapsed='right'] .petbar,
+body[data-edge-collapsed='left'] .petbar:hover,
+body[data-edge-collapsed='right'] .petbar:hover {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+body[data-edge-collapsed] .petbar #edge-expand {
+  position: relative;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: hidden;
+}
+body[data-edge-collapsed] #edge-expand svg {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  top: 0;
+  stroke: none;
+  fill: none;
+  transition: filter 0.15s;
+}
+body[data-edge-collapsed='left'] #edge-expand svg {
+  left: -22px;
+}
+body[data-edge-collapsed='right'] #edge-expand svg {
+  right: -22px;
+}
+body[data-edge-collapsed] #edge-expand:hover svg {
+  filter: brightness(1.1);
 }
 
 /* Radial quick menu (wheel.js): frosted sectors with a lilac-pink active state and staggered spin-in. */

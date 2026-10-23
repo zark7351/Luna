@@ -112,6 +112,16 @@ async function check(live) {
       'restore shortcut defaults'
     );
     await until(() => read(`document.querySelector('#settings').hidden`), 'reset save did not close settings');
+    // An unchanged unavailable shortcut must not prevent switching compact mode or saving other settings.
+    manager.suspend();
+    registry.register(schema.defaults.recording, () => {});
+    manager.resume();
+    assert.equal(manager.status().bindings.recording.available, false);
+    await read(`api('settings',{...settings,pureMode:true}).then(s=>applySettings(s.settings))`);
+    assert.equal(live.state.settings.pureMode, true);
+    await read(`api('settings',{...settings,pureMode:false}).then(s=>applySettings(s.settings))`);
+    registry.unregister(schema.defaults.recording);
+    manager.resume();
     win.show();
     win.focus();
     await sleep(100);
@@ -149,6 +159,7 @@ async function check(live) {
       windowsRegistration: true,
       clearAndReset: true,
       hideResumes: true,
+      unrelatedShortcutConflictDoesNotBlockMode: true,
       cleanup: true,
       capture
     };

@@ -8,7 +8,7 @@
     recording: '录屏',
     library: '收藏夹',
     reminder: '提醒',
-    pureMode: '纯净模式'
+    pureMode: '精简模式'
   });
   const defaults = Object.freeze({
     screenshot: 'Ctrl+Alt+A',

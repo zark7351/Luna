@@ -20,6 +20,7 @@ const t = text => i18n.translate(text, state?.settings.language);
 const fs = require('node:fs');
 const path = require('node:path');
 const petSize = require('./pet-size');
+const compactLayout = require('./compact-layout');
 const hotkeys = require('./hotkeys');
 const { createHotkeyManager } = require('./hotkey-manager');
 const { APP_NAME, APP_ID, appIcon, createTrayIcon } = require('./app-branding');
@@ -107,31 +108,31 @@ let smokeReminderNow = Date.now(),
   quitting = false,
   quitSettled = false;
 let pureExpanded = false,
+  pureLayoutMode = false,
   pureAnchor = null,
   petPanelsOpen = false;
 function setPureLayout(expanded = false) {
   if (!liveWindow() || !state.settings.pureMode) return;
   if (edgeDock?.read().collapsed) {
-    if (expanded !== true) return;
+    if (!expanded) return;
     edgeDock.expand();
   }
   const current = win.getBounds();
   if (!pureExpanded && current.height <= 128) pureAnchor = { ...current };
-  pureExpanded = expanded === true;
+  pureExpanded = expanded === true || expanded === 'wheel';
+  pureLayoutMode = pureExpanded ? expanded : false;
   const area = screen.getDisplayMatching(pureAnchor || current).workArea,
-    anchor = pureAnchor || current,
-    height = pureExpanded ? WINDOW_HEIGHT : 128,
-    bottom = anchor.y + anchor.height;
-  win.setBounds({
-    x: Math.round(clampHorizontal(anchor.x, area, windowWidth(), pureExpanded ? 0 : TOOLBAR_INSET)),
-    y: Math.round(Math.max(area.y, Math.min(bottom - height, area.y + area.height - height))),
-    width: windowWidth(),
-    height
-  });
+    anchor = pureAnchor || { ...current, y: current.y + current.height - 128 },
+    compact = compactLayout.compact(anchor, area),
+    layout = pureExpanded ? compactLayout.expand(compact, area, expanded === 'wheel') : { bounds: compact };
+  win.setBounds(layout.bounds);
   edgeDock?.noteMove(win.getBounds());
   if (!pureExpanded) pureAnchor = win.getBounds();
+  return layout;
 }
 const windowWidth = () => (state?.settings.pureMode ? WINDOW_WIDTH : petSize.windowWidth(state?.settings.petScale));
+const windowInset = () =>
+  state?.settings.pureMode ? (pureExpanded ? 0 : compactLayout.inset) : petPanelsOpen ? 0 : TOOLBAR_INSET;
 let trayMenu;
 function openPetPanel(name) {
   if (quitting || !liveWindow()) return;
@@ -233,15 +234,17 @@ function safePosition(x, y) {
     y: Math.round(y + (liveWindow() ? win.getBounds().height : state?.settings.pureMode ? 128 : WINDOW_HEIGHT) / 2)
   }).workArea;
   return [
-    Math.round(clampHorizontal(x, a, windowWidth(), petPanelsOpen ? 0 : TOOLBAR_INSET)),
+    Math.round(clampHorizontal(x, a, windowWidth(), windowInset())),
     Math.round(
       clamp(
         y,
-        a.y,
+        a.y - (state?.settings.pureMode && !pureExpanded ? compactLayout.verticalInsets.top : 0),
         a.y +
           Math.max(
             0,
-            a.height - (liveWindow() ? win.getBounds().height : state?.settings.pureMode ? 128 : WINDOW_HEIGHT)
+            a.height -
+              (liveWindow() ? win.getBounds().height : state?.settings.pureMode ? 128 : WINDOW_HEIGHT) +
+              (state?.settings.pureMode && !pureExpanded ? compactLayout.verticalInsets.bottom : 0)
           )
       )
     )
@@ -447,7 +450,11 @@ else {
     edgeDock = createEdgeDock({
       getWindow: () => win,
       getArea: bounds => screen.getDisplayMatching(bounds).workArea,
-      getInset: () => (petPanelsOpen ? 0 : TOOLBAR_INSET),
+      getInset: windowInset,
+      getVerticalInsets: () =>
+        state.settings.pureMode && !pureExpanded ? compactLayout.verticalInsets : { top: 0, bottom: 0 },
+      getHandleY: bounds =>
+        state.settings.pureMode ? bounds.y + compactLayout.flowerY - 22 : bounds.y + bounds.height - 60,
       getWidth: windowWidth,
       getHeight: () => (state.settings.pureMode ? (pureExpanded ? WINDOW_HEIGHT : 128) : WINDOW_HEIGHT),
       onChange: value => {
@@ -501,7 +508,7 @@ else {
       const restoreBounds = { ...normalPetBounds };
       setTimeout(() => {
         if (liveWindow() && !petVideoFullscreen) {
-          if (state.settings.pureMode) setPureLayout(pureExpanded);
+          if (state.settings.pureMode) setPureLayout(pureLayoutMode);
           else win.setBounds(restoreBounds);
         }
       }, 0);
@@ -525,7 +532,7 @@ else {
     });
     const reflowPet = () => {
       if (liveWindow() && !petVideoFullscreen) {
-        if (state.settings.pureMode && !edgeDock.read().collapsed) setPureLayout(pureExpanded);
+        if (state.settings.pureMode && !edgeDock.read().collapsed) setPureLayout(pureLayoutMode);
         else edgeDock.reflow();
       }
     };
@@ -849,7 +856,7 @@ else {
       }
       if (quitting || !liveWindow()) throw Error('窗口已关闭');
       const shortcutChange =
-        input?.hotkeys || JSON.stringify(next.hotkeys) !== JSON.stringify(state.settings.hotkeys)
+        JSON.stringify(next.hotkeys) !== JSON.stringify(state.settings.hotkeys)
           ? hotkeyManager.prepare(next.hotkeys)
           : null;
       const previous = state;
@@ -866,17 +873,29 @@ else {
         edgeDock.beginDrag();
         const bounds = win.getBounds();
         if (next.pureMode) {
-          pureAnchor = { ...bounds };
+          pureAnchor = {
+            ...bounds,
+            x: bounds.x + (bounds.width - 280) / 2,
+            y: bounds.y + bounds.height - 128,
+            height: 128
+          };
           pureExpanded = true;
           setPureLayout(false);
         } else {
           pureExpanded = false;
+          pureLayoutMode = false;
+          const anchor = pureAnchor || bounds;
           const modeArea = screen.getDisplayMatching(bounds).workArea;
           const pos = [
-            clampHorizontal(bounds.x, modeArea, windowWidth(), petPanelsOpen ? 0 : TOOLBAR_INSET),
+            clampHorizontal(
+              anchor.x + (280 - windowWidth()) / 2,
+              modeArea,
+              windowWidth(),
+              petPanelsOpen ? 0 : TOOLBAR_INSET
+            ),
             Math.max(
               modeArea.y,
-              Math.min(bounds.y + bounds.height - WINDOW_HEIGHT, modeArea.y + modeArea.height - WINDOW_HEIGHT)
+              Math.min(anchor.y + anchor.height - WINDOW_HEIGHT, modeArea.y + modeArea.height - WINDOW_HEIGHT)
             )
           ];
           win.setBounds({ x: pos[0], y: pos[1], width: windowWidth(), height: WINDOW_HEIGHT });
@@ -902,10 +921,7 @@ else {
       return result;
     }
     handle('settings', changeSettings);
-    handle('pure-layout', expanded => {
-      setPureLayout(expanded);
-      return true;
-    });
+    handle('pure-layout', expanded => setPureLayout(expanded));
     handle('hide', hideToBackground);
     handle('quit', () => app.quit());
     handle('library-show', () => openPetPanel('library'));

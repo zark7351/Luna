@@ -59,15 +59,14 @@ async function check({ win, dock, screen, ipcMain, stateFile, fireReminder }) {
       throw Error('edge handle bounds');
     const saved = JSON.parse(fs.readFileSync(stateFile, 'utf8')).position;
     if (saved[0] !== edgeX) throw Error('collapsed handle overwrote logical pet position');
-    const expected = side === 'left' ? 'm9 6 6 6-6 6' : 'm15 6-6 6 6 6';
     await win.webContents.executeJavaScript(
-      `(()=>{const buttons=[...document.querySelectorAll('button')].filter(node=>{const s=getComputedStyle(node),r=node.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&r.width>0&&r.height>0;});if(buttons.length!==1||buttons[0].id!=='edge-expand'||buttons[0].querySelector('path').getAttribute('d')!==${JSON.stringify(expected)}||document.querySelector('.petbar').getAttribute('aria-hidden')!=='false')throw Error('collapsed must show only inward arrow');})()`
+      `(()=>{const buttons=[...document.querySelectorAll('button')].filter(node=>{const s=getComputedStyle(node),r=node.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&r.width>0&&r.height>0;});if(buttons.length!==1||buttons[0].id!=='edge-expand'||buttons[0].querySelectorAll('ellipse').length!==14||document.querySelector('.petbar').getAttribute('aria-hidden')!=='false')throw Error('collapsed must show only half flower');})()`
     );
     const center = { x: 18, y: 22 };
     win.webContents.sendInputEvent({ type: 'mouseMove', ...center });
     await sleep(180);
     await win.webContents.executeJavaScript(
-      `(()=>{const bar=document.querySelector('.petbar'),button=document.querySelector('#edge-expand'),b=bar.getBoundingClientRect(),r=button.getBoundingClientRect(),style=getComputedStyle(bar),inner=getComputedStyle(button);if(!bar.matches(':hover')||style.backgroundColor!=='rgb(252, 228, 216)'||inner.backgroundColor!=='rgba(0, 0, 0, 0)'||Math.abs(b.width-r.width-2)>1||Math.abs(b.height-r.height-2)>1)throw Error('edge hover must fill the single outer silhouette');const corners=[style.borderTopLeftRadius,style.borderTopRightRadius,style.borderBottomRightRadius,style.borderBottomLeftRadius];if(JSON.stringify(corners)!==JSON.stringify(document.body.dataset.edgeCollapsed==='left'?['0px','13px','13px','0px']:['13px','0px','0px','13px']))throw Error('edge curve must mirror on either side');})()`
+      `(()=>{const bar=document.querySelector('.petbar'),button=document.querySelector('#edge-expand'),b=bar.getBoundingClientRect(),r=button.getBoundingClientRect(),style=getComputedStyle(bar),inner=getComputedStyle(button),svg=button.querySelector('svg'),s=svg.getBoundingClientRect();if(style.backgroundColor!=='rgba(0, 0, 0, 0)'||inner.backgroundColor!=='rgba(0, 0, 0, 0)'||Math.abs(b.width-r.width)>1||Math.abs(b.height-r.height)>1)throw Error('half flower must have a transparent background');if(svg.querySelectorAll('ellipse').length!==14||Math.abs(s.width-44)>1||Math.abs(s.height-44)>1)throw Error('hair flower missing');const center=s.left+s.width/2;if(Math.abs(center-(document.body.dataset.edgeCollapsed==='left'?r.left:r.right))>1)throw Error('half flower must mirror at the screen edge');})()`
     );
     await sleep(100);
     fs.writeFileSync(
@@ -119,7 +118,7 @@ async function check({ win, dock, screen, ipcMain, stateFile, fireReminder }) {
     noInfoBar: true,
     left: true,
     right: true,
-    onlyArrow: true,
+    onlyHalfFlower: true,
     hoverSilhouette: true,
     nativeExpand: true,
     autoRecollapse: true,

@@ -41,6 +41,7 @@ try {
     'ui-sounds.js',
     'preload.js',
     'core.js',
+    'compact-layout.js',
     'hotkeys.js',
     'hotkey-manager.js',
     'hotkeys-ui.js',

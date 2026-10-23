@@ -75,7 +75,7 @@ test('恢复按需天气，仅保存有效城市坐标，排除 IP 与凭据', (
   assert.equal(state.settings.recordFrameRate, 30);
 });
 
-test('纯净模式默认关闭，保存与迁移保持且不接受字符串开启', () => {
+test('精简模式默认关闭，保存与迁移保持且不接受字符串开启', () => {
   assert.equal(validate().pureMode, false);
   assert.equal(validate({ pureMode: 'true' }).pureMode, false);
   const state = migrateState({ settings: { pureMode: true } });

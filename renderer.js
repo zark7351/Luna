@@ -2,6 +2,7 @@ const t = window.lunaI18n.t;
 const $ = id => document.getElementById(id);
 window.lunaCharacter = createLunaCharacter($('pet'));
 let wheel = null;
+let flowerWheelOpening = false;
 let settings,
   sleeping = false,
   happyTimer,
@@ -33,14 +34,14 @@ function applySettings(value) {
 }
 function syncDockHold() {
   if (viewStopped) return;
-  // In clean mode the window also grows while the wheel is open so it fits above the flower.
-  const expanded =
-    $('help').open ||
-    ['settings', 'library-sheet', 'recording-sheet', 'reminder-sheet'].some(id => !$(id).hidden) ||
-    (settings?.pureMode && !!wheel?.isOpen);
-  if (settings?.pureMode && expanded !== lastPureLayout) {
-    lastPureLayout = expanded;
-    api('pure-layout', expanded).catch(() => {});
+  const panelOpen =
+    $('help').open || ['settings', 'library-sheet', 'recording-sheet', 'reminder-sheet'].some(id => !$(id).hidden);
+  const layout = panelOpen ? true : wheel?.isOpen || flowerWheelOpening ? 'wheel' : false;
+  const expanded = panelOpen || (settings?.pureMode && (wheel?.isOpen || flowerWheelOpening));
+  document.body.classList.toggle('flower-wheel', !!settings?.pureMode && (!!wheel?.isOpen || flowerWheelOpening));
+  if (settings?.pureMode && layout !== lastPureLayout) {
+    lastPureLayout = layout;
+    api('pure-layout', layout).catch(() => {});
   }
   const held = !!dragStart || expanded || wheel?.isOpen || $('bubble').classList.contains('reminder-alert');
   if (held !== lastDockHold || expanded !== lastDockPanels) {
@@ -56,7 +57,6 @@ function applyEdgeDock(value) {
   const button = $('edge-expand');
   button.title = t('展开克劳德');
   button.setAttribute('aria-label', button.title);
-  button.querySelector('path').setAttribute('d', value.side === 'right' ? 'm15 6-6 6 6 6' : 'm9 6 6 6-6 6');
   if (value.collapsed) {
     ignore = false;
     window.pet.passthrough(false);
@@ -672,22 +672,32 @@ document.addEventListener(
   },
   true
 );
-// The clean-mode flower drags like the toolbar grip; a click without moving opens the wheel above it.
+// Drag the compact-mode flower like the toolbar grip; a stationary click replaces it with the centered wheel.
 const flower = $('pure-flower');
+$('edge-expand').replaceChildren(flower.querySelector('svg').cloneNode(true));
 async function openFlowerWheel() {
-  if (viewStopped || document.body.inert || panelsOpen() || wheel.isOpen) return;
+  if (viewStopped || document.body.inert || panelsOpen() || wheel.isOpen || flowerWheelOpening || !settings?.pureMode)
+    return;
   cancelInfo();
-  lastPureLayout = true;
-  const compact = innerHeight;
-  await api('pure-layout', true).catch(() => {});
-  // Wait for the taller window so the wheel is placed above the flower, not in the old compact frame.
-  for (let tries = 0; innerHeight === compact && tries < 30; tries++)
-    await new Promise(resolve => setTimeout(resolve, 16));
-  await new Promise(resolve => requestAnimationFrame(resolve));
-  // Near the top of the screen the window grows downward, so the wheel opens below the flower instead.
-  const box = flower.getBoundingClientRect(),
-    above = box.top >= 280;
-  wheel.show(box.left + box.width / 2, above ? box.top - 150 : box.bottom + 150);
+  flowerWheelOpening = true;
+  lastPureLayout = 'wheel';
+  document.body.classList.add('flower-wheel');
+  try {
+    const layout = await api('pure-layout', 'wheel');
+    for (
+      let tries = 0;
+      layout && (innerHeight !== layout.bounds.height || innerWidth !== layout.bounds.width) && tries < 40;
+      tries++
+    )
+      await new Promise(resolve => setTimeout(resolve, 16));
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    if (!viewStopped && settings?.pureMode && layout && !panelsOpen()) wheel.show(layout.center.x, layout.center.y);
+  } catch (error) {
+    showMessage(error.message);
+  } finally {
+    flowerWheelOpening = false;
+    syncDockHold();
+  }
 }
 let flowerPress = null;
 flower.onpointerdown = e => {
@@ -837,7 +847,7 @@ wheel = window.lunaWheel.createWheel({
     { id: 'settings', label: '设置', icon: 'settings', color: '#6a78f5', run: () => openSettings() },
     {
       id: 'pure',
-      label: '纯净模式',
+      label: '精简模式',
       icon: 'sparkle',
       color: '#2fb991',
       off: () => !settings?.pureMode,

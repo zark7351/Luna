@@ -28,7 +28,7 @@ python design/chibi/build-atlas.py design/luna-2d/idle/frames assets/luna-2d/idl
 
 打包脚本只裁切、等比缩放与拼图，保留 alpha。这里明确使用整个源帧，避免自动裁掉耳朵、尾巴的动画留白。原始中间帧可重建，运行时只需要仓库跟踪的 WebP 图集。
 
-人物滚轮缩放范围 60%–180%，只改变屏幕绘制大小；原始帧图集、比例与 alpha 保持不变。头像由 `design/export-app-icon.cjs` 从已确认的透明基础图确定性裁出，输出 `assets/claude-avatar.png`、`assets/claude.ico`；花饰按纯净模式同款十四瓣 SVG 几何导出。
+人物滚轮缩放范围 60%–180%，只改变屏幕绘制大小；原始帧图集、比例与 alpha 保持不变。头像由 `design/export-app-icon.cjs` 从已确认的透明基础图确定性裁出，输出 `assets/claude-avatar.png`、`assets/claude.ico`；花饰按精简模式同款十四瓣 SVG 几何导出。
 
 ## 后续姿势
 

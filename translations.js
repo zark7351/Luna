@@ -194,7 +194,7 @@
   日期时间: 'Date & time',
   系统占用: 'System usage',
   设置: 'Settings',
-  纯净模式: 'Clean mode',
+  精简模式: 'Compact mode',
   拖动功能条: 'Drag toolbar',
   '到时间了：': "It's time: ",
   '（还有 ': ' (plus ',
@@ -456,6 +456,6 @@
   '清理天数无效。': 'Invalid cleanup period.',
   '已经收藏过了，移到最前面啦。': 'Already saved. Moved it to the top.',
   '便签已保存。': 'Note saved.',
-  '右键点击克劳德弹出功能转盘：收藏、截图、录屏、提醒、设置、纯净模式、陪伴互动、隐藏和退出。纯净模式下点击小花打开。方向键可切换，按 Esc 或点空白处关闭。':
-    'Right-click Claude for the quick wheel: collection, screenshot, recording, reminders, settings, clean mode, companion chat, hide and quit. In clean mode, click the flower. Use arrow keys to move; press Esc or click elsewhere to close.'
+  '右键点击克劳德弹出功能转盘：收藏、截图、录屏、提醒、设置、精简模式、陪伴互动、隐藏和退出。精简模式下点击小花打开。方向键可切换，按 Esc 或点空白处关闭。':
+    'Right-click Claude for the quick wheel: collection, screenshot, recording, reminders, settings, compact mode, companion chat, hide and quit. In compact mode, click the flower. Use arrow keys to move; press Esc or click elsewhere to close.'
 }));
