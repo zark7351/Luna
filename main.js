@@ -615,15 +615,16 @@ else {
       ipcMain,
       screen,
       getWindows: () => [win, libraryWin],
-      getSources: smoke
-        ? async () =>
-            screen.getAllDisplays().map(display => ({
-              display_id: String(display.id),
-              thumbnail: nativeImage
-                .createFromPath(path.join(__dirname, 'assets', 'claude-avatar.png'))
-                .resize({ width: display.bounds.width * 2, height: display.bounds.height * 2 })
-            }))
-        : desktopCapturer.getSources.bind(desktopCapturer),
+      getSources:
+        smoke && !process.argv.includes('--screenshot-test')
+          ? async () =>
+              screen.getAllDisplays().map(display => ({
+                display_id: String(display.id),
+                thumbnail: nativeImage
+                  .createFromPath(path.join(__dirname, 'assets', 'claude-avatar.png'))
+                  .resize({ width: display.bounds.width * 2, height: display.bounds.height * 2 })
+              }))
+          : desktopCapturer.getSources.bind(desktopCapturer),
       save: png =>
         mutateCollection(async () => {
           await collection.addBytes('截图-' + new Date().toISOString().replace(/[:.]/g, '-') + '.png', png);

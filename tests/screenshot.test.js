@@ -88,6 +88,9 @@ test('工作区变化不打断框选，录屏选择只交付区域和屏幕源�
       this.emit('closed');
     }
     setAlwaysOnTop() {}
+    setBounds(bounds) {
+      this.bounds = bounds;
+    }
     async loadFile() {}
     showInactive() {}
     focus() {}
@@ -119,6 +122,8 @@ test('工作区变化不打断框选，录屏选择只交付区域和屏幕源�
   assert.equal(controller.isActive(), true);
   assert.equal(windows[0].options.transparent, true);
   assert.equal(windows[0].options.fullscreen, false);
+  assert.equal(windows[0].options.thickFrame, false);
+  assert.deepEqual(windows[0].bounds, display.bounds);
   const selectionState = handlers.get('screenshot-state')({ sender: windows[0].webContents });
   assert.equal(selectionState.live, true);
   assert.equal(selectionState.image, null);

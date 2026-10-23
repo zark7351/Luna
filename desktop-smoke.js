@@ -45,6 +45,11 @@ module.exports = async function runDesktopSmoke(live) {
   let smokeStage = 'startup';
   try {
     await new Promise(r => setTimeout(r, 1200));
+    if (process.argv.includes('--screenshot-test')) {
+      console.log(JSON.stringify(await require('./screenshot-smoke').check({ screenshot, collection })));
+      app.exit(0);
+      return;
+    }
     if (process.argv.includes('--wheel-gesture-test')) {
       console.log(JSON.stringify(await require('./wheel-gesture-smoke').check(live)));
       app.exit(0);
@@ -696,6 +701,7 @@ module.exports = async function runDesktopSmoke(live) {
       (await live.libraryWin.webContents.capturePage()).toPNG()
     );
     smokeStage = 'screenshots';
+    result.screenshotAlignment = await require('./screenshot-smoke').check({ screenshot, collection });
     const countBeforeCapture = collection.list().length;
     if (!(await screenshot.start()) || (await screenshot.start())) throw Error('screenshot single session');
     let capture = screenshot.getWindows()[0];

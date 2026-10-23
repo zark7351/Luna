@@ -57,6 +57,7 @@ try {
     'reminder-renderer.js',
     'live-selection-smoke.js',
     'screenshot.js',
+    'screenshot-smoke.js',
     'screenshot-preload.js',
     'screenshot-renderer.js',
     'screenshot.html',

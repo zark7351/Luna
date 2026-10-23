@@ -129,11 +129,14 @@ function createScreenshot({
       for (const display of displays) {
         const source = sources.find(source => source.display_id === String(display.id));
         if (!source || (!live && source.thumbnail.isEmpty())) throw Error('无法获取屏幕图像，请重试。');
-        // Transparent, manually sized overlays keep the real desktop visible at its native pixels.
+        // Windows can size a non-resizable fullscreen window to the work area
+        // plus its invisible frame. That stretches the snapshot and exposes the
+        // real taskbar. Use an explicitly positioned, borderless screen overlay.
         const window = new BrowserWindow({
           ...display.bounds,
-          fullscreen: !live,
+          fullscreen: false,
           transparent: live,
+          thickFrame: false,
           hasShadow: false,
           roundedCorners: false,
           frame: false,
@@ -157,6 +160,9 @@ function createScreenshot({
         };
         current.entries.push(item);
         window.setAlwaysOnTop(true, 'screen-saver');
+        // The constructor may constrain opaque windows to the work area; apply
+        // the complete display bounds again, including the taskbar area.
+        window.setBounds(display.bounds);
         window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
         window.webContents.on('will-navigate', event => event.preventDefault());
         window.on('closed', () => {
