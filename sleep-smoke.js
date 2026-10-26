@@ -66,7 +66,7 @@ async function check(live, output) {
     live.smokeIdleNow += 1000;
     idle.check();
     await expect(true);
-    await click(212, 76); // The sleeping ear occupies a different place than idle.
+    await click(244, 65); // The current sleeping ear occupies a different place than idle.
     live.smokeIdleNow += 300000;
     idle.check();
     await expect(true);

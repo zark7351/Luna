@@ -29,17 +29,17 @@
       vUV = p / vec2(1448.0,1086.0);
       float breath = 0.5 - 0.5 * cos(uTime * 6.28318530718 / 6.0);
       // Only the back/hair silhouette and crown breathe; face, cheek contact and arms stay fixed.
-      float back = smoothstep(940.0,1140.0,p.x) * smoothstep(400.0,600.0,p.y)
+      float back = smoothstep(1030.0,1180.0,p.x) * smoothstep(400.0,600.0,p.y)
         * (1.0-smoothstep(750.0,825.0,p.y));
       float crown = smoothstep(350.0,520.0,p.x) * (1.0-smoothstep(940.0,1100.0,p.x))
-        * smoothstep(230.0,320.0,p.y) * (1.0-smoothstep(440.0,540.0,p.y));
+        * smoothstep(230.0,320.0,p.y) * (1.0-smoothstep(410.0,500.0,p.y));
       p += vec2(2.8,-5.2) * back * breath + vec2(0.0,-1.7) * crown * breath;
       // One quiet ear flick per six seconds, rooted above the face.
       float q = clamp((uTime-4.35)/0.42,0.0,1.0);
       float angle = 0.025 * sin(q*6.28318530718) * pow(sin(q*3.14159265),2.0);
-      float ear = smoothstep(650.0,705.0,aPosition.x) * (1.0-smoothstep(870.0,920.0,aPosition.x))
-        * (1.0-smoothstep(330.0,425.0,aPosition.y));
-      vec2 d = aPosition-vec2(810.0,425.0);
+      float ear = smoothstep(760.0,815.0,aPosition.x) * (1.0-smoothstep(980.0,1030.0,aPosition.x))
+        * (1.0-smoothstep(290.0,380.0,aPosition.y));
+      vec2 d = aPosition-vec2(920.0,380.0);
       p += (vec2(cos(angle)*d.x-sin(angle)*d.y,sin(angle)*d.x+cos(angle)*d.y)-d)*ear;
       // Same scale as idle; lowered source baseline is compensated by +32 pixels of top padding.
       vec2 uv = (p+vec2(52.0,80.0))/vec2(1552.0,1182.0);
