@@ -105,7 +105,6 @@ async function check(live) {
     win.showInactive();
     await type(win, '#name', 'Claude test');
     await type(win, '#nickname', 'Hello');
-    await type(win, '#weather-query', 'Hangzhou');
     await click(win, '#hotkey-reminder');
     key(win, 'T', ['control', 'alt']);
     await sleep(80);

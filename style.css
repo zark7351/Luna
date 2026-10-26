@@ -438,62 +438,6 @@ input::placeholder {
   line-height: 1.5;
   padding-bottom: 8px;
 }
-.weather-settings {
-  margin: 0 0 12px;
-  padding: 10px;
-  border: 1px solid #f2e5de;
-  border-radius: 15px;
-  background: #ffffffb0;
-}
-.weather-search-row {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-}
-.weather-search-row input {
-  min-width: 0;
-  width: 0;
-  flex: 1;
-  padding: 7px;
-  border: 1px solid #f2e5de;
-  border-radius: 9px;
-  background: #fffbf9;
-  color: #9b705b;
-  font-size: 11px;
-  user-select: text;
-}
-.weather-search-row button {
-  display: grid;
-  place-items: center;
-  width: 27px;
-  height: 29px;
-  padding: 4px;
-  border-radius: 8px;
-  color: #b39180;
-}
-#weather-selected,
-#weather-setting-status {
-  font-size: 10px;
-  color: #b39586;
-  margin-top: 5px;
-}
-#weather-results {
-  max-height: 92px;
-  overflow: auto;
-  margin-top: 6px;
-}
-#weather-results button {
-  display: block;
-  width: 100%;
-  padding: 7px;
-  text-align: left;
-  border-radius: 8px;
-  font-size: 10px;
-  color: #a47f6c;
-}
-#weather-results button:hover {
-  background: #fdebe2;
-}
 #bubble-message {
   white-space: pre-line;
 }

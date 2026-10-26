@@ -149,13 +149,17 @@ async function check(win, output, stateFile, stats) {
   fs.writeFileSync(path.join(output, 'luna-date-dialogue-preview.png'), (await win.webContents.capturePage()).toPNG());
   await require('./bubble-smoke').click(win, 'bubble-body');
   await read(
-    `(async()=>{await openSettings();document.querySelector('#weather-query').value='杭州';document.querySelector('#weather-search').click();})()`
+    `(async()=>{
+      await api('settings',{...settings,weatherLocation:{name:'杭州',latitude:30.27,longitude:120.15,detail:'浙江 · 中国',source:'manual'}});
+      await openSettings();
+      if(document.querySelector('.weather-settings,#weather-query,#weather-search,#weather-locate')||window.lunaWeather||document.querySelector('script[src="weather-ui.js"]'))
+        throw Error('retired weather settings remain');
+      document.querySelector('#settings-form').requestSubmit();
+    })()`
   );
   await sleep(150);
-  await read(
-    `(()=>{const result=document.querySelector('#weather-results button');if(!result)throw Error('weather search result');result.click();document.querySelector('#settings-form').requestSubmit();})()`
-  );
-  await sleep(150);
+  if (JSON.parse(fs.readFileSync(stateFile, 'utf8')).settings.weatherLocation?.name !== '杭州')
+    throw Error('saving settings lost legacy weather preference');
   await read(`showMessage('');infoBubbles.start('weather');void 0`);
   await until(() => read(`feedback.getMessage().includes('杭州')`), 'weather bubble');
   await require('./bubble-smoke').click(win, 'bubble-body');
@@ -198,7 +202,8 @@ async function check(win, output, stateFile, stats) {
     informationReaders: true,
     dynamicFiveSeconds: true,
     dateAndWeekday: true,
-    weatherCitySearch: true,
+    weatherSettingsRemoved: true,
+    legacyWeatherPreserved: true,
     repeatedClicksStayNormal: true,
     settingsAndRemindersAvailable: true,
     restored: true,

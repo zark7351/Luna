@@ -446,7 +446,6 @@ async function openSettings() {
     $('companion-enabled').checked = settings.companion !== false;
     hotkeysUI.fill(settings.hotkeys, await api('hotkeys-status'));
     $('sound-enabled').checked = settings.soundEnabled;
-    window.lunaWeather.fill(settings.weatherLocation);
     $('record-frame-rate').value = String(settings.recordFrameRate);
     $('save-directory').value = settings.saveDirectory;
     $('save-directory').placeholder = state.fileDirectory;
@@ -518,7 +517,6 @@ $('settings-form').onsubmit = async e => {
     pureMode: $('pure-mode').checked,
     companion: $('companion-enabled').checked,
     soundEnabled: $('sound-enabled').checked,
-    weatherLocation: window.lunaWeather.getLocation(),
     saveDirectory: $('save-directory').value,
     recordFrameRate: Number($('record-frame-rate').value)
   };

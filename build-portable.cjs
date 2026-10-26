@@ -68,7 +68,6 @@ try {
     'screenshot.css',
     'system-stats.js',
     'weather.js',
-    'weather-ui.js',
     'body-shortcuts.js',
     'appendage-motion.js',
     'appendage-smoke.js',
@@ -128,6 +127,7 @@ try {
   fs.copyFileSync(path.join(source, 'FFMPEG-NOTICE.md'), path.join(appDir, 'tools', 'FFMPEG-NOTICE.md'));
   // Remove retired runtime files from an existing portable output.
   for (const retired of [
+    'weather-ui.js',
     'network.js',
     'info-ui.js',
     'preview.png',

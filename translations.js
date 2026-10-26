@@ -100,7 +100,6 @@
   '当前系统没有可用的 MP4 视频编码器。': 'No MP4 video encoder is available on this system.',
   '当前系统不支持 MP4 视频编码。': 'This system does not support MP4 video encoding.',
   视频编码失败: 'Video encoding failed',
-  未选择城市: 'No city selected',
   '正在定位…': 'Locating…',
   '正在搜索…': 'Searching…',
   '没有找到，可试试拼音。': 'No results. Try another spelling.',
@@ -235,9 +234,6 @@
   '右键托盘图标进入设置，可修改名字、称呼和置顶。向下箭头隐藏克劳德，双击系统托盘图标可再次显示。':
     'Right-click the tray icon for Settings: name, nickname, language, and always on top. Hide using the down arrow; double-click the tray icon to show Claude.',
   关闭设置: 'Close settings',
-  天气城市: 'Weather city',
-  搜索城市: 'Search cities',
-  'IP 城市定位': 'Locate city by IP',
   名字: 'Name',
   称呼: 'Nickname',
   你的昵称: 'Your nickname',
