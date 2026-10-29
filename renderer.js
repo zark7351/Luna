@@ -524,7 +524,7 @@ $('settings-form').onsubmit = async e => {
     input.hotkeys = await hotkeysUI.read();
     const state = await api('settings', input);
     applySettings(state.settings);
-    document.title = t('claude maid · 桌面宠物');
+    document.title = t('Claudie · 桌面宠物');
     $('settings').hidden = true;
     showMessage(t('嗯，记下了。按你的意思来。'));
   } catch (err) {
@@ -954,7 +954,7 @@ $('pet').addEventListener('pointerdown', event => {
     applyEdgeDock(s.edgeDock);
     window.lunaCharacter.load();
     rest(s.sleeping === true);
-    document.title = t('claude maid · 桌面宠物');
+    document.title = t('Claudie · 桌面宠物');
     lifePaused = s.lifePaused === true;
     api('life-memory')
       .then(memory => {
@@ -992,5 +992,5 @@ window.addEventListener('luna-language-changed', () => {
   api('reminder-list')
     .then(items => reminderCount(items.filter(item => item.status !== 'done').length))
     .catch(() => {});
-  if (settings) document.title = t('claude maid · 桌面宠物');
+  if (settings) document.title = t('Claudie · 桌面宠物');
 });

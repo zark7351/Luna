@@ -50,8 +50,11 @@ async function check(live, output) {
     at(12, 30);
     await expect(true);
     const first = await state();
-    await wait(180);
+    const firstPixels = await read(`document.querySelector('.character-face').toDataURL()`);
+    await wait(1200);
     if ((await state()).frame === first.frame) throw Error('sleep breathing not playing');
+    if ((await read(`document.querySelector('.character-face').toDataURL()`)) === firstPixels)
+      throw Error('sleep frame advanced but painted pixels stayed static');
     if (await read(`window.lunaCharacter.react('ear-right')||window.lunaCharacter.react('tail')`))
       throw Error('idle appendage played on sleep artwork');
     fs.writeFileSync(path.join(output, 'claude-sleep.png'), (await win.webContents.capturePage()).toPNG());
@@ -66,7 +69,7 @@ async function check(live, output) {
     live.smokeIdleNow += 1000;
     idle.check();
     await expect(true);
-    await click(244, 65); // The current sleeping ear occupies a different place than idle.
+    await click(210, 65); // The approved left-leaning sleeping ear differs from idle.
     live.smokeIdleNow += 300000;
     idle.check();
     await expect(true);

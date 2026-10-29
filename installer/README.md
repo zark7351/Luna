@@ -1,8 +1,8 @@
-# claude maid 1.0 Windows 安装包
+# Claudie 1.0 Windows 安装包
 
-在 Windows 仓库根目录运行 `node build-installer.cjs`。先关闭本项目正在运行的便携程序。安装包位于仓库同级 `claude maid-Release/claude maid-1.0.0-Setup.exe`；便携版位于 `claude maid-Windows/claude maid.exe`。
+在 Windows 仓库根目录运行 `node build-installer.cjs`。先关闭本项目正在运行的便携程序。安装包位于仓库同级 `Claudie-Release/Claudie-1.0.0-Setup.exe`；便携版位于 `Claudie-Windows/Claudie.exe`。
 
-安装程序支持当前用户安装、自选路径、桌面与开始菜单快捷方式、Windows 卸载入口。软件名称为 claude maid，当前角色名为克劳德；为兼容已有数据，用户数据目录仍使用旧版 `LunaPet`，升级或卸载均不删除收藏、设置、提醒、自定义保存目录或引用的原文件。升级继续使用原安装身份与原安装位置，替换本安装目录的旧 Claude.exe/claudex.exe 并清理旧名称快捷方式；新装目录默认是当前用户 `AppData/Local/Programs/claude maid`。当前未配置数字签名，发布签名另行处理。
+安装程序支持当前用户安装、自选路径、桌面与开始菜单快捷方式、Windows 卸载入口。软件名称为 Claudie，当前角色名为克劳德；为兼容已有数据，用户数据目录仍使用旧版 `LunaPet`，升级或卸载均不删除收藏、设置、提醒、自定义保存目录或引用的原文件。升级继续使用原安装身份与原安装位置，替换本安装目录的旧 Claude.exe/claudex.exe/claude maid.exe 并清理旧名称快捷方式；新装目录默认是当前用户 `AppData/Local/Programs/Claudie`。当前未配置数字签名，发布签名另行处理。
 
 安装更新前，请从系统托盘退出克劳德。安装程序不使用 Restart Manager 自动关闭进程；部分游戏的防护进程可能持有文件句柄，自动判断文件占用会误列这些应用。
 
@@ -22,6 +22,6 @@
 
 测试安装时传入 `/LUNATEST=1 /VERYSILENT /SUPPRESSMSGBOXES /SP- /NORESTART /NOICONS /TASKS= /NOCLOSEAPPLICATIONS /DIR=<独立临时目录>`。
 
-该开关使用独立测试 AppId，不写真实卸载注册项、不创建桌面/开始菜单快捷方式、不自动启动克劳德，也不读取真实安装位置；仍执行实际文件安装和卸载，可在同一临时目录重复安装。运行安装后的 `claude maid.exe --smoke-test --capture-debug`，桌面 smoke 使用自己的独立临时用户目录。卸载运行临时目录中的 `unins000.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART`。
+该开关使用独立测试 AppId，不写真实卸载注册项、不创建桌面/开始菜单快捷方式、不自动启动克劳德，也不读取真实安装位置；仍执行实际文件安装和卸载，可在同一临时目录重复安装。运行安装后的 `Claudie.exe --smoke-test --capture-debug`，桌面 smoke 使用自己的独立临时用户目录。卸载运行临时目录中的 `unins000.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART`。
 
 测试模式用于开发验证；用户正常安装无需额外参数。

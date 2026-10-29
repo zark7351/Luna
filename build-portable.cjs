@@ -169,6 +169,6 @@ try {
 } catch (error) {
   console.error(`Build failed: ${error.message}`);
   if (['EBUSY', 'EPERM', 'EACCES'].includes(error.code))
-    console.error('Close the running claude maid portable app and retry.');
+    console.error('Close the running Claudie portable app and retry.');
   process.exitCode = 1;
 }
