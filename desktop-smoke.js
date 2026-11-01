@@ -45,6 +45,16 @@ module.exports = async function runDesktopSmoke(live) {
   let smokeStage = 'startup';
   try {
     await new Promise(r => setTimeout(r, 1200));
+    if (process.argv.includes('--background-click-test')) {
+      console.log(JSON.stringify(await require('./background-click-smoke').check(live)));
+      app.exit(0);
+      return;
+    }
+    if (process.argv.includes('--recurrence-test')) {
+      console.log(JSON.stringify(await require('./reminder-recurrence-smoke').check(live)));
+      app.exit(0);
+      return;
+    }
     if (process.argv.includes('--input-focus-test')) {
       console.log(JSON.stringify(await require('./input-focus-smoke').check(live)));
       app.exit(0);
@@ -156,6 +166,7 @@ module.exports = async function runDesktopSmoke(live) {
     result.appearance = appearance;
     smokeStage = 'input-focus';
     result.inputFocus = await require('./input-focus-smoke').check(live);
+    result.recurrence = await require('./reminder-recurrence-smoke').check(live);
     result.appendages = await require('./appendage-smoke').check(win, app.getPath('temp'));
     const migrated = JSON.parse(fs.readFileSync(stateFile, 'utf8'));
     if (

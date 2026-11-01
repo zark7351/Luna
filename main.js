@@ -287,6 +287,8 @@ function restore() {
   edgeDock?.expand();
   win.setIgnoreMouseEvents(false);
   showFocusedWindow(win);
+  win.setAlwaysOnTop(state.settings.top);
+  if (state.settings.top) win.moveTop();
 }
 async function showLibrary(view) {
   const initial =
@@ -621,8 +623,14 @@ else {
       );
       if (quitting || !current) return { ok: false, error: '窗口已关闭' };
       current.setIgnoreMouseEvents(false);
+      // Explicit interaction must recover the saved topmost policy after activation.
+      // Never show a hidden window here or override a disabled user preference.
       if (!current.isFocused()) current.focus();
       if (!current.webContents.isFocused()) current.webContents.focus();
+      if (current === win && state.settings.top && !petVideoFullscreen) {
+        current.setAlwaysOnTop(true);
+        current.moveTop();
+      }
       return { ok: true, value: true };
     });
     const captureMessage = (message, saved) => {

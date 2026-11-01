@@ -73,6 +73,39 @@
         </button>
       </div>
       <div id="scheduled-fields">
+        <div class="repeat-row">
+          <select id="repeat" aria-label="重复方式" data-i18n-aria-label="重复方式">
+            <option value="none" data-i18n="仅一次">仅一次</option>
+            <option value="daily" data-i18n="每天">每天</option>
+            <option value="weekly" data-i18n="每周">每周</option>
+          </select>
+          <input
+            id="repeat-time"
+            type="time"
+            value="09:00"
+            aria-label="提醒时刻"
+            data-i18n-aria-label="提醒时刻"
+            required
+            hidden
+            disabled
+          />
+        </div>
+        <div
+          id="weekdays"
+          class="weekdays"
+          role="group"
+          aria-label="每周提醒日期"
+          data-i18n-aria-label="每周提醒日期"
+          hidden
+        >
+          <button type="button" data-day="1" aria-pressed="false" data-i18n="周一">周一</button>
+          <button type="button" data-day="2" aria-pressed="false" data-i18n="周二">周二</button>
+          <button type="button" data-day="3" aria-pressed="false" data-i18n="周三">周三</button>
+          <button type="button" data-day="4" aria-pressed="false" data-i18n="周四">周四</button>
+          <button type="button" data-day="5" aria-pressed="false" data-i18n="周五">周五</button>
+          <button type="button" data-day="6" aria-pressed="false" data-i18n="周六">周六</button>
+          <button type="button" data-day="0" aria-pressed="false" data-i18n="周日">周日</button>
+        </div>
         <label for="time"><span data-i18n="时间">时间</span></label
         ><input id="time" type="datetime-local" required />
       </div>

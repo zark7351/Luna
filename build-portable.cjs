@@ -52,9 +52,12 @@ try {
     'hotkeys-smoke.js',
     'pet-size.js',
     'appearance-smoke.js',
+    'background-click-smoke.js',
     'idle.js',
     'sleep-smoke.js',
     'reminders.js',
+    'reminder-schedule.js',
+    'reminder-recurrence-smoke.js',
     'reminder-preload.js',
     'reminder.html',
     'reminder.css',
@@ -127,6 +130,7 @@ try {
   fs.copyFileSync(path.join(source, 'FFMPEG-NOTICE.md'), path.join(appDir, 'tools', 'FFMPEG-NOTICE.md'));
   // Remove retired runtime files from an existing portable output.
   for (const retired of [
+    'cn-calendar.js',
     'weather-ui.js',
     'network.js',
     'info-ui.js',

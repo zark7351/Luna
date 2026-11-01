@@ -41,6 +41,28 @@ function setMode(value) {
   const label = countdown ? (editing ? t('重新开始倒计时') : t('开始倒计时')) : t('保存提醒');
   $('save').title = label;
   $('save').setAttribute('aria-label', label);
+  syncRecurrence();
+}
+const dayNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+function syncRecurrence() {
+  const repeat = mode === 'scheduled' && $('repeat').value !== 'none';
+  $('time').hidden = !!repeat;
+  $('time').disabled = mode === 'countdown' || !!repeat;
+  $('repeat-time').hidden = !repeat;
+  $('repeat-time').disabled = !repeat;
+  $('weekdays').hidden = !repeat || $('repeat').value !== 'weekly';
+}
+function setDays(days) {
+  for (const button of document.querySelectorAll('[data-day]'))
+    button.setAttribute('aria-pressed', String(days.includes(Number(button.dataset.day))));
+}
+function recurrenceText(rule) {
+  if (!rule) return '';
+  return (
+    (rule.kind === 'weekly' ? t('每周') + ' ' + rule.days.map(day => t(dayNames[day])).join(' / ') : t('每天')) +
+    ' · ' +
+    rule.time
+  );
 }
 function durationFields(seconds) {
   $('hours').value = Math.floor(seconds / 3600);
@@ -66,6 +88,7 @@ function reset() {
   $('form').reset();
   $('time').value = localTime(Date.now() + 10 * 60000);
   $('cancel-edit').hidden = true;
+  setDays([new Date().getDay()]);
   setMode(mode);
 }
 function iconButton(label, icon, action) {
@@ -132,12 +155,16 @@ function render() {
     if (item.mode === 'countdown' && item.status === 'pending') time.dataset.countdown = item.dueAt;
     const actions = document.createElement('div');
     actions.className = 'actions';
-    if (item.status !== 'done') actions.append(iconButton(t('完成'), 'check', () => operate(item, 'complete')));
+    if (item.status !== 'done')
+      actions.append(iconButton(t(item.recurrence ? '完成本次' : '完成'), 'check', () => operate(item, 'complete')));
     if (item.status === 'fired') actions.append(iconButton(t('稍后 5 分钟'), 'snooze', () => operate(item, 'snooze')));
     actions.append(
       iconButton(t('编辑'), 'edit', async () => {
         editing = item.id;
         $('title').value = item.title;
+        $('repeat').value = item.recurrence?.kind || 'none';
+        $('repeat-time').value = item.recurrence?.time || '09:00';
+        setDays(item.recurrence?.days || [new Date().getDay()]);
         setMode(item.mode === 'countdown' ? 'countdown' : 'scheduled');
         if (mode === 'countdown')
           durationFields(
@@ -156,7 +183,14 @@ function render() {
     });
     remove.className = 'danger';
     actions.append(remove);
-    card.append(title, time, actions);
+    card.append(title, time);
+    if (item.recurrence) {
+      const repeat = document.createElement('div');
+      repeat.className = 'repeat-label';
+      repeat.textContent = recurrenceText(item.recurrence);
+      card.append(repeat);
+    }
+    card.append(actions);
     $('items').append(card);
     if (knownReminders.has(item.id) && knownReminders.get(item.id) !== item.status)
       window.lunaEffects.pulse(card, 'enter');
@@ -184,6 +218,16 @@ $('form').onsubmit = async event => {
       id: editing,
       title: $('title').value,
       mode,
+      recurrence:
+        mode === 'scheduled' && $('repeat').value !== 'none'
+          ? {
+              kind: $('repeat').value,
+              time: $('repeat-time').value,
+              days: [...document.querySelectorAll('[data-day][aria-pressed="true"]')].map(button =>
+                Number(button.dataset.day)
+              )
+            }
+          : null,
       ...(mode === 'countdown'
         ? {
             durationSeconds:
@@ -208,6 +252,9 @@ for (const name of ['active', 'done'])
     render();
   };
 for (const name of ['scheduled', 'countdown']) $('mode-' + name).onclick = () => setMode(name);
+$('repeat').onchange = syncRecurrence;
+for (const button of document.querySelectorAll('[data-day]'))
+  button.onclick = () => button.setAttribute('aria-pressed', String(button.getAttribute('aria-pressed') !== 'true'));
 for (const button of document.querySelectorAll('[data-minutes]'))
   button.onclick = () => durationFields(Number(button.dataset.minutes) * 60);
 setInterval(updateCountdowns, 1000);

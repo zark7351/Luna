@@ -3,6 +3,23 @@
   if (typeof module === 'object' && module.exports) module.exports = factory();
   else root.lunaTranslations = factory();
 })(globalThis, () => ({
+  重复方式: 'Repeat',
+  仅一次: 'Once',
+  每天: 'Every day',
+  每周: 'Every week',
+  提醒时刻: 'Reminder time',
+  每周提醒日期: 'Days of the week',
+  周一: 'Mon',
+  周二: 'Tue',
+  周三: 'Wed',
+  周四: 'Thu',
+  周五: 'Fri',
+  周六: 'Sat',
+  周日: 'Sun',
+  完成本次: 'Complete this occurrence',
+  '重复提醒规则无效。': 'Invalid repeat schedule.',
+  '请至少选择一个星期。': 'Select at least one weekday.',
+  '倒计时不支持周期重复。': 'Countdowns cannot repeat.',
   松开取消: 'Release to cancel',
   确定: 'Confirm',
   '也可在人物或小花上按住右键，拖到功能后松开执行；拖回中心或盘外松开取消。':

@@ -1,6 +1,7 @@
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const { randomUUID } = require('node:crypto');
+const schedule = require('./reminder-schedule');
 
 async function createReminders(directory, { now = Date.now, onDue = () => {}, onChange = () => {} } = {}) {
   const file = path.join(directory, 'reminders.json');
@@ -25,30 +26,55 @@ async function createReminders(directory, { now = Date.now, onDue = () => {}, on
   } catch (error) {
     if (error.code !== 'ENOENT') throw error;
   }
+  // Retired calendar-based rules keep their current occurrence as a one-shot.
+  // Already completed/blocked occurrences must not sound again on upgrade.
+  let migrated = false;
+  for (const item of items) {
+    if (['workday', 'restday'].includes(item.recurrence?.kind)) {
+      if (item.recurrenceBlocked) item.status = 'done';
+      delete item.recurrence;
+      migrated = true;
+    }
+    if (Object.hasOwn(item, 'recurrenceBlocked')) {
+      delete item.recurrenceBlocked;
+      migrated = true;
+    }
+    if (item.recurrence != null) {
+      if (item.mode !== 'scheduled') throw Error('重复提醒规则无效。');
+      item.recurrence = schedule.normalize(item.recurrence);
+    }
+  }
   const serial = task => {
     const pending = queue.then(task);
     queue = pending.catch(() => {});
     return pending;
   };
-  async function persist(next) {
+  async function persist(next, notify = true) {
     await fs.writeFile(file + '.tmp', JSON.stringify(next, null, 2), 'utf8');
     await fs.rename(file + '.tmp', file);
     items = next;
-    if (!stopped) onChange();
+    if (!stopped && notify) onChange();
   }
-  const list = () => items.map(item => ({ ...item })).sort((a, b) => a.dueAt - b.dueAt);
+  if (migrated) await persist(items, false);
+  const list = () => structuredClone(items).sort((a, b) => a.dueAt - b.dueAt);
   async function save(input) {
     return serial(async () => {
       if (!input || typeof input.title !== 'string' || !input.title.trim() || input.title.trim().length > 120)
         throw Error('提醒内容需在 1–120 字以内。');
       const mode = input.mode ?? 'scheduled';
       if (!['scheduled', 'countdown'].includes(mode)) throw Error('未知提醒方式。');
+      const recurrence = schedule.normalize(input.recurrence);
+      if (mode === 'countdown' && recurrence) throw Error('倒计时不支持周期重复。');
       if (
         mode === 'countdown' &&
         (!Number.isInteger(input.durationSeconds) || input.durationSeconds < 1 || input.durationSeconds > 7 * 86400)
       )
         throw Error('倒计时需在 1 秒到 7 天之间。');
-      const dueAt = mode === 'countdown' ? now() + input.durationSeconds * 1000 : input.dueAt;
+      const dueAt = recurrence
+        ? schedule.nextOccurrence(recurrence, now())
+        : mode === 'countdown'
+          ? now() + input.durationSeconds * 1000
+          : input.dueAt;
       if (!Number.isFinite(dueAt) || dueAt <= now() || dueAt > now() + 366 * 10 * 86400000)
         throw Error('请选择未来十年以内的提醒时间。');
       const previous = input.id ? items.find(item => item.id === input.id) : null;
@@ -59,12 +85,13 @@ async function createReminders(directory, { now = Date.now, onDue = () => {}, on
         title: input.title.trim(),
         dueAt,
         mode,
+        ...(recurrence ? { recurrence } : {}),
         ...(mode === 'countdown' ? { durationSeconds: input.durationSeconds } : {}),
         status: 'pending',
         createdAt: previous?.createdAt || now()
       };
       await persist(previous ? items.map(entry => (entry.id === item.id ? item : entry)) : [...items, item]);
-      return item;
+      return structuredClone(item);
     });
   }
   async function action({ id, action } = {}, onlyFired = false) {
@@ -74,6 +101,14 @@ async function createReminders(directory, { now = Date.now, onDue = () => {}, on
       if (onlyFired && item.status !== 'fired') throw Error('这条提醒已处理或尚未到时间。');
       if (!['complete', 'snooze', 'delete'].includes(action)) throw Error('未知提醒操作。');
       if (action === 'snooze' && item.status !== 'fired') throw Error('只有已到点的提醒可延后。');
+      let completed = { ...item, status: 'done' };
+      if (action === 'complete' && item.recurrence) {
+        completed = {
+          ...item,
+          status: 'pending',
+          dueAt: schedule.nextOccurrence(item.recurrence, Math.max(now(), item.dueAt))
+        };
+      }
       await persist(
         action === 'delete'
           ? items.filter(entry => entry.id !== id)
@@ -81,7 +116,7 @@ async function createReminders(directory, { now = Date.now, onDue = () => {}, on
               entry.id !== id
                 ? entry
                 : action === 'complete'
-                  ? { ...entry, status: 'done' }
+                  ? completed
                   : { ...entry, status: 'pending', dueAt: now() + 5 * 60000 }
             )
       );
@@ -95,8 +130,8 @@ async function createReminders(directory, { now = Date.now, onDue = () => {}, on
       if (!due.length) return [];
       const ids = new Set(due.map(item => item.id));
       await persist(items.map(item => (ids.has(item.id) ? { ...item, status: 'fired' } : item)));
-      if (!stopped) await onDue(due.map(item => ({ ...item, status: 'fired' })));
-      return due;
+      if (!stopped && due.length) await onDue(structuredClone(due.map(item => ({ ...item, status: 'fired' }))));
+      return structuredClone(due);
     });
   }
   return {

@@ -19,6 +19,28 @@ const api = async (name, payload) => {
   if (!r.ok) throw Error(t(r.error));
   return r.value;
 };
+let interactionFocus = null;
+function focusPetInteraction() {
+  if (viewStopped || document.body.inert) return Promise.resolve(false);
+  ignore = false;
+  window.pet.passthrough(false);
+  if (!interactionFocus)
+    interactionFocus = api('panel-focus')
+      .catch(() => false)
+      .finally(() => {
+        interactionFocus = null;
+      });
+  return interactionFocus;
+}
+// A transparent inactive window must explicitly activate on its first press.
+// Hovering and clicks in transparent space must not steal focus from other apps.
+document.addEventListener(
+  'pointerdown',
+  event => {
+    if ([0, 1, 2].includes(event.button) && event.target.closest('#pet,#pure-flower')) void focusPetInteraction();
+  },
+  true
+);
 const hotkeysUI = window.createHotkeysUI({ root: $('hotkeys-settings'), call: api, t });
 window.pet.onHotkeysChanged(value => hotkeysUI.status(value));
 function applySettings(value) {
@@ -730,6 +752,7 @@ async function openFlowerWheel(event = null) {
   lastPureLayout = 'wheel';
   document.body.classList.add('flower-wheel');
   try {
+    if (!(await focusPetInteraction())) return;
     const layout = await api('pure-layout', 'wheel');
     for (
       let tries = 0;
