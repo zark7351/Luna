@@ -215,3 +215,14 @@ test('精简工具条收起/展开保留紧凑高度，面板期间使用展开�
     assert.equal(f.bounds().height, 128);
   }
 });
+test('边缘展开按钮不使用原生 title 提示，避免提示残留在屏幕边缘', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  const tag = html.match(/<button\s+id="edge-expand"[^>]*>/)[0];
+  assert.doesNotMatch(tag, /\btitle=/);
+  assert.match(tag, /aria-label="展开克劳德"/);
+  const renderer = fs.readFileSync(path.join(__dirname, '..', 'renderer.js'), 'utf8');
+  assert.doesNotMatch(renderer, /edge-expand'\)[\s\S]{0,40}\.title\s*=/);
+  assert.doesNotMatch(renderer, /button\.title = t\('展开克劳德'\)/);
+});

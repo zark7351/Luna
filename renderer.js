@@ -78,8 +78,9 @@ function applyEdgeDock(value) {
   edgeState = value;
   document.body.dataset.edgeCollapsed = value.collapsed ? value.side : '';
   const button = $('edge-expand');
-  button.title = t('展开克劳德');
-  button.setAttribute('aria-label', button.title);
+  // 不用原生 title：窗口收起/穿透时 Windows 原生提示收不到离开事件，会一直悬停在屏幕边缘
+  button.removeAttribute('title');
+  button.setAttribute('aria-label', t('展开克劳德'));
   if (value.collapsed) {
     ignore = false;
     window.pet.passthrough(false);
