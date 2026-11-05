@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self' data:; script-src 'self'; connect-src 'none'; style-src 'self' 'unsafe-inline'"
+    />
+    <title>Claudie · 宣传视觉样片</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: #f7f2e9;
+      }
+      #actor {
+        position: absolute;
+        left: -9999px;
+      }
+      #film {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="actor"></div>
+    <canvas id="film" width="1920" height="1080"></canvas>
+    <script src="clock.js"></script>
+    <script src="../../character-assets.js"></script>
+    <script src="../../appendage-motion.js"></script>
+    <script src="../../character.js"></script>
+    <script src="sample.js"></script>
+  </body>
+</html>

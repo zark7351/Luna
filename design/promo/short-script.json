@@ -1,0 +1,9 @@
+[
+  {"say":"我用 Claude 的形象开发了一个桌宠软件，叫 Claudie。","shots":["intro"]},
+  {"say":"点一下耳朵，它会动两下。尾巴也能点。","shots":["interact"]},
+  {"say":"文字、链接、文件，往她身上一拖，就进收藏夹了。","shots":["drag","library"]},
+  {"say":"截图和录屏都能框选范围，保存后自动加入收藏夹。","shots":["screenshot-selection","recording-adjust","screenshot-saved"]},
+  {"say":"还能设倒计时，或者每天、每周提醒。","shots":["reminder-countdown","reminder-weekly"]},
+  {"say":"右键就能打开功能菜单。开了精简模式，桌面只留一朵小花。","shots":["menu","compact"]},
+  {"say":"想试试的话，先点个关注，发布了我再告诉大家。","shots":["end"]}
+]

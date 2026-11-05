@@ -1,0 +1,168 @@
+const canvas = document.getElementById('film');
+const ctx = canvas.getContext('2d');
+const host = document.getElementById('actor');
+const actor = window.createLunaCharacter(host, {
+  loadImage: async file => {
+    const image = new Image();
+    image.src = '../../assets/' + file;
+    await image.decode();
+    return image;
+  }
+});
+const pet = host.querySelector('canvas');
+const images = new Map();
+let scenes;
+const fired = new Set();
+const ink = '#372923';
+const orange = '#b9542d';
+const ease = x => {
+  const v = Math.min(1, Math.max(0, x));
+  return v * v * (3 - 2 * v);
+};
+function box(x, y, w, h, radius, color) {
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, radius);
+  ctx.fillStyle = color;
+  ctx.fill();
+}
+function text(s, x, y, size, color = ink, weight = 400) {
+  ctx.font = weight + ' ' + size + 'px "Microsoft YaHei", sans-serif';
+  ctx.fillStyle = color;
+  ctx.fillText(s, x, y);
+}
+function paintPet(x, y, w) {
+  ctx.drawImage(pet, x, y, w, (w * 292) / 384);
+}
+function clickAt(x, y, t) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(4, 37);
+  ctx.lineTo(13, 27);
+  ctx.lineTo(20, 42);
+  ctx.lineTo(26, 39);
+  ctx.lineTo(19, 24);
+  ctx.lineTo(34, 21);
+  ctx.closePath();
+  ctx.fillStyle = '#fff';
+  ctx.fill();
+  ctx.strokeStyle = ink;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  if (t >= 0 && t < 0.52) {
+    ctx.globalAlpha = 1 - t / 0.52;
+    ctx.beginPath();
+    ctx.arc(0, 0, 12 + t * 65, 0, Math.PI * 2);
+    ctx.strokeStyle = orange;
+    ctx.lineWidth = 4;
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+function subtitle(s) {
+  ctx.font = '500 39px "Microsoft YaHei", sans-serif';
+  const width = ctx.measureText(s).width;
+  box((1920 - width) / 2 - 28, 948, width + 56, 70, 15, '#2b211deF');
+  text(s, (1920 - width) / 2, 995, 39, '#fff7ef', 500);
+}
+const custom = new Set(['intro', 'interact', 'drag', 'end']);
+window.prepareShort = async (plan, base) => {
+  scenes = plan;
+  const names = [...new Set(plan.flatMap(scene => scene.shots))].filter(name => !custom.has(name));
+  await Promise.all(
+    names.map(async name => {
+      const image = new Image();
+      image.src = base + name + '.png';
+      await image.decode();
+      images.set(name, image);
+    })
+  );
+  if (!(await actor.load())) throw Error('角色素材加载失败');
+};
+const crops = {
+  library: [0, 0, 740, 335],
+  'screenshot-saved': [0, 0, 600, 326],
+  'recording-adjust': [138, 91, 680, 442],
+  'reminder-weekly': [0, 0, 256, 228],
+  'reminder-countdown': [0, 0, 256, 226]
+};
+const labels = {
+  library: '拖入收藏',
+  'screenshot-selection': '框选截图',
+  'screenshot-saved': '自动保存到收藏夹',
+  'recording-adjust': '区域录屏',
+  'reminder-weekly': '每天 / 每周提醒',
+  'reminder-countdown': '倒计时',
+  menu: '右键功能菜单',
+  compact: '精简模式'
+};
+window.shortFrame = frame => {
+  window.advancePromoClock((frame * 1000) / 24);
+  const index = scenes.findIndex(s => frame < s.start + s.frames);
+  const scene = scenes[index];
+  const local = (frame - scene.start) / 24;
+  const progress = (frame - scene.start) / scene.frames;
+  const shot = scene.shots[Math.min(scene.shots.length - 1, Math.floor(progress * scene.shots.length))];
+  const gradient = ctx.createLinearGradient(0, 0, 1920, 1080);
+  gradient.addColorStop(0, '#fff8ed');
+  gradient.addColorStop(1, '#efd9c7');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 1920, 1080);
+  if (shot === 'intro' || shot === 'end') {
+    text('Claudie', 147, 481, 131, ink, 700);
+    text(shot === 'intro' ? '我做了一个 Windows 桌宠' : '关注，等发布', 154, 562, 38, orange, 500);
+    actor.draw(window.promoTime);
+    paintPet(870 - progress * 20, 137, 892 + progress * 28);
+  } else if (shot === 'interact' || shot === 'drag') {
+    const [x, y, w] = [540, 105, 840];
+    const taps = [
+      { at: 0.95, kind: 'ear-right', px: 0.65, py: 0.17 },
+      { at: 2.62, kind: 'tail', px: 0.16, py: 0.56 }
+    ];
+    if (shot === 'interact') {
+      for (const tap of taps) {
+        if (local >= tap.at && !fired.has(tap.kind)) {
+          fired.add(tap.kind);
+          actor.react(tap.kind);
+        }
+      }
+    }
+    actor.draw(window.promoTime);
+    paintPet(x, y, w);
+    if (shot === 'interact') {
+      for (const tap of taps) {
+        if (local >= tap.at - 0.35 && local < tap.at + 0.7)
+          clickAt(x + w * tap.px, y + ((w * 292) / 384) * tap.py, local - tap.at);
+      }
+    } else {
+      const p = ease((local - 0.25) / 1.65);
+      const cardX = 245 + p * 700,
+        cardY = 326 + p * 168;
+      if (local < 2.1) {
+        box(cardX, cardY, 265, 73, 14, '#fffdf8');
+        text('文字 / 链接 / 文件', cardX + 20, cardY + 46, 26);
+        clickAt(cardX + 238, cardY + 46, -1);
+      }
+    }
+  } else {
+    const img = images.get(shot);
+    const crop = crops[shot] || [0, 0, img.width, img.height];
+    const scale = Math.min(1550 / crop[2], 750 / crop[3], shot === 'compact' ? 4 : 2.8);
+    const zoom = 0.985 + ease((progress * scene.shots.length) % 1) * 0.025;
+    const w = crop[2] * scale * zoom,
+      h = crop[3] * scale * zoom;
+    const x = (1920 - w) / 2,
+      y = 509 - h / 2;
+    ctx.save();
+    ctx.shadowColor = '#3b21182c';
+    ctx.shadowBlur = 36;
+    ctx.shadowOffsetY = 10;
+    ctx.drawImage(img, ...crop, x, y, w, h);
+    ctx.restore();
+    const label = labels[shot];
+    text(label, 95, 103, 38, orange, 650);
+  }
+  subtitle(scene.say);
+  return canvas.toDataURL('image/png');
+};
