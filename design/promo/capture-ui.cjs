@@ -6,7 +6,7 @@ const assert = require('node:assert/strict');
 const { app, BrowserWindow, nativeImage, screen } = require('electron');
 const root = path.resolve(__dirname, '../..');
 app.setAppPath(root);
-const output = path.resolve(root, '../Claudie-Promo/functional-captures');
+const output = path.resolve(root, '../Claudy-Promo/functional-captures');
 fs.mkdirSync(output, { recursive: true });
 let fixture;
 const screenshotModule = require('../../screenshot');

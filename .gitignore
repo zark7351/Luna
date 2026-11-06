@@ -10,6 +10,8 @@ claudex-Windows/
 claudex-Release/
 claude maid-Windows/
 claude maid-Release/
+Claudy-Windows/
+Claudy-Release/
 *.exe
 *.zip
 

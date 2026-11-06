@@ -1,6 +1,6 @@
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();
-  else root.claudieSchedule = factory();
+  else root.claudySchedule = factory();
 })(typeof window === 'object' ? window : globalThis, () => {
   function normalize(rule) {
     if (rule == null) return null;

@@ -101,7 +101,7 @@ async function check(live) {
     assert.equal(await panel(`!!document.querySelector('#calendar-note,script[src="cn-calendar.js"]')`), false);
 
     fs.writeFileSync(
-      path.join(require('node:os').tmpdir(), 'claudie-recurring-reminders.png'),
+      path.join(require('node:os').tmpdir(), 'claudy-recurring-reminders.png'),
 
       (await win.webContents.capturePage()).toPNG()
     );

@@ -9,7 +9,7 @@ try {
   for ($i=0; $i -lt $lines.Count; $i++) {
     $file = Join-Path $env:CLAUDIE_AUDIO ('line-' + $i + '.wav')
     $voice.SetOutputToWaveFile($file, $format)
-    $voice.Speak($lines[$i].say.Replace('Claudie', [string][char]0x514B + [char]0x52B3 + [char]0x8FEA).Replace('Claude', [string][char]0x514B + [char]0x52B3 + [char]0x5FB7))
+    $voice.Speak($lines[$i].say.Replace('Claudy', [string][char]0x514B + [char]0x52B3 + [char]0x8FEA).Replace('Claude', [string][char]0x514B + [char]0x52B3 + [char]0x5FB7))
     $voice.SetOutputToNull()
   }
 } finally { $voice.Dispose() }

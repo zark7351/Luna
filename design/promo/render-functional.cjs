@@ -5,12 +5,12 @@ const os = require('node:os');
 const { pathToFileURL } = require('node:url');
 const { spawn } = require('node:child_process');
 const { once } = require('node:events');
-const output = path.resolve(__dirname, '../../../Claudie-Promo');
-app.setPath('userData', fs.mkdtempSync(path.join(os.tmpdir(), 'claudie-functional-video-')));
+const output = path.resolve(__dirname, '../../../Claudy-Promo');
+app.setPath('userData', fs.mkdtempSync(path.join(os.tmpdir(), 'claudy-functional-video-')));
 let win, encoder;
 async function main() {
   const ffmpeg = path.join(require('../../prepare-build-tools.cjs').ensureFFmpeg(), 'bin/ffmpeg.exe');
-  const music = path.join(output, 'claudie-functional-music.wav');
+  const music = path.join(output, 'claudy-functional-music.wav');
   await app.whenReady();
   win = new BrowserWindow({
     show: false,
@@ -22,7 +22,7 @@ async function main() {
   const base = pathToFileURL(path.join(output, 'functional-captures') + path.sep).href;
   const plan = await win.webContents.executeJavaScript(`window.initializeFunctional(${JSON.stringify(base)})`);
   require('./music.cjs')(music, plan.seconds);
-  const video = path.join(output, 'Claudie-功能操作演示-v2.mp4');
+  const video = path.join(output, 'Claudy-功能操作演示-v2.mp4');
   encoder = spawn(
     ffmpeg,
     [
@@ -82,7 +82,7 @@ async function main() {
   const stamp = seconds =>
     `${String(Math.floor(seconds / 3600)).padStart(2, '0')}:${String(Math.floor(seconds / 60) % 60).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')},000`;
   fs.writeFileSync(
-    path.join(output, 'Claudie-功能操作字幕-v2.srt'),
+    path.join(output, 'Claudy-功能操作字幕-v2.srt'),
     plan.scenes.map((s, i) => `${i + 1}\n${stamp(s.start)} --> ${stamp(s.start + s.length)}\n${s.caption}\n`).join('\n')
   );
   console.log('FUNCTIONAL_VIDEO_OK ' + video + ' ' + plan.seconds + 's');

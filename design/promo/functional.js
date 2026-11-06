@@ -119,10 +119,10 @@ const scenes = [
   {
     length: 3,
     image: 'menu',
-    chapter: 'Claudie',
+    chapter: 'Claudy',
     title: ['功能演示到这里'],
     lines: ['收藏 / 截图 / 区域录屏', '定时与周期提醒 / 快捷键'],
-    caption: '关注，等待 Claudie 发布。'
+    caption: '关注，等待 Claudy 发布。'
   }
 ];
 const canvas = document.getElementById('film');
@@ -168,7 +168,7 @@ window.renderFunctionalFrame = index => {
   const local = t - scene.start;
   ctx.fillStyle = '#f7f7f5';
   ctx.fillRect(0, 0, 1920, 1080);
-  write('Claudie', 80, 92, 38, ink, 700);
+  write('Claudy', 80, 92, 38, ink, 700);
   write('功能与操作演示', 260, 91, 28, '#6f6c68');
   write(String(scenes.indexOf(scene) + 1).padStart(2, '0') + ' / ' + scenes.length, 1720, 90, 25, '#77746e');
   ctx.fillStyle = '#e1e1db';

@@ -183,7 +183,7 @@
     canSpeak = () => true,
     translate = (text, values) =>
       values ? text.replace(/\{(\w+)\}/g, (match, key) => (key in values ? String(values[key]) : match)) : text,
-    name = () => '克劳德',
+    name = () => '克劳迪',
     nickname = () => '',
     separator = () => '，',
     load = () => ({}),

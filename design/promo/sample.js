@@ -1,5 +1,5 @@
 /* A visual treatment, composited from the production character renderer.
-   The document window is set dressing, not a Claudie feature or live desktop capture. */
+   The document window is set dressing, not a Claudy feature or live desktop capture. */
 const film = document.getElementById('film');
 const paint = film.getContext('2d');
 const pet = document.getElementById('actor');
@@ -50,7 +50,7 @@ function background(t) {
   paint.ellipse(1580 + Math.sin(t / 8) * 12, 370, 530, 610, -0.4, 0, Math.PI * 2);
   paint.fill();
   flower(115, 94, 25, rust);
-  text('Claudie', 158, 107, 36, ink, 600);
+  text('Claudy', 158, 107, 36, ink, 600);
   text('WINDOWS 桌面陪伴', 1398, 102, 23, '#8a7768', 400);
 }
 function subtitle(line, opacity = 1) {
@@ -144,7 +144,7 @@ function end(t) {
   actorAt(1050, 228, 720);
   text('忙碌的间隙，', 156, 365, 73, ink, 600);
   text('也有她在。', 156, 474, 73, ink, 600);
-  text('Claudie · 制作中', 160, 578, 33, '#8a7768');
+  text('Claudy · 制作中', 160, 578, 33, '#8a7768');
   round(159, 652, 479, 80, 40, rust);
   text('关注，等她来你的桌面', 195, 704, 29, '#fff8ed', 500);
   text('角色陪伴 / 收藏 / 截图录屏 / 提醒', 160, 797, 26, '#8a7768');

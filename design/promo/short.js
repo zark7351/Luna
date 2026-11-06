@@ -62,9 +62,29 @@ function clickAt(x, y, t) {
 }
 function subtitle(s) {
   ctx.font = '500 39px "Microsoft YaHei", sans-serif';
-  const width = ctx.measureText(s).width;
-  box((1920 - width) / 2 - 28, 948, width + 56, 70, 15, '#2b211deF');
-  text(s, (1920 - width) / 2, 995, 39, '#fff7ef', 500);
+  const lines = [''];
+  for (const char of s) {
+    const last = lines.length - 1;
+    if (ctx.measureText(lines[last] + char).width > 1570 && !'，。！、～'.includes(char)) lines.push(char);
+    else lines[last] += char;
+  }
+  if (lines.length === 2) {
+    const breaks = [...s.matchAll(/[，。！、]/g)]
+      .map(match => match.index + 1)
+      .filter(i => i > s.length * 0.35 && i < s.length * 0.65);
+    const middle = s.length / 2;
+    breaks.sort((a, b) => Math.abs(a - middle) - Math.abs(b - middle));
+    const split = breaks[0];
+    if (split && Math.max(ctx.measureText(s.slice(0, split)).width, ctx.measureText(s.slice(split)).width) <= 1570) {
+      lines[0] = s.slice(0, split);
+      lines[1] = s.slice(split);
+    }
+  }
+  const widths = lines.map(line => ctx.measureText(line).width);
+  const width = Math.max(...widths);
+  const offset = (lines.length - 1) * 51;
+  box((1920 - width) / 2 - 28, 948 - offset, width + 56, 70 + offset, 15, '#2b211deF');
+  lines.forEach((line, i) => text(line, (1920 - widths[i]) / 2, 995 - offset + i * 51, 39, '#fff7ef', 500));
 }
 const custom = new Set(['intro', 'interact', 'drag', 'end']);
 window.prepareShort = async (plan, base) => {
@@ -89,6 +109,7 @@ const crops = {
 };
 const labels = {
   library: '拖入收藏',
+  'library-search': '搜索收藏',
   'screenshot-selection': '框选截图',
   'screenshot-saved': '自动保存到收藏夹',
   'recording-adjust': '区域录屏',
@@ -110,8 +131,9 @@ window.shortFrame = frame => {
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, 1920, 1080);
   if (shot === 'intro' || shot === 'end') {
-    text('Claudie', 147, 481, 131, ink, 700);
-    text(shot === 'intro' ? '我做了一个 Windows 桌宠' : '关注，等发布', 154, 562, 38, orange, 500);
+    text('Claudy', 147, 481, 131, ink, 700);
+    const tag = scene.v4 ? '关注＋充电，即可获取软件' : '关注，等发布';
+    text(shot === 'intro' ? '我做了一个 Windows 桌宠' : tag, 154, 562, 38, orange, 500);
     actor.draw(window.promoTime);
     paintPet(870 - progress * 20, 137, 892 + progress * 28);
   } else if (shot === 'interact' || shot === 'drag') {
@@ -139,7 +161,15 @@ window.shortFrame = frame => {
       const p = ease((local - 0.25) / 1.65);
       const cardX = 245 + p * 700,
         cardY = 326 + p * 168;
-      if (local < 2.1) {
+      if (scene.v4 && local < 2.1) {
+        const library = images.get('library');
+        box(cardX, cardY - 50, 230, 126, 14, '#fffdf8');
+        ctx.drawImage(library, 24, 139, 176, 98, cardX + 12, cardY - 40, 206, 104);
+        clickAt(cardX + 198, cardY + 46, -1);
+      } else if (scene.v4) {
+        box(880, 123, 160, 54, 15, '#fffdf8');
+        text('已收藏', 913, 159, 29, orange, 600);
+      } else if (local < 2.1) {
         box(cardX, cardY, 265, 73, 14, '#fffdf8');
         text('文字 / 链接 / 文件', cardX + 20, cardY + 46, 26);
         clickAt(cardX + 238, cardY + 46, -1);
@@ -161,7 +191,7 @@ window.shortFrame = frame => {
     ctx.drawImage(img, ...crop, x, y, w, h);
     ctx.restore();
     const label = labels[shot];
-    text(label, 95, 103, 38, orange, 650);
+    if (label) text(label, 95, 103, 38, orange, 650);
   }
   subtitle(scene.say);
   return canvas.toDataURL('image/png');

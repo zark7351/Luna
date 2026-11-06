@@ -40,8 +40,8 @@ async function check({ win, edgeDock, restore, stateFile }) {
   try {
     await read(`closeSheets();document.querySelector('#settings').hidden=true;showMessage('');void 0`);
     await setScale(1);
-    assert.match(win.getTitle(), /Claudie/);
-    assert.equal(JSON.parse(fs.readFileSync(stateFile)).settings.name, '克劳德');
+    assert.match(win.getTitle(), /Claudy/);
+    assert.equal(JSON.parse(fs.readFileSync(stateFile)).settings.name, '克劳迪');
     await wheel(120, true);
     assert.equal(await read('settings.petScale'), 1, 'transparent pixels must not zoom');
     await wheel(120);

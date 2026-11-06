@@ -12,7 +12,7 @@ const { nextOccurrence } = require('../reminder-schedule');
 const at = (year, month, day, hour = 9, minute = 0) => new Date(year, month - 1, day, hour, minute).getTime();
 
 async function fixture(t) {
-  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'claudie-repeat-'));
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'claudy-repeat-'));
 
   t.after(() => fs.rm(dir, { recursive: true, force: true }));
 

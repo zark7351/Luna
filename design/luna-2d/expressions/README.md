@@ -1,4 +1,4 @@
-# 克劳德表情
+# 克劳迪表情
 
 - `smile-preview-v1.png`：用户已确认的 image_gen 编辑预览，以 `../default-pose.png` 为参考，保持半睁眼、单手托腮、温柔慵懒且略带大小姐的气质。
 - 已原样复制到 `assets/luna-2d/smile-source.png`；运行时仅提取嘴部并羽化叠加到透明待机，不将白底整图用于人物背景，也不替换原始待机图集。映射与时序见 `character-assets.js` 和 `CHARACTER-ASSETS.md`。

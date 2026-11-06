@@ -43,8 +43,8 @@ async function check() {
   assert.ok(fs.existsSync(setup));
   console.log('ISOLATED_TEST_DIR=' + root);
   fs.mkdirSync(target, { recursive: true });
-  for (const name of ['Claude.exe', 'claudex.exe', 'claude maid.exe'])
-    fs.writeFileSync(path.join(target, name), 'retired test executable');
+  const retired = ['Claude.exe', 'claudex.exe', 'claude maid.exe', 'Claudie.exe'];
+  for (const name of retired) fs.writeFileSync(path.join(target, name), 'retired test executable');
   const install = log =>
     run(setup, [
       '/LUNATEST=1',
@@ -62,8 +62,7 @@ async function check() {
   const exe = path.join(target, EXE_NAME),
     appDir = path.join(target, 'resources', 'app');
   assert.ok(fs.existsSync(exe));
-  for (const name of ['Claude.exe', 'claudex.exe', 'claude maid.exe'])
-    assert.equal(fs.existsSync(path.join(target, name)), false);
+  for (const name of retired) assert.equal(fs.existsSync(path.join(target, name)), false);
   assert.equal(JSON.parse(fs.readFileSync(path.join(appDir, 'package.json'))).version, version);
   assert.equal(
     hash(path.join(appDir, 'assets', 'claude.ico')),

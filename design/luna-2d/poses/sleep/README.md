@@ -1,4 +1,4 @@
-# 克劳德睡眠动画
+# 克劳迪睡眠动画
 
 `sleep-approved.png` 原样复制自用户确认的 `sleep-left-preview-v2.png`：保留歪头，头肩向画面左侧靠，双臂交叠枕睡，右侧头发收拢。已重新制作更可见的呼吸、耳尖微动和独立尾巴慢摆；清醒时仍用原默认姿势。动画预览为 `sleep-motion-preview.webp`，旧预览仅作对比。
 

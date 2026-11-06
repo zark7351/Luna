@@ -14,18 +14,18 @@ test('托盘使用十四瓣花饰，圆心深棕、边角透明且边缘抗锯�
   assert.equal(APP_ID, 'claudex.Companion.Desktop');
 });
 
-test('软件品牌为 Claudie，角色名和安装升级身份保持独立', () => {
-  assert.equal(APP_NAME, 'Claudie');
-  assert.equal(EXE_NAME, 'Claudie.exe');
-  assert.equal(PORTABLE_DIR, 'Claudie-Windows');
-  assert.equal(RELEASE_DIR, 'Claudie-Release');
+test('软件品牌为 Claudy，角色名和安装升级身份保持独立', () => {
+  assert.equal(APP_NAME, 'Claudy');
+  assert.equal(EXE_NAME, 'Claudy.exe');
+  assert.equal(PORTABLE_DIR, 'Claudy-Windows');
+  assert.equal(RELEASE_DIR, 'Claudy-Release');
   const pkg = require('../package.json'),
     lock = require('../package-lock.json');
   assert.equal(pkg.productName, APP_NAME);
-  assert.equal(pkg.name, 'claudie');
+  assert.equal(pkg.name, 'claudy');
   assert.equal(lock.name, pkg.name);
   assert.equal(lock.packages[''].name, pkg.name);
-  assert.equal(require('../core').defaults.name, '克劳德');
+  assert.equal(require('../core').defaults.name, '克劳迪');
   const installer = fs.readFileSync(path.join(__dirname, '..', 'installer', 'LunaPet.iss'), 'utf8');
   assert.ok(installer.includes('AppName=' + APP_NAME));
   assert.ok(installer.includes('AppUserModelID: "' + APP_ID + '"'));

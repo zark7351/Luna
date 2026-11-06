@@ -80,7 +80,7 @@ function applyEdgeDock(value) {
   const button = $('edge-expand');
   // 不用原生 title：窗口收起/穿透时 Windows 原生提示收不到离开事件，会一直悬停在屏幕边缘
   button.removeAttribute('title');
-  button.setAttribute('aria-label', t('展开克劳德'));
+  button.setAttribute('aria-label', t('展开克劳迪'));
   if (value.collapsed) {
     ignore = false;
     window.pet.passthrough(false);
@@ -195,7 +195,7 @@ function startLife(memory) {
     say: lifeSay,
     canSpeak: lifeCanSpeak,
     translate: t,
-    name: () => settings?.name || '克劳德',
+    name: () => settings?.name || '克劳迪',
     nickname: () => settings?.nickname || '',
     separator: () => (window.lunaI18n.language === 'en' ? ', ' : '，'),
     load: () => memory,
@@ -547,7 +547,7 @@ $('settings-form').onsubmit = async e => {
     input.hotkeys = await hotkeysUI.read();
     const state = await api('settings', input);
     applySettings(state.settings);
-    document.title = t('Claudie · 桌面宠物');
+    document.title = t('Claudy · 桌面宠物');
     $('settings').hidden = true;
     showMessage(t('嗯，记下了。按你的意思来。'));
   } catch (err) {
@@ -978,7 +978,7 @@ $('pet').addEventListener('pointerdown', event => {
     applyEdgeDock(s.edgeDock);
     window.lunaCharacter.load();
     rest(s.sleeping === true);
-    document.title = t('Claudie · 桌面宠物');
+    document.title = t('Claudy · 桌面宠物');
     lifePaused = s.lifePaused === true;
     api('life-memory')
       .then(memory => {
@@ -1016,5 +1016,5 @@ window.addEventListener('luna-language-changed', () => {
   api('reminder-list')
     .then(items => reminderCount(items.filter(item => item.status !== 'done').length))
     .catch(() => {});
-  if (settings) document.title = t('Claudie · 桌面宠物');
+  if (settings) document.title = t('Claudy · 桌面宠物');
 });

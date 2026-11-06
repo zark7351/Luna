@@ -5,8 +5,8 @@ const os = require('node:os');
 const { spawn } = require('node:child_process');
 const { once } = require('node:events');
 const root = path.resolve(__dirname, '../..');
-const output = path.resolve(root, '../Claudie-Promo');
-const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'claudie-promo-'));
+const output = path.resolve(root, '../Claudy-Promo');
+const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'claudy-promo-'));
 app.setPath('userData', profile);
 app.commandLine.appendSwitch('disable-renderer-backgrounding');
 app.commandLine.appendSwitch('disable-background-timer-throttling');
@@ -14,7 +14,7 @@ let win, encoder;
 async function main() {
   fs.mkdirSync(output, { recursive: true });
   const ffmpeg = path.join(require('../../prepare-build-tools.cjs').ensureFFmpeg(), 'bin/ffmpeg.exe');
-  const music = path.join(output, 'claudie-original-music.wav');
+  const music = path.join(output, 'claudy-original-music.wav');
   require('./music.cjs')(music);
   await app.whenReady();
   win = new BrowserWindow({
@@ -26,7 +26,7 @@ async function main() {
   win.webContents.on('console-message', (_event, ...args) => console.log('PAGE', ...args));
   await win.loadFile(path.join(__dirname, 'sample.html'));
   await win.webContents.executeJavaScript('window.promoReady');
-  const video = path.join(output, 'Claudie-B站视觉样片-v1.mp4');
+  const video = path.join(output, 'Claudy-B站视觉样片-v1.mp4');
   encoder = spawn(
     ffmpeg,
     [
@@ -59,7 +59,7 @@ async function main() {
       '-movflags',
       '+faststart',
       '-metadata',
-      'title=Claudie visual sample v1',
+      'title=Claudy visual sample v1',
       video
     ],
     { windowsHide: true, stdio: ['pipe', 'ignore', 'pipe'] }
@@ -91,7 +91,7 @@ async function main() {
   fs.writeFileSync(path.join(output, 'encode.log'), errors);
   if (code !== 0) throw Error('视频编码失败：' + errors.slice(-1600));
   fs.writeFileSync(
-    path.join(output, 'Claudie-字幕-v1.srt'),
+    path.join(output, 'Claudy-字幕-v1.srt'),
     '1\n00:00:00,500 --> 00:00:04,600\n……嗯？你来啦。\n\n' +
       '2\n00:00:07,300 --> 00:00:11,700\n我就在这儿，陪你一会儿。\n\n' +
       '3\n00:00:12,200 --> 00:00:15,600\n偶尔摸摸头，也会收到一个微笑。\n\n' +

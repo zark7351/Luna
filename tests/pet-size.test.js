@@ -15,11 +15,11 @@ test('滚轮尺寸有上下限，非法输入不污染存储，设置与迁移�
   assert.deepEqual(migrateState(JSON.parse(JSON.stringify(state))), state);
   assert.equal(validate({ petScale: 0 }).petScale, 0.6);
 });
-test('品牌默认名迁移为克劳德，自定义称呼和其他本地设置保留', () => {
-  assert.equal(migrateState({ settings: { name: '露娜' } }).settings.name, '克劳德');
+test('品牌默认名迁移为克劳迪，自定义称呼和其他本地设置保留', () => {
+  assert.equal(migrateState({ settings: { name: '露娜' } }).settings.name, '克劳迪');
   assert.equal(
     migrateState({ settings: { name: '小克', nickname: '主人', soundEnabled: false } }).settings.name,
     '小克'
   );
-  assert.equal(validate({}).name, '克劳德');
+  assert.equal(validate({}).name, '克劳迪');
 });

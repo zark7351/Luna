@@ -6,8 +6,8 @@ const { pathToFileURL } = require('node:url');
 const { spawn, spawnSync } = require('node:child_process');
 const { once } = require('node:events');
 const assert = require('node:assert/strict');
-const output = path.resolve(__dirname, '../../../Claudie-Promo');
-app.setPath('userData', fs.mkdtempSync(path.join(os.tmpdir(), 'claudie-short-')));
+const output = path.resolve(__dirname, '../../../Claudy-Promo');
+app.setPath('userData', fs.mkdtempSync(path.join(os.tmpdir(), 'claudy-short-')));
 let win, encoder;
 function run(exe, args, options = {}) {
   const result = spawnSync(exe, args, { encoding: 'utf8', windowsHide: true, ...options });
@@ -19,41 +19,53 @@ async function main() {
   const bin = path.join(require('../../prepare-build-tools.cjs').ensureFFmpeg(), 'bin');
   const ffmpeg = path.join(bin, 'ffmpeg.exe');
   const ffprobe = path.join(bin, 'ffprobe.exe');
-  const voiceDir = path.join(output, 'voice-v3');
+  const v4 = process.argv.includes('--v4');
+  const version = v4 ? 'v4' : 'v3';
+  const voiceDir = path.join(output, 'voice-' + version);
+  const scriptPath = path.join(__dirname, v4 ? 'narration-v4.json' : 'short-script.json');
   fs.mkdirSync(voiceDir, { recursive: true });
-  run(
-    'powershell.exe',
-    [
-      '-NoProfile',
-      '-NonInteractive',
-      '-Command',
-      '& ([scriptblock]::Create([IO.File]::ReadAllText($env:CLAUDIE_VOICE_SCRIPT)))'
-    ],
-    {
-      env: {
-        ...process.env,
-        CLAUDIE_VOICE_SCRIPT: path.join(__dirname, 'voice.ps1'),
-        CLAUDIE_SCRIPT: path.join(__dirname, 'short-script.json'),
-        CLAUDIE_AUDIO: voiceDir
+  if (!v4)
+    run(
+      'powershell.exe',
+      [
+        '-NoProfile',
+        '-NonInteractive',
+        '-Command',
+        '& ([scriptblock]::Create([IO.File]::ReadAllText($env:CLAUDIE_VOICE_SCRIPT)))'
+      ],
+      {
+        env: {
+          ...process.env,
+          CLAUDIE_VOICE_SCRIPT: path.join(__dirname, 'voice.ps1'),
+          CLAUDIE_SCRIPT: scriptPath,
+          CLAUDIE_AUDIO: voiceDir
+        }
       }
-    }
-  );
-  const script = require('./short-script.json');
-  const inputs = script.map((_, i) => path.join(voiceDir, 'line-' + i + '.wav'));
+    );
+  const script = require(scriptPath);
+  const inputs = script.map((_, i) => {
+    const wav = path.join(voiceDir, `line-${i}.wav`);
+    const file = !v4 || fs.existsSync(wav) ? wav : path.join(voiceDir, `line-${i}.mp3`);
+    assert.ok(fs.existsSync(file), `缺少第 ${i + 1} 段旁白：${file}`);
+    return file;
+  });
   let frames = 0;
   const plan = script.map((scene, i) => {
     const duration = Number(
       run(ffprobe, ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', inputs[i]]).trim()
     );
-    assert.ok(duration > 1 && duration < 10);
+    assert.ok(duration > 1 && duration < (v4 ? 30 : 10));
     const count = Math.ceil((duration + (i === script.length - 1 ? 0.45 : 0.15)) * 24);
-    const result = { ...scene, start: frames, frames: count };
+    const result = { ...scene, start: frames, frames: count, v4 };
     frames += count;
     return result;
   });
-  const wav = path.join(output, 'Claudie-普通话旁白-v3.wav');
+  const wav = path.join(output, `Claudy-普通话旁白-${version}.wav`);
   const mix = plan
-    .map((scene, i) => '[' + i + ':a]apad,atrim=end_sample=' + scene.frames * 1000 + '[a' + i + ']')
+    .map(
+      (scene, i) =>
+        `[${i}:a]aresample=24000,aformat=channel_layouts=mono,apad,atrim=end_sample=${scene.frames * 1000}[a${i}]`
+    )
     .join(';');
   const concat = plan.map((_, i) => '[a' + i + ']').join('');
   run(ffmpeg, [
@@ -81,7 +93,7 @@ async function main() {
   await win.webContents.executeJavaScript(
     'window.prepareShort(' + JSON.stringify(plan) + ',' + JSON.stringify(base) + ')'
   );
-  const video = path.join(output, 'Claudie-功能速览-v3.mp4');
+  const video = path.join(output, `Claudy-功能速览-${version}.mp4`);
   encoder = spawn(
     ffmpeg,
     [
@@ -130,7 +142,7 @@ async function main() {
     plan.flatMap((scene, i) =>
       scene.shots.map((_, j) => [
         scene.start + Math.floor(((j + 0.5) * scene.frames) / scene.shots.length),
-        'v3-' + (i + 1) + '-' + (j + 1)
+        version + '-' + (i + 1) + '-' + (j + 1)
       ])
     )
   );
@@ -147,7 +159,7 @@ async function main() {
   assert.equal(code, 0, log);
   const stamp = frame => new Date(Math.round((frame * 1000) / 24)).toISOString().slice(11, 23).replace('.', ',');
   fs.writeFileSync(
-    path.join(output, 'Claudie-口播字幕-v3.srt'),
+    path.join(output, `Claudy-口播字幕-${version}.srt`),
     plan
       .map((s, i) => i + 1 + '\n' + stamp(s.start) + ' --> ' + stamp(s.start + s.frames) + '\n' + s.say + '\n')
       .join('\n')
@@ -169,7 +181,7 @@ async function main() {
         width: 1920,
         height: 1080,
         fps: 24,
-        audio: '本地合成普通话旁白，无配乐',
+        audio: v4 ? '导入普通话旁白，无配乐' : '本地合成普通话旁白，无配乐',
         fullDecode: 'passed'
       },
       null,

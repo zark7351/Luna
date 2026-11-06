@@ -29,6 +29,15 @@ test('new position and settings stay stable on later launches', () => {
   assert.equal(WINDOW_HEIGHT, 640);
 });
 
+test('旧版默认角色名迁移为克劳迪，其他偏好保持', () => {
+  const saved = { settings: { name: '克劳德', nickname: '小星', top: false }, layoutVersion: 3 };
+  const state = migrateState(saved);
+  assert.equal(state.settings.name, '克劳迪');
+  assert.equal(state.settings.nickname, '小星');
+  assert.equal(state.settings.top, false);
+  assert.deepEqual(migrateState(state), state);
+});
+
 test('截图快捷键默认开启，关闭设置经过校验和重启迁移后保持', () => {
   assert.equal(validate({}).screenshotShortcut, true);
   const state = migrateState({ settings: { screenshotShortcut: false } });

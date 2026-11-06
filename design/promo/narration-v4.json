@@ -1,0 +1,68 @@
+[
+  {
+    "say": "这是我最近用 Claude 的形象做的一款 Windows 桌宠，叫 Claudy。",
+    "shots": [
+      "intro"
+    ]
+  },
+  {
+    "say": "我还给她加了几个平时用得上的小功能，先给大家看收藏夹。",
+    "shots": [
+      "intro",
+      "library"
+    ]
+  },
+  {
+    "say": "平时看到想留的图片、视频，或者手边有个文件，直接拖到 Claudy 身上，她就会帮你收起来。",
+    "shots": [
+      "drag",
+      "library"
+    ]
+  },
+  {
+    "say": "下次要用，打开收藏夹就能找到。文字和链接也能这么收。",
+    "shots": [
+      "library",
+      "library-search"
+    ]
+  },
+  {
+    "say": "要留住屏幕上的画面，可以框选截图，也可以录一段视频。",
+    "shots": [
+      "screenshot-selection",
+      "recording-adjust"
+    ]
+  },
+  {
+    "say": "截完或者录完，文件会自动进收藏夹，回头找起来很方便。",
+    "shots": [
+      "screenshot-saved"
+    ]
+  },
+  {
+    "say": "还有提醒。比如十分钟后要开会，或者每周五要交周报，设好时间，到点桌面上就会弹出提醒。",
+    "shots": [
+      "reminder-countdown",
+      "reminder-weekly"
+    ]
+  },
+  {
+    "say": "平时也可以点一下 Claudy，跟她互动。",
+    "shots": [
+      "interact"
+    ]
+  },
+  {
+    "say": "桌面想多留点空间，就开精简模式，只留一朵小花，点开照样能用。",
+    "shots": [
+      "menu",
+      "compact"
+    ]
+  },
+  {
+    "say": "关注并给 UP 主充电，即可获取软件哦～欢迎大家提出宝贵意见！",
+    "shots": [
+      "end"
+    ]
+  }
+]

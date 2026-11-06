@@ -3,10 +3,10 @@ const path = require('node:path');
 const assert = require('node:assert/strict');
 const { spawnSync } = require('node:child_process');
 const bin = path.join(require('../../prepare-build-tools.cjs').ensureFFmpeg(), 'bin');
-const output = path.resolve(__dirname, '../../../Claudie-Promo');
+const output = path.resolve(__dirname, '../../../Claudy-Promo');
 const functional = process.argv.includes('--functional');
 const seconds = functional ? 80 : 20;
-const video = path.join(output, functional ? 'Claudie-功能操作演示-v2.mp4' : 'Claudie-B站视觉样片-v1.mp4');
+const video = path.join(output, functional ? 'Claudy-功能操作演示-v2.mp4' : 'Claudy-B站视觉样片-v1.mp4');
 function run(tool, args) {
   const result = spawnSync(path.join(bin, tool + '.exe'), args, { encoding: 'utf8', windowsHide: true });
   if (result.error) throw result.error;

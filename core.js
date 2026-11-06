@@ -5,7 +5,7 @@ const { validateMemory } = require('./life');
 const petSize = require('./pet-size');
 const hotkeys = require('./hotkeys');
 const defaults = {
-  name: '克劳德',
+  name: '克劳迪',
   petScale: 1,
   language: 'zh-CN',
   nickname: '',
@@ -59,7 +59,7 @@ function migrateState(saved = {}) {
   if (!saved || typeof saved !== 'object') saved = {};
   const state = { settings: validate(saved.settings || {}), layoutVersion: 3, life: validateMemory(saved.life) };
   // Rename the former default while preserving names the user chose and all existing local data.
-  if (['露娜', 'Luna'].includes(state.settings.name)) state.settings.name = defaults.name;
+  if (['露娜', 'Luna', '克劳德'].includes(state.settings.name)) state.settings.name = defaults.name;
   if (Array.isArray(saved.position) && saved.position.length === 2 && saved.position.every(Number.isFinite)) {
     state.position = [
       saved.position[0] + ([2, 3].includes(saved.layoutVersion) ? 0 : OLD_PET_OFFSET - PET_OFFSET),

@@ -2,20 +2,20 @@
   #define AppVersion "1.0.0"
 #endif
 #ifndef SourceDir
-  #define SourceDir "..\..\Claudie-Windows"
+  #define SourceDir "..\..\Claudy-Windows"
 #endif
 #ifndef ReleaseDir
-  #define ReleaseDir "..\..\Claudie-Release"
+  #define ReleaseDir "..\..\Claudy-Release"
 #endif
 
 [Setup]
 AppId={code:ReleaseAppId}
-AppName=Claudie
+AppName=Claudy
 AppVersion={#AppVersion}
-AppVerName=Claudie {#AppVersion}
-AppPublisher=Claudie
-DefaultDirName={localappdata}\Programs\Claudie
-DefaultGroupName=Claudie
+AppVerName=Claudy {#AppVersion}
+AppPublisher=Claudy
+DefaultDirName={localappdata}\Programs\Claudy
+DefaultGroupName=Claudy
 DisableProgramGroupPage=yes
 DisableDirPage=no
 PrivilegesRequired=lowest
@@ -23,12 +23,12 @@ ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0.17763
 OutputDir={#ReleaseDir}
-OutputBaseFilename=Claudie-{#AppVersion}-Setup
+OutputBaseFilename=Claudy-{#AppVersion}-Setup
 SetupIconFile=..\assets\claude.ico
-UninstallDisplayIcon={app}\Claudie.exe
+UninstallDisplayIcon={app}\Claudy.exe
 VersionInfoVersion={#AppVersion}
-VersionInfoProductName=Claudie
-VersionInfoDescription=Claudie 安装程序
+VersionInfoProductName=Claudy
+VersionInfoDescription=Claudy 安装程序
 WizardStyle=modern
 Compression=lzma2/normal
 SolidCompression=yes
@@ -53,6 +53,10 @@ Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs 
 ; Remove only this product's retired executable and shortcuts during an upgrade.
 ; Keep the release AppId so existing installations and uninstall records are upgraded.
 [InstallDelete]
+Type: files; Name: "{app}\Claudie.exe"
+Type: files; Name: "{userdesktop}\Claudie.lnk"; Check: not IsTestMode
+Type: files; Name: "{userprograms}\Claudie\Claudie.lnk"; Check: not IsTestMode
+Type: dirifempty; Name: "{userprograms}\Claudie"; Check: not IsTestMode
 Type: files; Name: "{app}\Claude.exe"
 Type: files; Name: "{app}\claudex.exe"
 Type: files; Name: "{app}\claude maid.exe"
@@ -67,11 +71,11 @@ Type: files; Name: "{userprograms}\克劳德\克劳德.lnk"; Check: not IsTestMo
 Type: dirifempty; Name: "{userprograms}\克劳德"; Check: not IsTestMode
 
 [Icons]
-Name: "{userprograms}\Claudie\Claudie"; Filename: "{app}\Claudie.exe"; WorkingDir: "{app}"; AppUserModelID: "claudex.Companion.Desktop"; Check: not IsTestMode
-Name: "{userdesktop}\Claudie"; Filename: "{app}\Claudie.exe"; WorkingDir: "{app}"; AppUserModelID: "claudex.Companion.Desktop"; Tasks: desktopicon; Check: not IsTestMode
+Name: "{userprograms}\Claudy\Claudy"; Filename: "{app}\Claudy.exe"; WorkingDir: "{app}"; AppUserModelID: "claudex.Companion.Desktop"; Check: not IsTestMode
+Name: "{userdesktop}\Claudy"; Filename: "{app}\Claudy.exe"; WorkingDir: "{app}"; AppUserModelID: "claudex.Companion.Desktop"; Tasks: desktopicon; Check: not IsTestMode
 
 [Run]
-Filename: "{app}\Claudie.exe"; WorkingDir: "{app}"; Description: "启动 Claudie"; Flags: nowait postinstall skipifsilent; Check: not IsTestMode
+Filename: "{app}\Claudy.exe"; WorkingDir: "{app}"; Description: "启动 Claudy"; Flags: nowait postinstall skipifsilent; Check: not IsTestMode
 
 [Code]
 function IsTestMode: Boolean;
