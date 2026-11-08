@@ -3,7 +3,6 @@
 import asyncio
 import json
 import os
-import re
 import shutil
 import subprocess
 import tempfile
@@ -16,8 +15,8 @@ import edge_tts
 def spoken_parts(text):
     # Voice-only spellings keep the published Chinese captions intact.
     text = text.replace("我还给", "我孩给").replace("UP 主", "阿普主").replace("哦～", "哦，")
-    parts = re.split(r"\b(Claudy|Claude|Windows)\b", text)
-    return [part.strip() for part in parts if re.search(r"\w", part)]
+    # Keep code-switching in context: a whole sentence shares one rhythm and voice.
+    return [text.strip()] if text.strip() else []
 
 
 async def main():
@@ -37,7 +36,7 @@ async def main():
         async def synthesize(index, part):
             async with slots:
                 path = Path(folder) / f"part-{index}.mp3"
-                # Standalone Latin chunks let the multilingual voice read them in English.
+                # Synthesize each complete sentence without separately splicing English words.
                 voice = edge_tts.Communicate(
                     part,
                     "en-US-AvaMultilingualNeural",
@@ -61,11 +60,10 @@ async def main():
         audio = dict(zip(unique, await asyncio.gather(*(
             synthesize(index, part) for index, part in enumerate(unique)
         ))))
-        gap = bytes(2 * 960)  # 40 ms between language chunks.
         for i, parts in enumerate(segments):
             with wave.open(str(out / f"line-{i}.wav"), "wb") as track:
                 track.setparams((1, 2, 24000, 0, "NONE", "not compressed"))
-                track.writeframes(gap.join(audio[part] for part in parts))
+                track.writeframes(b"".join(audio[part] for part in parts))
 
 
 if __name__ == "__main__":

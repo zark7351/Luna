@@ -43,8 +43,12 @@ async function run(live) {
       bounds = await current.webContents.executeJavaScript(
         `(()=>{const r=document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect();return {x:Math.max(0,Math.floor(r.x)),y:Math.max(0,Math.floor(r.y)),width:Math.ceil(r.width),height:Math.ceil(r.height)}})()`
       );
-    const image = await current.webContents.capturePage(bounds);
-    assert.ok(!image.isEmpty(), name);
+    const captured = await current.webContents.capturePage(bounds);
+    assert.ok(!captured.isEmpty(), name);
+    // Editing crops use CSS pixels; capturePage returns physical pixels on HiDPI displays.
+    const dimensions =
+      bounds || (await current.webContents.executeJavaScript('({width:innerWidth,height:innerHeight})'));
+    const image = captured.resize({ width: dimensions.width, height: dimensions.height, quality: 'best' });
     fs.writeFileSync(path.join(output, name + '.png'), image.toPNG());
     manifest[name] = { ...image.getSize(), file: name + '.png' };
     console.log('UI_CAPTURE ' + name);

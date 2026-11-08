@@ -132,8 +132,8 @@ window.shortFrame = frame => {
   ctx.fillRect(0, 0, 1920, 1080);
   if (shot === 'intro' || shot === 'end') {
     text('Claudy', 147, 481, 131, ink, 700);
-    const tag = scene.v4 ? '关注＋充电，即可获取软件' : '关注，等发布';
-    text(shot === 'intro' ? '我做了一个 Windows 桌宠' : tag, 154, 562, 38, orange, 500);
+    const tag = scene.v4 ? '关注＋充电，即可私信获取软件' : '关注，等发布';
+    text(shot === 'intro' ? '一款多功能 Windows 桌宠' : tag, 154, 562, 38, orange, 500);
     actor.draw(window.promoTime);
     paintPet(870 - progress * 20, 137, 892 + progress * 28);
   } else if (shot === 'interact' || shot === 'drag') {
